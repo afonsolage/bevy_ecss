@@ -37,26 +37,52 @@ fn main() {
 struct CssQueryParam<'w, 's> {
     names: Query<'w, 's, (Entity, &'static Name)>,
     classes: Query<'w, 's, (Entity, &'static CssClass)>,
+    children: Query<'w, 's, &'static Children, With<Parent>>,
+}
+
+fn apply_style_sheet(rules: Res<Vec<StyleRule>>, css_query: CssQueryParam) {
+    for rule in &*rules {
+        let entities = select_entities(&rule.0, &css_query);
+
+        // APPLY PROPERTIES!
+    }
 }
 
 fn select_entities(selector: &Selector, css_query: &CssQueryParam) -> SmallVec<[Entity; 8]> {
-    let parent_tree = selector.get_parent_tree();
+    let mut parent_tree = selector.get_parent_tree();
 
-    for node in parent_tree {
-        let entities = select_entities_node(node, css_query);
-
-        // Children??
+    if parent_tree.is_empty() {
+        return SmallVec::new();
     }
 
-    todo!();
+    let mut filter = None;
+
+    loop {
+        let node = parent_tree.remove(0);
+
+        let entities = select_entities_node(node, css_query, filter.clone());
+
+        if parent_tree.is_empty() {
+            break entities;
+        } else {
+            let children = entities
+                .into_iter()
+                .filter_map(|e| css_query.children.get(e).ok())
+                .map(|children| get_children_recursively(children, &css_query.children))
+                .flatten()
+                .collect();
+            filter = Some(children);
+        }
+    }
 }
 
 fn select_entities_node(
     node: SmallVec<[&SelectorElement; 8]>,
     css_query: &CssQueryParam,
+    filter: Option<SmallVec<[Entity; 8]>>,
 ) -> SmallVec<[Entity; 8]> {
     node.into_iter()
-        .fold(None, |filter, element| {
+        .fold(filter, |filter, element| {
             Some(match element {
                 SelectorElement::Name(name) => {
                     get_entities_with(name.as_str(), &css_query.names, filter)
