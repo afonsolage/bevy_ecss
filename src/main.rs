@@ -1,8 +1,9 @@
 use std::fs;
 
-use bevy::{prelude::*, ecs::system::SystemParam};
-use element::{SelectorElement, Selector};
+use bevy::{ecs::system::SystemParam, prelude::*};
+use element::{Selector, SelectorElement};
 use parser::StyleRule;
+use smallvec::{smallvec, SmallVec};
 
 use crate::parser::parse_stylesheets;
 
@@ -12,6 +13,12 @@ mod parser;
 
 #[derive(Debug, Component, Clone, Deref)]
 pub struct CssClass(String);
+
+impl AsRef<str> for CssClass {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
 
 fn main() {
     let content = fs::read_to_string("test.css").unwrap();
@@ -28,26 +35,76 @@ fn main() {
 
 #[derive(SystemParam)]
 struct CssQueryParam<'w, 's> {
-    names: Query<'w, 's, &'static Name>,
-    classes: Query<'w, 's, &'static Name>,
+    names: Query<'w, 's, (Entity, &'static Name)>,
+    classes: Query<'w, 's, (Entity, &'static CssClass)>,
 }
 
-fn select_entities(selector: Selector, css_query: CssQueryParam) -> Vec<Entity> {
-    
+fn select_entities(selector: &Selector, css_query: &CssQueryParam) -> SmallVec<[Entity; 8]> {
+    let parent_tree = selector.get_parent_tree();
 
-    todo!()
+    for node in parent_tree {
+        let entities = select_entities_node(node, css_query);
+
+        // Children??
+    }
+
+    todo!();
 }
 
-fn get_entities_with_name(name: &str, q_name: Query<(Entity, &Name)>) -> Vec<Entity> {
+fn select_entities_node(
+    node: SmallVec<[&SelectorElement; 8]>,
+    css_query: &CssQueryParam,
+) -> SmallVec<[Entity; 8]> {
+    node.into_iter()
+        .fold(None, |filter, element| {
+            Some(match element {
+                SelectorElement::Name(name) => {
+                    get_entities_with(name.as_str(), &css_query.names, filter)
+                }
+                SelectorElement::Class(class) => {
+                    get_entities_with(class.as_str(), &css_query.classes, filter)
+                }
+                SelectorElement::Component(_) => todo!(),
+                SelectorElement::Child => todo!(),
+            })
+        })
+        .unwrap_or_default()
+}
+
+fn get_entities_with<T>(
+    name: &str,
+    q_name: &Query<(Entity, &'static T)>,
+    filter: Option<SmallVec<[Entity; 8]>>,
+) -> SmallVec<[Entity; 8]>
+where
+    T: Component + AsRef<str>,
+{
     q_name
         .iter()
-        .filter_map(|(e, rhs)| if name == &**rhs { Some(e) } else { None })
+        .filter_map(|(e, rhs)| if name == rhs.as_ref() { Some(e) } else { None })
+        .filter(|e| {
+            if let Some(filter) = &filter {
+                filter.contains(e)
+            } else {
+                true
+            }
+        })
         .collect()
 }
 
-fn get_entities_with_class(class: &str, q_class: Query<(Entity, &CssClass)>) -> Vec<Entity> {
-    q_class
+fn get_children_recursively(
+    children: &Children,
+    q_childs: &Query<&Children, With<Parent>>,
+) -> SmallVec<[Entity; 8]> {
+    children
         .iter()
-        .filter_map(|(e, rhs)| if class == rhs.as_str() { Some(e) } else { None })
+        .map(|&e| {
+            std::iter::once(e).chain(
+                q_childs
+                    .get(e)
+                    .map_or(SmallVec::new(), |gc| get_children_recursively(gc, q_childs)),
+            )
+        })
+        .flatten()
         .collect()
 }

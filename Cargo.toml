@@ -9,3 +9,5 @@ edition = "2021"
 bevy = { version = "0.8"}
 cssparser = "0.29"
 heck = "0.4"
+
+smallvec = { version = "1.6", features = ["serde", "union", "const_generics"] }

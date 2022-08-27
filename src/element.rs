@@ -8,6 +8,7 @@ use bevy::{
 
 use cssparser::{CowRcStr, ToCss, Token};
 use heck::ToKebabCase;
+use smallvec::SmallVec;
 
 use crate::{colors, parser::EcssError};
 
@@ -25,6 +26,25 @@ pub enum SelectorElement {
 
 #[derive(Debug, Clone)]
 pub struct Selector(pub Vec<SelectorElement>);
+
+impl Selector {
+    pub fn get_parent_tree(&self) -> SmallVec<[SmallVec<[&SelectorElement; 8]>; 8]> {
+        let mut tree = SmallVec::new();
+        let mut current_level = SmallVec::new();
+        for element in &self.0 {
+            match element {
+                SelectorElement::Child => {
+                    tree.push(current_level);
+                    current_level = SmallVec::new();
+                }
+                _ => current_level.push(element),
+            }
+        }
+        tree.push(current_level);
+
+        tree
+    }
+}
 
 impl<'i> From<Vec<CowRcStr<'i>>> for Selector {
     fn from(input: Vec<CowRcStr<'i>>) -> Self {
