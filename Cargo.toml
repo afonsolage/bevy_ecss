@@ -9,10 +9,11 @@ edition = "2021"
 bevy = { version = "0.8", features = ["filesystem_watcher"]}
 cssparser = "0.29"
 heck = "0.4"
-bevy-inspector-egui = "0.12"
 
 smallvec = { version = "1.6", features = ["serde", "union", "const_generics"] }
 
+[dev-dependencies]
+bevy-inspector-egui = "0.12"
 
 [[example]]
 name = "simple_ui"
@@ -21,3 +22,7 @@ path = "examples/simple_ui.rs"
 [[example]]
 name = "apply_on_load"
 path = "examples/apply_on_load.rs"
+
+[[example]]
+name = "stress_test"
+path = "examples/stress_test.rs"

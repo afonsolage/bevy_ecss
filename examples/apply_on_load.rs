@@ -1,6 +1,5 @@
 use bevy::{asset::AssetServerSettings, prelude::*};
 use bevy_ecss::{CssClass, EcssPlugin, StyleSheet};
-use bevy_inspector_egui::WorldInspectorPlugin;
 
 fn main() {
     App::new()
@@ -12,7 +11,6 @@ fn main() {
         // Whenever a StyleSheet is loaded, it'll be automatically applied.
         // This also works for asset hot reloading
         .add_plugin(EcssPlugin::apply_on_load())
-        .add_plugin(WorldInspectorPlugin::new())
         .add_startup_system(load_stylesheet)
         .add_startup_system(setup)
         .run();
