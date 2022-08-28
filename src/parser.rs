@@ -100,7 +100,7 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
         _start: &cssparser::ParserState,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
-        let mut properties = vec![];
+        let mut properties = SmallVec::new();
 
         for property in DeclarationListParser::new(input, PropertyParser) {
             match property {
@@ -183,8 +183,8 @@ impl<'i> AtRuleParser<'i> for PropertyParser {
 
 fn parse_values<'i, 'tt>(
     parser: &mut Parser<'i, 'tt>,
-) -> Result<Vec<Token<'i>>, ParseError<'i, EcssError>> {
-    let mut values = vec![];
+) -> Result<SmallVec<[Token<'i>; 8]>, ParseError<'i, EcssError>> {
+    let mut values = SmallVec::new();
 
     while let Ok(token) = parser.next_including_whitespace() {
         values.push(token.clone())

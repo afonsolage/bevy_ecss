@@ -1,4 +1,4 @@
-use bevy::{reflect::TypeUuid, prelude::Deref};
+use bevy::{prelude::Deref, reflect::TypeUuid};
 use smallvec::SmallVec;
 
 use crate::{parser::StyleSheetParser, property::Property, selector::Selector};
@@ -14,4 +14,4 @@ impl StyleSheet {
 }
 
 #[derive(Debug, Clone)]
-pub struct StyleRule(pub Selector, pub Vec<Property>);
+pub struct StyleRule(pub Selector, pub SmallVec<[Property; 8]>);

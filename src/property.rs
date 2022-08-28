@@ -8,6 +8,7 @@ use bevy::{
 
 use cssparser::{ToCss, Token};
 use heck::ToKebabCase;
+use smallvec::{SmallVec, smallvec};
 
 use crate::{colors, parser::EcssError};
 
@@ -103,7 +104,7 @@ impl Property {
 }
 
 #[derive(Debug, Clone)]
-pub struct PropertyValue<'i>(Vec<Token<'i>>);
+pub struct PropertyValue<'i>(SmallVec<[Token<'i>; 8]>);
 
 impl<'i> PropertyValue<'i> {
     fn only_ident(self) -> Self {
@@ -126,15 +127,15 @@ impl<'i> PropertyValue<'i> {
 }
 
 impl<'i> std::ops::Deref for PropertyValue<'i> {
-    type Target = Vec<Token<'i>>;
+    type Target = SmallVec<[Token<'i>; 8]>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<'i> From<Vec<Token<'i>>> for PropertyValue<'i> {
-    fn from(v: Vec<Token<'i>>) -> Self {
+impl<'i> From<SmallVec<[Token<'i>; 8]>> for PropertyValue<'i> {
+    fn from(v: SmallVec<[Token<'i>; 8]>) -> Self {
         Self(v)
     }
 }
@@ -159,7 +160,7 @@ fn token_to_f32<'i>(token: Token<'i>) -> f32 {
 fn token_to_option<'i, T: TryFrom<PropertyValue<'i>>>(token: Token<'i>) -> Option<T> {
     match token {
         Token::Ident(_) => None,
-        _ => T::try_from(PropertyValue(vec![token])).ok(),
+        _ => T::try_from(PropertyValue(smallvec![token])).ok(),
     }
 }
 
