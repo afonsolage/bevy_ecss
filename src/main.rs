@@ -1,6 +1,11 @@
-use std::{borrow::Cow, fs};
+use std::borrow::Cow;
 
-use bevy::{ecs::system::SystemParam, prelude::*};
+use bevy::{
+    asset::{AssetLoader, AssetServerSettings, LoadedAsset},
+    ecs::system::SystemParam,
+    prelude::*,
+    reflect::TypeUuid,
+};
 use bevy_inspector_egui::WorldInspectorPlugin;
 use element::{Property, Selector, SelectorElement};
 use parser::StyleRule;
@@ -47,18 +52,54 @@ impl MatchSelectorElement for Name {
 }
 
 fn main() {
-    let content = fs::read_to_string("assets/sheets/test.css").unwrap();
-
-    let rules = parse_stylesheets(content.as_str());
-
     App::new()
+        .insert_resource(AssetServerSettings {
+            watch_for_changes: true,
+            ..default()
+        })
         .add_plugins(DefaultPlugins)
         .add_plugin(WorldInspectorPlugin::new())
         .register_type::<CssClass>()
-        .insert_resource(rules)
+        .init_asset_loader::<StyleSheetLoader>()
+        .add_asset::<StyleSheet>()
+        .add_startup_system(load_style_sheet)
         .add_startup_system(test::setup)
         .add_system(apply_style_sheet)
         .run();
+}
+
+#[derive(Debug, TypeUuid)]
+#[uuid = "29c5a90f-fccf-45e1-a8d9-adbfaafc0c88"]
+pub struct StyleSheet(Vec<StyleRule>);
+
+#[derive(Default)]
+struct StyleSheetLoader;
+
+impl AssetLoader for StyleSheetLoader {
+    fn load<'a>(
+        &'a self,
+        bytes: &'a [u8],
+        load_context: &'a mut bevy::asset::LoadContext,
+    ) -> bevy::utils::BoxedFuture<'a, Result<(), bevy::asset::Error>> {
+        Box::pin(async move {
+            let content = std::str::from_utf8(bytes)?;
+            let rules = parse_stylesheets(content);
+            load_context.set_default_asset(LoadedAsset::new(StyleSheet(rules)));
+            Ok(())
+        })
+    }
+
+    fn extensions(&self) -> &[&str] {
+        &["css"]
+    }
+}
+
+struct TestSheetRes(Handle<StyleSheet>);
+
+fn load_style_sheet(asset_server: Res<AssetServer>, mut commands: Commands) {
+    let stylesheet: Handle<StyleSheet> = asset_server.load("sheets/test.css");
+
+    commands.insert_resource(stylesheet);
 }
 
 #[derive(SystemParam)]
@@ -71,21 +112,32 @@ struct CssQueryParam<'w, 's> {
 }
 
 fn apply_style_sheet(
-    rules: Res<Vec<StyleRule>>,
+    mut assets_events: EventReader<AssetEvent<StyleSheet>>,
+    sheets: Res<Assets<StyleSheet>>,
     mut css_query: CssQueryParam,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    if rules.is_changed() == false {
-        return;
-    }
+    for evt in assets_events.iter() {
+        match evt {
+            AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
+                if let Some(sheet) = sheets.get(handle) {
+                    for rule in &sheet.0 {
+                        let entities = select_entities(&rule.0, &css_query);
 
-    for rule in &*rules {
-        let entities = select_entities(&rule.0, &css_query);
-
-        apply_style_properties(&entities, &mut css_query.style, &rule.1);
-        apply_text_properties(&entities, &mut css_query.text, &rule.1, &asset_server);
-        apply_color_properties(&entities, &rule.1, &mut commands);
+                        apply_style_properties(&entities, &mut css_query.style, &rule.1);
+                        apply_text_properties(
+                            &entities,
+                            &mut css_query.text,
+                            &rule.1,
+                            &asset_server,
+                        );
+                        apply_color_properties(&entities, &rule.1, &mut commands);
+                    }
+                }
+            }
+            _ => (),
+        }
     }
 }
 
