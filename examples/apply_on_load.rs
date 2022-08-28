@@ -1,9 +1,31 @@
-use bevy::prelude::*;
+use bevy::{asset::AssetServerSettings, prelude::*};
+use bevy_ecss::{CssClass, EcssPlugin, StyleSheet};
+use bevy_inspector_egui::WorldInspectorPlugin;
 
-use crate::CssClass;
+fn main() {
+    App::new()
+        .insert_resource(AssetServerSettings {
+            watch_for_changes: true,
+            ..default()
+        })
+        .add_plugins(DefaultPlugins)
+        // Whenever a StyleSheet is loaded, it'll be automatically applied.
+        // This also works for asset hot reloading
+        .add_plugin(EcssPlugin::apply_on_load())
+        .add_plugin(WorldInspectorPlugin::new())
+        .add_startup_system(load_stylesheet)
+        .add_startup_system(setup)
+        .run();
+}
 
-// Borrowed from https://bevyengine.org/examples/ui/ui/
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn load_stylesheet(asset_server: Res<AssetServer>, mut commands: Commands) {
+    let stylesheet: Handle<StyleSheet> = asset_server.load("sheets/test.css");
+
+    // The Handle needs to be stored somewhere to prevent AssetServer from unloading it
+    commands.insert_resource(stylesheet)
+}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Camera
     commands.spawn_bundle(Camera2dBundle::default());
 

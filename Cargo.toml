@@ -12,3 +12,12 @@ heck = "0.4"
 bevy-inspector-egui = "0.12"
 
 smallvec = { version = "1.6", features = ["serde", "union", "const_generics"] }
+
+
+[[example]]
+name = "simple_ui"
+path = "examples/simple_ui.rs"
+
+[[example]]
+name = "apply_on_load"
+path = "examples/apply_on_load.rs"

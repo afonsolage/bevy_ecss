@@ -1,31 +1,17 @@
 use std::{error::Error, fmt::Display};
 
+use bevy::prelude::error;
 use cssparser::{
     AtRuleParser, DeclarationListParser, DeclarationParser, ParseError, Parser, ParserInput,
-    QualifiedRuleParser, RuleListParser, Token,
+    QualifiedRuleParser, RuleListParser, ToCss, Token,
 };
+use smallvec::SmallVec;
 
-use crate::element::{Property, Selector, SelectorElement};
-
-pub fn parse_stylesheets(content: &str) -> Vec<StyleRule> {
-    let mut rules = vec![];
-
-    let mut input = ParserInput::new(content);
-    let mut parser = Parser::new(&mut input);
-
-    let a = RuleListParser::new_for_stylesheet(&mut parser, StylesheetParser);
-    for rule in a {
-        match rule {
-            Ok(rule) => rules.push(rule),
-            Err((err, a)) => println!("Error parsing rule: {:?} ({})", err, a),
-        }
-    }
-
-    rules
-}
-
-#[derive(Debug, Clone)]
-pub struct StyleRule(pub Selector, pub Vec<Property>);
+use crate::{
+    property::Property,
+    selector::{Selector, SelectorElement},
+    stylesheet::StyleRule,
+};
 
 #[derive(Debug)]
 pub enum EcssError {
@@ -48,9 +34,53 @@ impl Display for EcssError {
     }
 }
 
-struct StylesheetParser;
+pub(crate) struct StyleSheetParser;
 
-impl<'i> QualifiedRuleParser<'i> for StylesheetParser {
+impl StyleSheetParser {
+    pub(crate) fn parse(content: &str) -> SmallVec<[StyleRule; 8]> {
+        let mut input = ParserInput::new(content);
+        let mut parser = Parser::new(&mut input);
+
+        RuleListParser::new_for_stylesheet(&mut parser, StyleSheetParser)
+            .into_iter()
+            .filter_map(|result| match result {
+                Ok(rule) => Some(rule),
+                Err((err, rule)) => {
+                    error!(
+                        "Failed to parse rule: {}. Error: {}",
+                        rule,
+                        format_error(err)
+                    );
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
+fn format_error<'i>(error: ParseError<'i, EcssError>) -> String {
+    let error_description = match error.kind {
+        cssparser::ParseErrorKind::Basic(b) => match b {
+            cssparser::BasicParseErrorKind::UnexpectedToken(token) => {
+                format!("Unexpected token {}", token.to_css_string())
+            }
+            cssparser::BasicParseErrorKind::EndOfInput => "End of input".to_string(),
+            cssparser::BasicParseErrorKind::AtRuleInvalid(token) => {
+                format!("At rule isn't supported {}", token.to_string())
+            }
+            cssparser::BasicParseErrorKind::AtRuleBodyInvalid => format!("At rule isn't supported"),
+            cssparser::BasicParseErrorKind::QualifiedRuleInvalid => format!("Invalid rule"),
+        },
+        cssparser::ParseErrorKind::Custom(c) => c.to_string(),
+    };
+
+    format!(
+        "{} at {}:{}",
+        error_description, error.location.line, error.location.column
+    )
+}
+
+impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
     type Prelude = Selector;
 
     type QualifiedRule = StyleRule;
@@ -118,7 +148,7 @@ fn parse_selector<'i, 'tt>(
     Ok(Selector(values))
 }
 
-impl<'i> AtRuleParser<'i> for StylesheetParser {
+impl<'i> AtRuleParser<'i> for StyleSheetParser {
     type Prelude = ();
 
     type AtRule = StyleRule;
