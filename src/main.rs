@@ -1,35 +1,63 @@
-use std::fs;
+use std::{borrow::Cow, fs};
 
 use bevy::{ecs::system::SystemParam, prelude::*};
-use element::{Selector, SelectorElement};
+use bevy_inspector_egui::WorldInspectorPlugin;
+use element::{Property, Selector, SelectorElement};
 use parser::StyleRule;
-use smallvec::{smallvec, SmallVec};
+use smallvec::SmallVec;
 
 use crate::parser::parse_stylesheets;
 
 mod colors;
 mod element;
 mod parser;
+mod test;
 
-#[derive(Debug, Component, Clone, Deref)]
-pub struct CssClass(String);
+trait MatchSelectorElement {
+    fn matches(&self, element: &str) -> bool;
+}
 
-impl AsRef<str> for CssClass {
-    fn as_ref(&self) -> &str {
-        self.0.as_ref()
+#[derive(Debug, Reflect, Component, Default, Clone, Deref)]
+#[reflect(Component)]
+pub struct CssClass(SmallVec<[Cow<'static, str>; 4]>);
+
+impl CssClass {
+    pub fn new<T>(classes: &[T]) -> Self
+    where
+        T: Into<Cow<'static, str>> + Clone,
+    {
+        Self(classes.into_iter().map(|t| t.clone().into()).collect())
+    }
+
+    fn matches(&self, class: &str) -> bool {
+        self.0.iter().any(|c| c.as_ref() == class)
+    }
+}
+
+impl MatchSelectorElement for CssClass {
+    fn matches(&self, element: &str) -> bool {
+        self.matches(element)
+    }
+}
+
+impl MatchSelectorElement for Name {
+    fn matches(&self, element: &str) -> bool {
+        self.as_str() == element
     }
 }
 
 fn main() {
-    let content = fs::read_to_string("test.css").unwrap();
+    let content = fs::read_to_string("assets/sheets/test.css").unwrap();
 
     let rules = parse_stylesheets(content.as_str());
 
-    println!("Rules: {:#?}", rules);
-
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugin(WorldInspectorPlugin::new())
+        .register_type::<CssClass>()
         .insert_resource(rules)
+        .add_startup_system(test::setup)
+        .add_system(apply_style_sheet)
         .run();
 }
 
@@ -37,14 +65,27 @@ fn main() {
 struct CssQueryParam<'w, 's> {
     names: Query<'w, 's, (Entity, &'static Name)>,
     classes: Query<'w, 's, (Entity, &'static CssClass)>,
-    children: Query<'w, 's, &'static Children, With<Parent>>,
+    children: Query<'w, 's, &'static Children, With<Node>>,
+    style: Query<'w, 's, &'static mut Style, With<Node>>,
+    text: Query<'w, 's, &'static mut Text, With<Node>>,
 }
 
-fn apply_style_sheet(rules: Res<Vec<StyleRule>>, css_query: CssQueryParam) {
+fn apply_style_sheet(
+    rules: Res<Vec<StyleRule>>,
+    mut css_query: CssQueryParam,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+    if rules.is_changed() == false {
+        return;
+    }
+
     for rule in &*rules {
         let entities = select_entities(&rule.0, &css_query);
 
-        // APPLY PROPERTIES!
+        apply_style_properties(&entities, &mut css_query.style, &rule.1);
+        apply_text_properties(&entities, &mut css_query.text, &rule.1, &asset_server);
+        apply_color_properties(&entities, &rule.1, &mut commands);
     }
 }
 
@@ -90,8 +131,11 @@ fn select_entities_node(
                 SelectorElement::Class(class) => {
                     get_entities_with(class.as_str(), &css_query.classes, filter)
                 }
-                SelectorElement::Component(_) => todo!(),
-                SelectorElement::Child => todo!(),
+                SelectorElement::Component(component) => {
+                    debug!("Not implemented yet! ({})", component);
+                    SmallVec::new()
+                }
+                SelectorElement::Child => unreachable!(),
             })
         })
         .unwrap_or_default()
@@ -103,11 +147,11 @@ fn get_entities_with<T>(
     filter: Option<SmallVec<[Entity; 8]>>,
 ) -> SmallVec<[Entity; 8]>
 where
-    T: Component + AsRef<str>,
+    T: Component + MatchSelectorElement,
 {
     q_name
         .iter()
-        .filter_map(|(e, rhs)| if name == rhs.as_ref() { Some(e) } else { None })
+        .filter_map(|(e, rhs)| if rhs.matches(name) { Some(e) } else { None })
         .filter(|e| {
             if let Some(filter) = &filter {
                 filter.contains(e)
@@ -120,7 +164,7 @@ where
 
 fn get_children_recursively(
     children: &Children,
-    q_childs: &Query<&Children, With<Parent>>,
+    q_childs: &Query<&Children, With<Node>>,
 ) -> SmallVec<[Entity; 8]> {
     children
         .iter()
@@ -133,4 +177,93 @@ fn get_children_recursively(
         })
         .flatten()
         .collect()
+}
+
+fn apply_style_properties(
+    entities: &SmallVec<[Entity; 8]>,
+    q_styles: &mut Query<&mut Style, With<Node>>,
+    properties: &[Property],
+) {
+    for entity in entities {
+        if let Ok(mut style) = q_styles.get_mut(*entity) {
+            for property in properties {
+                match property {
+                    Property::Display(val) => style.display = val.clone(),
+                    Property::PositionType(val) => style.position_type = val.clone(),
+                    Property::Direction(val) => style.direction = val.clone(),
+                    Property::FlexDirection(val) => style.flex_direction = val.clone(),
+                    Property::FlexWrap(val) => style.flex_wrap = val.clone(),
+                    Property::AlignItems(val) => style.align_items = val.clone(),
+                    Property::AlignSelf(val) => style.align_self = val.clone(),
+                    Property::AlignContent(val) => style.align_content = val.clone(),
+                    Property::JustifyContent(val) => style.justify_content = val.clone(),
+                    Property::PositionLeft(val) => style.position.left = val.clone(),
+                    Property::PositionRight(val) => style.position.right = val.clone(),
+                    Property::PositionTop(val) => style.position.top = val.clone(),
+                    Property::PositionBottom(val) => style.position.bottom = val.clone(),
+                    Property::Margin(val) => style.margin = val.clone(),
+                    Property::Padding(val) => style.padding = val.clone(),
+                    Property::Border(val) => style.border = val.clone(),
+                    Property::FlexGrow(val) => style.flex_grow = val.clone(),
+                    Property::FlexShrink(val) => style.flex_shrink = val.clone(),
+                    Property::FlexBasis(val) => style.flex_basis = val.clone(),
+                    Property::SizeWidth(val) => style.size.width = val.clone(),
+                    Property::SizeHeight(val) => style.size.height = val.clone(),
+                    Property::SizeMinWidth(val) => style.min_size.width = val.clone(),
+                    Property::SizeMinHeight(val) => style.min_size.height = val.clone(),
+                    Property::SizeMaxWidth(val) => style.max_size.width = val.clone(),
+                    Property::SizeMaxHeight(val) => style.max_size.height = val.clone(),
+                    Property::AspectRatio(val) => style.aspect_ratio = val.clone(),
+                    Property::Overflow(val) => style.overflow = val.clone(),
+                    _ => (),
+                }
+            }
+        }
+    }
+}
+
+fn apply_text_properties(
+    entities: &SmallVec<[Entity; 8]>,
+    q_texts: &mut Query<&mut Text, With<Node>>,
+    properties: &[Property],
+    asset_server: &Res<AssetServer>,
+) {
+    for entity in entities {
+        if let Ok(mut text) = q_texts.get_mut(*entity) {
+            for property in properties {
+                match property {
+                    Property::TextVerticalAlign(val) => text.alignment.vertical = val.clone(),
+                    Property::TextHorizontalAlign(val) => text.alignment.horizontal = val.clone(),
+                    Property::Font(val) => text
+                        .sections
+                        .iter_mut()
+                        .for_each(|s| s.style.font = asset_server.load(val)),
+                    Property::FontSize(val) => text
+                        .sections
+                        .iter_mut()
+                        .for_each(|s| s.style.font_size = val.clone()),
+                    Property::FontColor(val) => text
+                        .sections
+                        .iter_mut()
+                        .for_each(|s| s.style.color = (*val).into()),
+                    _ => (),
+                }
+            }
+        }
+    }
+}
+
+fn apply_color_properties(
+    entities: &SmallVec<[Entity; 8]>,
+    properties: &[Property],
+    commands: &mut Commands,
+) {
+    for entity in entities {
+        for property in properties {
+            match property {
+                Property::Color(color) => commands.entity(*entity).insert(UiColor((*color).into())),
+                _ => continue,
+            };
+        }
+    }
 }

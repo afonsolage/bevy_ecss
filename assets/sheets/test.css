@@ -1,0 +1,19 @@
+#ui-root {
+    color: #0f0fAf2F
+}
+
+#ui-root #left-bg {
+    color: #AF0F0F2F
+}
+
+#right-list {
+    height: 70%
+}
+
+.big-text {
+    font-size: 15;
+}
+
+.container .blue-bg {
+    background-color: blue;
+}

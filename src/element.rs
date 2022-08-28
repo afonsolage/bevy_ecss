@@ -46,6 +46,29 @@ impl Selector {
     }
 }
 
+impl std::fmt::Display for Selector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut result = String::new();
+
+        for element in &self.0 {
+            match element {
+                SelectorElement::Name(n) => {
+                    result.push('#');
+                    result.push_str(n);
+                }
+                SelectorElement::Component(c) => result.push_str(c),
+                SelectorElement::Class(c) => {
+                    result.push('.');
+                    result.push_str(c);
+                }
+                SelectorElement::Child => result.push(' '),
+            }
+        }
+
+        write!(f, "{}", result)
+    }
+}
+
 impl<'i> From<Vec<CowRcStr<'i>>> for Selector {
     fn from(input: Vec<CowRcStr<'i>>) -> Self {
         let mut elements = vec![];
@@ -106,7 +129,7 @@ pub enum Property {
     TextVerticalAlign(VerticalAlign),
     TextHorizontalAlign(HorizontalAlign),
     Font(String),
-    FontSize(Val),
+    FontSize(f32),
     FontColor([f32; 4]),
     Color([f32; 4]),
 }
