@@ -5,7 +5,6 @@ use bevy::{
     prelude::{Component, Deref, Name, ReflectComponent},
     reflect::Reflect,
 };
-use smallvec::SmallVec;
 
 use crate::StyleSheet;
 
@@ -15,22 +14,19 @@ pub trait MatchSelectorElement {
 
 #[derive(Debug, Reflect, Component, Default, Clone, Deref)]
 #[reflect(Component)]
-pub struct CssClass(SmallVec<[Cow<'static, str>; 4]>);
+pub struct Class(Cow<'static, str>);
 
-impl CssClass {
-    pub fn new<T>(classes: &[T]) -> Self
-    where
-        T: Into<Cow<'static, str>> + Clone,
-    {
-        Self(classes.into_iter().map(|t| t.clone().into()).collect())
+impl Class {
+    pub fn new(class: impl Into<Cow<'static, str>>) -> Self {
+        Self(class.into())
     }
 
     fn matches(&self, class: &str) -> bool {
-        self.0.iter().any(|c| c.as_ref() == class)
+        self.0.split_ascii_whitespace().any(|c| c == class)
     }
 }
 
-impl MatchSelectorElement for CssClass {
+impl MatchSelectorElement for Class {
     fn matches(&self, element: &str) -> bool {
         self.matches(element)
     }

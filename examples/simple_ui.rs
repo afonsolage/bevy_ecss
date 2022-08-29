@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_ecss::{ApplyStyleSheet, CssClass, EcssPlugin, StyleSheet};
+use bevy_ecss::{ApplyStyleSheet, Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
@@ -173,7 +173,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                                     ..default()
                                                 }),
                                             )
-                                            .insert(CssClass::new(&["big-text"]))
+                                            .insert(Class::new("big-text"))
                                             .insert(Name::new(format!("right-item-{}", i)));
                                     }
                                 });
@@ -223,7 +223,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..default()
                 })
                 .insert(Name::new("mid-red-last"))
-                .insert(CssClass::new(&["blue-bg", "container"]))
+                .insert(Class::new("blue-bg container"))
                 .with_children(|parent| {
                     parent
                         .spawn_bundle(NodeBundle {
@@ -267,7 +267,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                     color: Color::rgb(1.0, 0.5, 0.5).into(),
                                     ..default()
                                 })
-                                .insert(CssClass::new(&["blue-bg"]))
+                                .insert(Class::new("blue-bg"))
                                 .insert(Name::new("mid-red-top-but-one"));
                             parent
                                 .spawn_bundle(NodeBundle {
@@ -301,7 +301,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                     color: Color::rgba(1.0, 0.9, 0.9, 0.4).into(),
                                     ..default()
                                 })
-                                .insert(CssClass::new(&["blue-bg"]))
+                                .insert(Class::new("blue-bg"))
                                 .insert(Name::new("mid-red-alpha"));
                         });
                 });

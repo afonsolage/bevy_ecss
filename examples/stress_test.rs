@@ -1,5 +1,5 @@
 use bevy::{asset::AssetServerSettings, prelude::*};
-use bevy_ecss::{CssClass, EcssPlugin, StyleSheet};
+use bevy_ecss::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
@@ -40,7 +40,7 @@ fn setup(mut commands: Commands) {
                         },
                         ..Default::default()
                     })
-                    .insert(CssClass::new(&["red"]))
+                    .insert(Class::new("red"))
                     .with_children(|builder| {
                         for _ in 0..10 {
                             builder
@@ -50,7 +50,7 @@ fn setup(mut commands: Commands) {
                                     },
                                     ..Default::default()
                                 })
-                                .insert(CssClass::new(&["green"]))
+                                .insert(Class::new("green"))
                                 .with_children(|builder| {
                                     for _ in 0..10 {
                                         builder
@@ -60,14 +60,14 @@ fn setup(mut commands: Commands) {
                                                 },
                                                 ..Default::default()
                                             })
-                                            .insert(CssClass::new(&["blue"]))
+                                            .insert(Class::new("blue"))
                                             .with_children(|builder| {
                                                 for _ in 0..10 {
                                                     builder
                                                         .spawn_bundle(NodeBundle {
                                                             ..Default::default()
                                                         })
-                                                        .insert(CssClass::new(&["purple"]));
+                                                        .insert(Class::new("purple"));
                                                 }
                                             });
                                     }

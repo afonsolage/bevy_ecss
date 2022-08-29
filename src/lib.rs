@@ -13,7 +13,7 @@ use bevy::{
 };
 use component::StyleSheetLoader;
 
-pub use component::CssClass;
+pub use component::Class;
 pub use stylesheet::StyleSheet;
 
 #[derive(SystemLabel)]
@@ -40,7 +40,7 @@ impl EcssPlugin {
 
 impl Plugin for EcssPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.register_type::<CssClass>()
+        app.register_type::<Class>()
             .add_asset::<StyleSheet>()
             .add_event::<ApplyStyleSheet>()
             .init_asset_loader::<StyleSheetLoader>()

@@ -3,7 +3,9 @@
 }
 
 #left-border {
-    border: 5px;
+    margin: 0px 0px 0px 50px;
+    border: 0px;
+    padding: 5px;
     background-color: gray;
 }
 

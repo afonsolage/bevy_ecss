@@ -10,7 +10,7 @@ use bevy::{
 use smallvec::SmallVec;
 
 use crate::{
-    component::{CssClass, MatchSelectorElement},
+    component::{Class, MatchSelectorElement},
     property::Property,
     selector::{Selector, SelectorElement},
     ApplyStyleSheet, StyleSheet,
@@ -19,7 +19,7 @@ use crate::{
 #[derive(SystemParam)]
 pub(crate) struct CssQueryParam<'w, 's> {
     names: Query<'w, 's, (Entity, &'static Name)>,
-    classes: Query<'w, 's, (Entity, &'static CssClass)>,
+    classes: Query<'w, 's, (Entity, &'static Class)>,
     children: Query<'w, 's, &'static Children, With<Node>>,
     style: Query<'w, 's, &'static mut Style, With<Node>>,
     text: Query<'w, 's, &'static mut Text, With<Node>>,
