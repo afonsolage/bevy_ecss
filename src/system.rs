@@ -1,8 +1,8 @@
 use bevy::{
     ecs::system::SystemParam,
     prelude::{
-        debug, AssetEvent, AssetServer, Assets, Children, Commands, Component, Entity, EventReader,
-        EventWriter, Name, Query, Res, With,
+        debug, AssetEvent, AssetServer, Assets, Changed, Children, Commands, Component, Entity,
+        EventReader, Name, Query, Res, With,
     },
     text::Text,
     ui::{Node, Style, UiColor},
@@ -10,10 +10,10 @@ use bevy::{
 use smallvec::SmallVec;
 
 use crate::{
-    component::{Class, MatchSelectorElement},
+    component::{Class, MatchSelectorElement, StyleSheet},
     property::Property,
     selector::{Selector, SelectorElement},
-    ApplyStyleSheet, StyleSheet,
+    CssRules,
 };
 
 #[derive(SystemParam)]
@@ -25,14 +25,17 @@ pub(crate) struct CssQueryParam<'w, 's> {
     text: Query<'w, 's, &'static mut Text, With<Node>>,
 }
 
-pub(crate) fn apply_loaded_style_sheets(
-    mut assets_events: EventReader<AssetEvent<StyleSheet>>,
-    mut apply_writer: EventWriter<ApplyStyleSheet>,
+pub(crate) fn reload_style_sheets(
+    mut assets_events: EventReader<AssetEvent<CssRules>>,
+    mut q_sheets: Query<&mut StyleSheet>,
 ) {
     for evt in assets_events.iter() {
         match evt {
-            AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
-                apply_writer.send(handle.clone().into())
+            AssetEvent::Modified { handle } => {
+                q_sheets
+                    .iter_mut()
+                    .filter(|sheet| sheet.handle() == handle)
+                    .for_each(|mut sheet| sheet.refresh());
             }
             _ => (),
         }
@@ -40,16 +43,16 @@ pub(crate) fn apply_loaded_style_sheets(
 }
 
 pub(crate) fn apply_style_sheet(
-    mut assets_events: EventReader<ApplyStyleSheet>,
-    sheets: Res<Assets<StyleSheet>>,
+    sheets: Res<Assets<CssRules>>,
+    q_nodes: Query<(Entity, Option<&Children>, &StyleSheet), Changed<StyleSheet>>,
     mut css_query: CssQueryParam,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    for ApplyStyleSheet(handle) in assets_events.iter() {
-        if let Some(sheet) = sheets.get(handle) {
+    for (entity, children, sheet) in &q_nodes {
+        if let Some(sheet) = sheets.get(sheet.handle()) {
             for rule in sheet.iter() {
-                let entities = select_entities(&rule.0, &css_query);
+                let entities = select_entities(entity, children, &rule.0, &css_query);
 
                 apply_style_properties(&entities, &mut css_query.style, &rule.1);
                 apply_text_properties(&entities, &mut css_query.text, &rule.1, &asset_server);
@@ -59,14 +62,24 @@ pub(crate) fn apply_style_sheet(
     }
 }
 
-fn select_entities(selector: &Selector, css_query: &CssQueryParam) -> SmallVec<[Entity; 8]> {
+fn select_entities(
+    root: Entity,
+    children: Option<&Children>,
+    selector: &Selector,
+    css_query: &CssQueryParam,
+) -> SmallVec<[Entity; 8]> {
     let mut parent_tree = selector.get_parent_tree();
 
     if parent_tree.is_empty() {
         return SmallVec::new();
     }
 
-    let mut filter = None;
+    
+    let mut filter = children.map(|children| {
+        std::iter::once(root)
+            .chain(get_children_recursively(children, &css_query.children).into_iter())
+            .collect()
+    });
 
     loop {
         let node = parent_tree.remove(0);

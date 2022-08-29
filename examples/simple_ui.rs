@@ -1,25 +1,12 @@
 use bevy::prelude::*;
-use bevy_ecss::{ApplyStyleSheet, Class, EcssPlugin, StyleSheet};
+use bevy_ecss::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(EcssPlugin::new())
-        .add_startup_system(load_and_apply_stylesheet)
+        .add_plugin(EcssPlugin)
         .add_startup_system(setup)
         .run();
-}
-
-fn load_and_apply_stylesheet(
-    asset_server: Res<AssetServer>,
-    mut writer: EventWriter<ApplyStyleSheet>,
-) {
-    let stylesheet: Handle<StyleSheet> = asset_server.load("sheets/test.css");
-
-    // Since the Handle isn't saved anywhere, once the StyleSheet is applied, it'll be unloaded by AssetServer
-    // If you plan to reapply stylesheet, either by spawning new entities or switching scenes, consider storing Handle
-    // and reusing it whenever possible.
-    writer.send(stylesheet.into());
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -37,6 +24,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             color: Color::NONE.into(),
             ..default()
         })
+        .insert(StyleSheet::new(asset_server.load("sheets/simple_ui.css")))
         .insert(Name::new("ui-root"))
         .with_children(|parent| {
             // left vertical fill (border)

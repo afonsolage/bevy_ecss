@@ -1,16 +1,8 @@
 use std::borrow::Cow;
 
-use bevy::{
-    asset::{AssetLoader, LoadedAsset},
-    prelude::{Component, Deref, Name, ReflectComponent},
-    reflect::Reflect,
-};
+use bevy::prelude::{Component, Deref, Handle, Name, Reflect, ReflectComponent};
 
-use crate::StyleSheet;
-
-pub trait MatchSelectorElement {
-    fn matches(&self, element: &str) -> bool;
-}
+use crate::CssRules;
 
 #[derive(Debug, Reflect, Component, Default, Clone, Deref)]
 #[reflect(Component)]
@@ -26,6 +18,36 @@ impl Class {
     }
 }
 
+#[derive(Component, Debug, Reflect, Clone, Default)]
+#[reflect(Component)]
+pub struct StyleSheet {
+    sheet: Handle<CssRules>,
+}
+
+impl StyleSheet {
+    pub fn new(handle: Handle<CssRules>) -> Self {
+        Self { sheet: handle }
+    }
+
+    pub fn refresh(&mut self) {
+        // Just to trigger DerefMut
+    }
+
+    pub fn handle(&self) -> &Handle<CssRules> {
+        &self.sheet
+    }
+}
+
+impl PartialEq for StyleSheet {
+    fn eq(&self, other: &Self) -> bool {
+        self.sheet == other.sheet
+    }
+}
+
+pub trait MatchSelectorElement {
+    fn matches(&self, element: &str) -> bool;
+}
+
 impl MatchSelectorElement for Class {
     fn matches(&self, element: &str) -> bool {
         self.matches(element)
@@ -35,27 +57,5 @@ impl MatchSelectorElement for Class {
 impl MatchSelectorElement for Name {
     fn matches(&self, element: &str) -> bool {
         self.as_str() == element
-    }
-}
-
-#[derive(Default)]
-pub(crate) struct StyleSheetLoader;
-
-impl AssetLoader for StyleSheetLoader {
-    fn load<'a>(
-        &'a self,
-        bytes: &'a [u8],
-        load_context: &'a mut bevy::asset::LoadContext,
-    ) -> bevy::utils::BoxedFuture<'a, Result<(), bevy::asset::Error>> {
-        Box::pin(async move {
-            let content = std::str::from_utf8(bytes)?;
-            let stylesheet = StyleSheet::parse(content);
-            load_context.set_default_asset(LoadedAsset::new(stylesheet));
-            Ok(())
-        })
-    }
-
-    fn extensions(&self) -> &[&str] {
-        &["css"]
     }
 }

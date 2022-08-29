@@ -7,14 +7,14 @@ mod stylesheet;
 mod system;
 
 use bevy::{
-    prelude::{AddAsset, CoreStage, Deref, Handle, Plugin, SystemLabel, SystemSet},
+    asset::AssetServerSettings,
+    prelude::{AddAsset, CoreStage, Plugin, SystemLabel, SystemSet},
     ui::UiSystem,
-    utils::default,
 };
-use component::StyleSheetLoader;
+use stylesheet::StyleSheetLoader;
 
-pub use component::Class;
-pub use stylesheet::StyleSheet;
+pub use component::{Class, StyleSheet};
+pub use stylesheet::CssRules;
 
 #[derive(SystemLabel)]
 pub enum EcssSystem {
@@ -22,27 +22,13 @@ pub enum EcssSystem {
 }
 
 #[derive(Default)]
-pub struct EcssPlugin {
-    auto_apply_on_load: bool,
-}
-
-impl EcssPlugin {
-    pub fn new() -> Self {
-        default()
-    }
-
-    pub fn apply_on_load() -> Self {
-        Self {
-            auto_apply_on_load: true,
-        }
-    }
-}
+pub struct EcssPlugin;
 
 impl Plugin for EcssPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<Class>()
-            .add_asset::<StyleSheet>()
-            .add_event::<ApplyStyleSheet>()
+            .register_type::<StyleSheet>()
+            .add_asset::<CssRules>()
             .init_asset_loader::<StyleSheetLoader>()
             .add_system_set_to_stage(
                 CoreStage::PostUpdate,
@@ -52,23 +38,8 @@ impl Plugin for EcssPlugin {
                     .before(UiSystem::Flex),
             );
 
-        if self.auto_apply_on_load {
-            app.add_system(system::apply_loaded_style_sheets);
+        if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
+            app.add_system(system::reload_style_sheets);
         }
-    }
-}
-
-#[derive(Debug, Deref)]
-pub struct ApplyStyleSheet(Handle<StyleSheet>);
-
-impl ApplyStyleSheet {
-    pub fn new(handle: Handle<StyleSheet>) -> Self {
-        Self(handle)
-    }
-}
-
-impl From<Handle<StyleSheet>> for ApplyStyleSheet {
-    fn from(handle: Handle<StyleSheet>) -> Self {
-        Self::new(handle)
     }
 }
