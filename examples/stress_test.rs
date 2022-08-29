@@ -8,22 +8,12 @@ fn main() {
             ..default()
         })
         .add_plugins(DefaultPlugins)
-        // Whenever a StyleSheet is loaded, it'll be automatically applied.
-        // This also works for asset hot reloading
-        .add_plugin(EcssPlugin::apply_on_load())
-        .add_startup_system(load_stylesheet)
+        .add_plugin(EcssPlugin)
         .add_startup_system(setup)
         .run();
 }
 
-fn load_stylesheet(asset_server: Res<AssetServer>, mut commands: Commands) {
-    let stylesheet: Handle<StyleSheet> = asset_server.load("sheets/stress.css");
-
-    // The Handle needs to be stored somewhere to prevent AssetServer from unloading it
-    commands.insert_resource(stylesheet)
-}
-
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(Camera2dBundle::default());
 
     commands
@@ -31,6 +21,7 @@ fn setup(mut commands: Commands) {
             ..Default::default()
         })
         .insert(Name::new("root"))
+        .insert(StyleSheet::new(asset_server.load("sheets/stress.css")))
         .with_children(|builder| {
             for _ in 0..10 {
                 builder

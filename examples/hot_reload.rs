@@ -3,24 +3,15 @@ use bevy_ecss::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
+        // Whenever an StyleSheet is loaded, it'll be applied automatically
         .insert_resource(AssetServerSettings {
             watch_for_changes: true,
             ..default()
         })
         .add_plugins(DefaultPlugins)
-        // Whenever a StyleSheet is loaded, it'll be automatically applied.
-        // This also works for asset hot reloading
-        .add_plugin(EcssPlugin::apply_on_load())
-        .add_startup_system(load_stylesheet)
+        .add_plugin(EcssPlugin)
         .add_startup_system(setup)
         .run();
-}
-
-fn load_stylesheet(asset_server: Res<AssetServer>, mut commands: Commands) {
-    let stylesheet: Handle<StyleSheet> = asset_server.load("sheets/test.css");
-
-    // The Handle needs to be stored somewhere to prevent AssetServer from unloading it
-    commands.insert_resource(stylesheet)
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -39,6 +30,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Name::new("ui-root"))
+        .insert(StyleSheet::new(asset_server.load("sheets/hot_reload.css")))
         .with_children(|parent| {
             // left vertical fill (border)
             parent
