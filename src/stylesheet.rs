@@ -1,24 +1,65 @@
+use std::hash::{Hash, Hasher};
+
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
-    prelude::Deref,
     reflect::TypeUuid,
+    utils::{AHasher, HashMap},
 };
 use smallvec::SmallVec;
 
-use crate::{parser::StyleSheetParser, property::Property, selector::Selector};
+use crate::{parser::StyleSheetParser, property::PropertyValues, selector::Selector};
 
-#[derive(Debug, TypeUuid, Deref)]
+#[derive(Debug, TypeUuid)]
 #[uuid = "14b98dd6-5425-4692-a561-5e6ae9180554"]
-pub struct CssRules(SmallVec<[StyleRule; 8]>);
+pub struct CssRules {
+    hash: u64,
+    rules: SmallVec<[StyleRule; 8]>,
+}
 
 impl CssRules {
     pub fn parse(content: &str) -> Self {
-        Self(StyleSheetParser::parse(content))
+        let mut hasher = AHasher::default();
+        content.hash(&mut hasher);
+        let hash = hasher.finish();
+
+        Self {
+            hash,
+            rules: StyleSheetParser::parse(content),
+        }
+    }
+
+    pub fn get_properties(&self, selector: &Selector, name: &str) -> Option<&PropertyValues> {
+        self.rules
+            .iter()
+            .find(|&rule| &rule.selector == selector)
+            .map(|rule| rule.tokens.get(name).map(|prop| &*prop))
+            .flatten()
+    }
+
+    pub fn has_property(&self, name: &str) -> bool {
+        self.rules.iter().any(|rule| rule.has_property(name))
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &StyleRule> {
+        self.rules.iter()
+    }
+
+    pub fn hash(&self) -> u64 {
+        self.hash
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct StyleRule(pub Selector, pub SmallVec<[Property; 8]>);
+pub struct StyleRule {
+    pub selector: Selector,
+    pub tokens: HashMap<String, PropertyValues>,
+}
+
+impl StyleRule {
+    pub(crate) fn has_property(&self, name: &str) -> bool {
+        self.tokens.keys().any(|str| str == name)
+    }
+}
 
 #[derive(Default)]
 pub(crate) struct StyleSheetLoader;

@@ -1,389 +1,188 @@
+use std::any::Any;
+
 use bevy::{
-    text::{HorizontalAlign, VerticalAlign},
-    ui::{
-        AlignContent, AlignItems, AlignSelf, Direction, Display, FlexDirection, FlexWrap,
-        JustifyContent, Overflow, PositionType, UiRect, Val,
+    ecs::{
+        query::{Fetch, WorldQuery, WorldQueryGats},
+        schedule::ShouldRun,
     },
+    prelude::{
+        AssetServer, Assets, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res, With,
+    },
+    ui::{Display, Node, PositionType, Style},
+    utils::HashMap,
 };
 
-use cssparser::{ToCss, Token};
-use heck::ToKebabCase;
-use smallvec::{SmallVec, smallvec};
+use cssparser::Token;
+use smallvec::SmallVec;
 
-use crate::{colors, parser::EcssError};
-
-#[derive(Debug, Clone)]
-pub enum Property {
-    Display(Display),
-    PositionType(PositionType),
-    Direction(Direction),
-    FlexDirection(FlexDirection),
-    FlexWrap(FlexWrap),
-    AlignItems(AlignItems),
-    AlignSelf(AlignSelf),
-    AlignContent(AlignContent),
-    JustifyContent(JustifyContent),
-    PositionLeft(Val),
-    PositionRight(Val),
-    PositionTop(Val),
-    PositionBottom(Val),
-    Margin(UiRect<Val>),
-    Padding(UiRect<Val>),
-    Border(UiRect<Val>),
-    FlexGrow(f32),
-    FlexShrink(f32),
-    FlexBasis(Val),
-    SizeWidth(Val),
-    SizeHeight(Val),
-    SizeMinWidth(Val),
-    SizeMinHeight(Val),
-    SizeMaxWidth(Val),
-    SizeMaxHeight(Val),
-
-    AspectRatio(Option<f32>),
-    Overflow(Overflow),
-
-    TextVerticalAlign(VerticalAlign),
-    TextHorizontalAlign(HorizontalAlign),
-    Font(String),
-    FontSize(f32),
-    FontColor([f32; 4]),
-    Color([f32; 4]),
-}
-
-impl Property {
-    pub fn new(name: &str, values: PropertyValue) -> Result<Property, EcssError> {
-        let property = match name {
-            "display" => Property::Display(values.try_into()?),
-            // Using CSS Property name "position" instead of "position-type"
-            "position" => Property::PositionType(values.try_into()?),
-            "direction" => Property::Direction(values.try_into()?),
-            "flex-direction" => Property::FlexDirection(values.try_into()?),
-            "flex-wrap" => Property::FlexWrap(values.try_into()?),
-            "align-items" => Property::AlignItems(values.try_into()?),
-            "align-self" => Property::AlignSelf(values.try_into()?),
-            "align-content" => Property::AlignContent(values.try_into()?),
-            "justify-content" => Property::JustifyContent(values.try_into()?),
-
-            "left" => Property::PositionLeft(values.try_into()?),
-            "right" => Property::PositionRight(values.try_into()?),
-            "top" => Property::PositionTop(values.try_into()?),
-            "bottom" => Property::PositionBottom(values.try_into()?),
-
-            "width" => Property::SizeWidth(values.try_into()?),
-            "height" => Property::SizeHeight(values.try_into()?),
-            "min-width" => Property::SizeMinWidth(values.try_into()?),
-            "min-height" => Property::SizeMinHeight(values.try_into()?),
-            "max-width" => Property::SizeMaxWidth(values.try_into()?),
-            "max-height" => Property::SizeMaxHeight(values.try_into()?),
-            "margin" => Property::Margin(values.try_into()?),
-            "padding" => Property::Padding(values.try_into()?),
-            "border" => Property::Border(values.try_into()?),
-            "flex-grow" => Property::FlexGrow(values.try_into()?),
-            "flex-shrink" => Property::FlexShrink(values.try_into()?),
-            "flex-basis" => Property::FlexBasis(values.try_into()?),
-            "aspect-ratio" => Property::AspectRatio(values.try_into()?),
-            "overflow" => Property::Overflow(values.try_into()?),
-            "font" => Property::Font(values.try_into()?),
-            "font-size" => Property::FontSize(values.try_into()?),
-
-            // Using CSS Property name "color" instead of "font-color"
-            "color" => Property::FontColor(values.try_into()?),
-            // Using CSS Property name "background_color" instead of "color"
-            "background-color" => Property::Color(values.try_into()?),
-
-            // Using CSS Property name "vertical-align" instead of "text-vertical-align"
-            "vertical-align" => Property::TextVerticalAlign(values.try_into()?),
-            // Using CSS Property name "text-align" instead of "text-horizontal-align"
-            "text-align" => Property::TextHorizontalAlign(values.try_into()?),
-            _ => return Err(EcssError::UnsupportedProperty(name.to_string())),
-        };
-
-        Ok(property)
-    }
-}
+use crate::{parser::EcssError, selector::Selector, CssRules};
 
 #[derive(Debug, Clone)]
-pub struct PropertyValue<'i>(SmallVec<[Token<'i>; 8]>);
-
-impl<'i> PropertyValue<'i> {
-    fn only_ident(self) -> Self {
-        Self(
-            self.0
-                .into_iter()
-                .filter(|t| matches!(t, Token::Ident(_)))
-                .collect(),
-        )
-    }
-
-    fn only_dim_or_perc(self) -> Self {
-        Self(
-            self.0
-                .into_iter()
-                .filter(|t| matches!(t, Token::Dimension { .. } | Token::Percentage { .. }))
-                .collect(),
-        )
-    }
+pub enum PropertyToken {
+    Percentage(f32),
+    Dimension(f32),
+    Number(f32),
+    Identifier(String),
+    Hash(String),
+    String(String),
 }
 
-impl<'i> std::ops::Deref for PropertyValue<'i> {
-    type Target = SmallVec<[Token<'i>; 8]>;
+#[derive(Debug, Default, Clone, Deref)]
+pub struct PropertyValues(pub SmallVec<[PropertyToken; 8]>);
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+impl<'i> TryFrom<Token<'i>> for PropertyToken {
+    type Error = ();
 
-impl<'i> From<SmallVec<[Token<'i>; 8]>> for PropertyValue<'i> {
-    fn from(v: SmallVec<[Token<'i>; 8]>) -> Self {
-        Self(v)
-    }
-}
-
-fn token_to_val<'i>(token: Token<'i>) -> Val {
-    match token {
-        Token::Percentage { unit_value, .. } => Val::Percent(unit_value * 100.0),
-        Token::Dimension { value, .. } => Val::Px(value),
-        _ => Val::Undefined,
-    }
-}
-
-fn token_to_f32<'i>(token: Token<'i>) -> f32 {
-    match token {
-        Token::Percentage { unit_value, .. } => unit_value * 100.0,
-        Token::Dimension { value, .. } => value,
-        Token::Number { value, .. } => value,
-        _ => 0.0,
-    }
-}
-
-fn token_to_option<'i, T: TryFrom<PropertyValue<'i>>>(token: Token<'i>) -> Option<T> {
-    match token {
-        Token::Ident(_) => None,
-        _ => T::try_from(PropertyValue(smallvec![token])).ok(),
-    }
-}
-
-fn token_to_color<'i>(token: Token<'i>) -> [f32; 4] {
-    match token {
-        Token::IDHash(ref hash) | Token::Hash(ref hash) => {
-            if let Ok(color) = cssparser::Color::parse_hash(hash.as_bytes()) && let cssparser::Color::RGBA(rgba) = color {
-                [rgba.red_f32(), rgba.green_f32(), rgba.blue_f32(), rgba.alpha_f32()]
-            } else {
-                [1.0; 4]
-            }
+    fn try_from(token: Token<'i>) -> Result<Self, Self::Error> {
+        match token {
+            Token::Ident(val) => Ok(Self::Identifier(val.to_string())),
+            Token::Hash(val) => Ok(Self::Hash(val.to_string())),
+            Token::IDHash(val) => Ok(Self::Hash(val.to_string())),
+            Token::QuotedString(val) => Ok(Self::String(val.to_string())),
+            Token::Number { value, .. } => Ok(Self::Number(value)),
+            Token::Percentage { unit_value, .. } => Ok(Self::Percentage(unit_value)),
+            Token::Dimension { value, .. } => Ok(Self::Dimension(value)),
+            _ => Err(()),
         }
-        Token::Ident(name) => colors::parse_named_color(&name),
-        _ => [1.0; 4],
     }
 }
 
-impl<'i> TryFrom<PropertyValue<'i>> for UiRect<Val> {
-    type Error = EcssError;
+#[derive(Debug, Default, Deref, DerefMut)]
+pub struct CachedProperties<T>(HashMap<Selector, T>);
 
-    fn try_from(value: PropertyValue<'i>) -> Result<Self, Self::Error> {
-        let mut value = value.only_dim_or_perc();
-        if value.is_empty() {
-            return Err(EcssError::InvalidPropertyValue(format!("{:?}", value)));
-        }
+#[derive(Debug, Default, Deref, DerefMut)]
+pub struct PropertyMeta<T: Property>(HashMap<u64, CachedProperties<T::Cache>>);
 
-        let mut result = UiRect::all(token_to_val(value.0.remove(0)));
-
-        if value.is_empty() == false {
-            result.right = token_to_val(value.0.remove(0));
-        }
-
-        if value.is_empty() == false {
-            result.bottom = token_to_val(value.0.remove(0));
-        }
-
-        if value.is_empty() == false {
-            result.left = token_to_val(value.0.remove(0));
-        }
-
-        Ok(result)
+impl<T: Property> PropertyMeta<T> {
+    fn get_or_parse(&mut self, rules: &CssRules, selector: Selector) -> &T::Cache {
+        self.entry(rules.hash())
+            .or_insert(CachedProperties(Default::default()))
+            .entry(selector)
+            .or_insert_with_key(|selector| {
+                rules
+                    .get_properties(selector, T::name())
+                    .map(|values| {
+                        T::parse(&*values)
+                            .expect("This function should be called only when there is a property")
+                    })
+                    .unwrap()
+            })
     }
 }
 
-impl<'i> TryFrom<PropertyValue<'i>> for Val {
-    type Error = EcssError;
+#[derive(Debug, Clone, Default, Deref, DerefMut)]
+pub struct SelectedEntities(HashMap<Selector, SmallVec<[Entity; 8]>>);
 
-    fn try_from(value: PropertyValue<'i>) -> Result<Self, Self::Error> {
-        let mut value = value.only_dim_or_perc();
-        if value.is_empty() {
-            return Err(EcssError::InvalidPropertyValue(format!("{:?}", value)));
-        }
+#[derive(Debug, Clone, Default, Deref, DerefMut)]
+pub struct StyleSheetState(HashMap<Handle<CssRules>, SelectedEntities>);
 
-        Ok(token_to_val(value.0.remove(0)))
-    }
-}
+pub trait Property: Default + Sized + Send + Sync + 'static {
+    type Cache: Default + Any + Send + Sync;
+    type Components: WorldQuery;
+    type Filters: WorldQuery;
 
-impl<'i> TryFrom<PropertyValue<'i>> for f32 {
-    type Error = EcssError;
+    fn name() -> &'static str;
+    fn parse<'a>(token: &[PropertyToken]) -> Result<Self::Cache, EcssError>;
 
-    fn try_from(value: PropertyValue<'i>) -> Result<Self, Self::Error> {
-        match value
-            .0
-            .into_iter()
-            .filter(|t| matches!(t, Token::Number { .. }))
-            .next()
+    fn apply<'w>(
+        cache: &Self::Cache,
+        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+        asset_server: &AssetServer,
+        commands: &mut Commands,
+    );
+
+    fn have_property(
+        apply_sheets: Res<StyleSheetState>,
+        assets: Res<Assets<CssRules>>,
+    ) -> ShouldRun {
+        if apply_sheets
+            .iter()
+            .filter_map(|(handle, _)| assets.get(handle))
+            .any(|rules| rules.has_property(Self::name()))
         {
-            Some(t) => Ok(token_to_f32(t)),
-            None => Err(EcssError::InvalidPropertyValue("number".to_string())),
+            ShouldRun::Yes
+        } else {
+            ShouldRun::No
         }
     }
-}
 
-impl<'i> TryFrom<PropertyValue<'i>> for String {
-    type Error = EcssError;
-
-    fn try_from(value: PropertyValue<'i>) -> Result<Self, Self::Error> {
-        match value
-            .0
-            .into_iter()
-            .filter(|t| matches!(t, Token::QuotedString(_)))
-            .next()
-        {
-            Some(t) => Ok(t.to_css_string()),
-            None => Err(EcssError::InvalidPropertyValue("string".to_string())),
-        }
-    }
-}
-
-impl<'i> TryFrom<PropertyValue<'i>> for Option<f32> {
-    type Error = EcssError;
-
-    fn try_from(value: PropertyValue<'i>) -> Result<Self, Self::Error> {
-        match value
-            .0
-            .into_iter()
-            .filter(|t| matches!(t, Token::Number { .. } | Token::Ident(_)))
-            .next()
-        {
-            Some(t) => Ok(token_to_option(t)),
-            None => Err(EcssError::InvalidPropertyValue("string".to_string())),
-        }
-    }
-}
-
-impl<'i> TryFrom<PropertyValue<'i>> for [f32; 4] {
-    type Error = EcssError;
-
-    fn try_from(value: PropertyValue<'i>) -> Result<Self, Self::Error> {
-        match value
-            .0
-            .into_iter()
-            .filter(|t| matches!(t, Token::Ident(_) | Token::Hash(_) | Token::IDHash(_)))
-            .next()
-        {
-            Some(token) => Ok(token_to_color(token)),
-            None => Err(EcssError::InvalidPropertyValue("color".to_string())),
-        }
-    }
-}
-
-macro_rules! try_from_enum {
-    ($t:ty, $($name:expr => $variant:expr),+$(,)?) => {
-        impl<'i> TryFrom<PropertyValue<'i>> for $t {
-            type Error = EcssError;
-
-            fn try_from(value: PropertyValue<'i>) -> Result<Self, EcssError> {
-                use $t::*;
-
-                let value = value.only_ident();
-                if value.is_empty() == false && let Token::Ident(ref v) = value[0] {
-                    match v.as_ref() {
-                        $($name => return Ok($variant)),+,
-                        _ => (),
+    fn apply_system(
+        mut local: Local<PropertyMeta<Self>>,
+        assets: Res<Assets<CssRules>>,
+        apply_sheets: Res<StyleSheetState>,
+        mut q_nodes: Query<Self::Components, Self::Filters>,
+        asset_server: Res<AssetServer>,
+        mut commands: Commands,
+    ) {
+        for (handle, selected) in apply_sheets.iter() {
+            if let Some(rules) = assets.get(handle) {
+                for (selector, entities) in selected.iter() {
+                    let cached = local.get_or_parse(rules, selector.clone());
+                    for entity in entities {
+                        if let Ok(components) = q_nodes.get_mut(*entity) {
+                            Self::apply(cached, components, &asset_server, &mut commands);
+                        }
                     }
                 }
-
-                Err(EcssError::InvalidPropertyValue(format!(
-                    "{}",
-                    stringify!($t).to_kebab_case()
-                )))
             }
         }
-    };
+    }
 }
 
-try_from_enum!(Display,
-    "flex" => Flex,
-    "none" => None,
-);
+#[derive(Default)]
+pub(crate) struct DisplayProperty;
 
-try_from_enum!(PositionType,
-    "absolute" => Absolute,
-    "relative" => Relative,
-);
+impl Property for DisplayProperty {
+    type Cache = Display;
 
-try_from_enum!(Direction,
-    "inherit" => Inherit,
-    "left-to-right" => LeftToRight,
-    "right-to-left" => RightToLeft,
-);
+    type Components = &'static mut Style;
 
-try_from_enum!(FlexDirection,
-    "row" => Row,
-    "column" => Column,
-    "row-reverse" => RowReverse,
-    "column-reverse" => ColumnReverse,
-);
+    type Filters = With<Node>;
 
-try_from_enum!(FlexWrap,
-    "no-wrap" => NoWrap,
-    "wrap" => Wrap,
-    "wrap-reverse" => WrapReverse,
-);
+    fn name() -> &'static str {
+        "display"
+    }
 
-try_from_enum!(AlignItems,
-    "flex-start" => FlexStart,
-    "flex-end" => FlexEnd,
-    "center" => Center,
-    "baseline" => Baseline,
-    "stretch" => Stretch,
-);
+    fn parse<'a>(_token: &[PropertyToken]) -> Result<Self::Cache, EcssError> {
+        Ok(Display::Flex)
+    }
 
-try_from_enum!(AlignSelf,
-    "auto" => Auto,
-    "flex-start" => FlexStart,
-    "flex-end" => FlexEnd,
-    "center" => Center,
-    "baseline" => Baseline,
-    "stretch" => Stretch,
-);
+    fn apply<'w>(
+        cache: &Self::Cache,
+        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+        _asset_server: &AssetServer,
+        _commands: &mut Commands,
+    ) {
+        let mut style = components;
+        style.display = *cache;
+    }
+}
 
-try_from_enum!(AlignContent,
-    "flex-start" => FlexStart,
-    "flex-end" => FlexEnd,
-    "center" => Center,
-    "stretch" => Stretch,
-    "space-between" => SpaceBetween,
-    "space-around" => SpaceAround,
-);
+#[derive(Default)]
+pub(crate) struct PositionTypeProperty;
 
-try_from_enum!(JustifyContent,
-    "flex-start" => FlexStart,
-    "flex-end" => FlexEnd,
-    "center" => Center,
-    "space-between" => SpaceBetween,
-    "space-around" => SpaceAround,
-    "space-evenly" => SpaceEvenly,
-);
+impl Property for PositionTypeProperty {
+    type Cache = PositionType;
 
-try_from_enum!(Overflow,
-    "visible" => Visible,
-    "hidden" => Hidden,
-);
+    type Components = &'static mut Style;
 
-try_from_enum!(VerticalAlign,
-    "top" => Top,
-    "center" => Center,
-    "bottom" => Bottom,
-);
+    type Filters = With<Node>;
 
-try_from_enum!(HorizontalAlign,
-    "left" => Left,
-    "center" => Center,
-    "right" => Right,
-);
+    fn name() -> &'static str {
+        "position-type"
+    }
+
+    fn parse<'a>(_token: &[PropertyToken]) -> Result<Self::Cache, EcssError> {
+        Ok(PositionType::Relative)
+    }
+
+    fn apply<'w>(
+        cache: &Self::Cache,
+        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+        _asset_server: &AssetServer,
+        _commands: &mut Commands,
+    ) {
+        let mut style = components;
+        style.position_type = *cache;
+    }
+}

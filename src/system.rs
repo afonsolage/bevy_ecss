@@ -1,17 +1,16 @@
 use bevy::{
     ecs::system::SystemParam,
     prelude::{
-        debug, AssetEvent, AssetServer, Assets, Changed, Children, Commands, Component, Entity,
-        EventReader, Name, Query, Res, With,
+        debug, AssetEvent, Assets, Changed, Children, Component, Entity, EventReader, Name, Query,
+        Res, ResMut, With, DetectChanges,
     },
-    text::Text,
-    ui::{Node, Style, UiColor},
+    ui::Node,
 };
 use smallvec::SmallVec;
 
 use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
-    property::Property,
+    property::StyleSheetState,
     selector::{Selector, SelectorElement},
     CssRules,
 };
@@ -21,11 +20,10 @@ pub(crate) struct CssQueryParam<'w, 's> {
     names: Query<'w, 's, (Entity, &'static Name)>,
     classes: Query<'w, 's, (Entity, &'static Class)>,
     children: Query<'w, 's, &'static Children, With<Node>>,
-    style: Query<'w, 's, &'static mut Style, With<Node>>,
-    text: Query<'w, 's, &'static mut Text, With<Node>>,
 }
 
-pub(crate) fn reload_style_sheets(
+/// Auto reapply style sheets when hot reloading is enabled
+pub(crate) fn hot_reload_style_sheets(
     mut assets_events: EventReader<AssetEvent<CssRules>>,
     mut q_sheets: Query<&mut StyleSheet>,
 ) {
@@ -42,26 +40,37 @@ pub(crate) fn reload_style_sheets(
     }
 }
 
-pub(crate) fn apply_style_sheet(
+/// Clear temporary state
+pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
+    if sheet_rule.is_changed() {
+        sheet_rule.clear();
+    }
+}
+
+/// Prepare state to be used by [`Property`](crate::Property) systems
+pub(crate) fn prepare_state(
+    mut sheet_rule: ResMut<StyleSheetState>,
     sheets: Res<Assets<CssRules>>,
     q_nodes: Query<(Entity, Option<&Children>, &StyleSheet), Changed<StyleSheet>>,
-    mut css_query: CssQueryParam,
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
+    css_query: CssQueryParam,
 ) {
-    for (entity, children, sheet) in &q_nodes {
-        if let Some(sheet) = sheets.get(sheet.handle()) {
+    for (entity, children, sheet_handle) in &q_nodes {
+        if let Some(sheet) = sheets.get(sheet_handle.handle()) {
             for rule in sheet.iter() {
-                let entities = select_entities(entity, children, &rule.0, &css_query);
+                let entities = select_entities(entity, children, &rule.selector, &css_query);
 
-                apply_style_properties(&entities, &mut css_query.style, &rule.1);
-                apply_text_properties(&entities, &mut css_query.text, &rule.1, &asset_server);
-                apply_color_properties(&entities, &rule.1, &mut commands);
+                sheet_rule
+                    .entry(sheet_handle.handle().clone())
+                    .or_default()
+                    .insert(rule.selector.clone(), entities);
             }
         }
     }
 }
 
+/// Select all entities using the given [`Selector`](crate::Selector).
+///
+/// If no [`Children`] is supplied, then the selector is applied only on root entity.
 fn select_entities(
     root: Entity,
     children: Option<&Children>,
@@ -74,14 +83,16 @@ fn select_entities(
         return SmallVec::new();
     }
 
-    
     let mut filter = children.map(|children| {
+        // Include root, since stylesheet may be applied on root too.
         std::iter::once(root)
             .chain(get_children_recursively(children, &css_query.children).into_iter())
             .collect()
     });
 
     loop {
+        // Rework this to use a index to avoid recreating parent_tree every time the systems runs.
+        // This is has little to no impact on performance, since this system doesn't runs often.
         let node = parent_tree.remove(0);
 
         let entities = select_entities_node(node, css_query, filter.clone());
@@ -160,93 +171,4 @@ fn get_children_recursively(
         })
         .flatten()
         .collect()
-}
-
-fn apply_style_properties(
-    entities: &SmallVec<[Entity; 8]>,
-    q_styles: &mut Query<&mut Style, With<Node>>,
-    properties: &[Property],
-) {
-    for entity in entities {
-        if let Ok(mut style) = q_styles.get_mut(*entity) {
-            for property in properties {
-                match property {
-                    Property::Display(val) => style.display = val.clone(),
-                    Property::PositionType(val) => style.position_type = val.clone(),
-                    Property::Direction(val) => style.direction = val.clone(),
-                    Property::FlexDirection(val) => style.flex_direction = val.clone(),
-                    Property::FlexWrap(val) => style.flex_wrap = val.clone(),
-                    Property::AlignItems(val) => style.align_items = val.clone(),
-                    Property::AlignSelf(val) => style.align_self = val.clone(),
-                    Property::AlignContent(val) => style.align_content = val.clone(),
-                    Property::JustifyContent(val) => style.justify_content = val.clone(),
-                    Property::PositionLeft(val) => style.position.left = val.clone(),
-                    Property::PositionRight(val) => style.position.right = val.clone(),
-                    Property::PositionTop(val) => style.position.top = val.clone(),
-                    Property::PositionBottom(val) => style.position.bottom = val.clone(),
-                    Property::Margin(val) => style.margin = val.clone(),
-                    Property::Padding(val) => style.padding = val.clone(),
-                    Property::Border(val) => style.border = val.clone(),
-                    Property::FlexGrow(val) => style.flex_grow = val.clone(),
-                    Property::FlexShrink(val) => style.flex_shrink = val.clone(),
-                    Property::FlexBasis(val) => style.flex_basis = val.clone(),
-                    Property::SizeWidth(val) => style.size.width = val.clone(),
-                    Property::SizeHeight(val) => style.size.height = val.clone(),
-                    Property::SizeMinWidth(val) => style.min_size.width = val.clone(),
-                    Property::SizeMinHeight(val) => style.min_size.height = val.clone(),
-                    Property::SizeMaxWidth(val) => style.max_size.width = val.clone(),
-                    Property::SizeMaxHeight(val) => style.max_size.height = val.clone(),
-                    Property::AspectRatio(val) => style.aspect_ratio = val.clone(),
-                    Property::Overflow(val) => style.overflow = val.clone(),
-                    _ => (),
-                }
-            }
-        }
-    }
-}
-
-fn apply_text_properties(
-    entities: &SmallVec<[Entity; 8]>,
-    q_texts: &mut Query<&mut Text, With<Node>>,
-    properties: &[Property],
-    asset_server: &Res<AssetServer>,
-) {
-    for entity in entities {
-        if let Ok(mut text) = q_texts.get_mut(*entity) {
-            for property in properties {
-                match property {
-                    Property::TextVerticalAlign(val) => text.alignment.vertical = val.clone(),
-                    Property::TextHorizontalAlign(val) => text.alignment.horizontal = val.clone(),
-                    Property::Font(val) => text
-                        .sections
-                        .iter_mut()
-                        .for_each(|s| s.style.font = asset_server.load(val)),
-                    Property::FontSize(val) => text
-                        .sections
-                        .iter_mut()
-                        .for_each(|s| s.style.font_size = val.clone()),
-                    Property::FontColor(val) => text
-                        .sections
-                        .iter_mut()
-                        .for_each(|s| s.style.color = (*val).into()),
-                    _ => (),
-                }
-            }
-        }
-    }
-}
-
-fn apply_color_properties(
-    entities: &SmallVec<[Entity; 8]>,
-    properties: &[Property],
-    commands: &mut Commands,
-) {
-    for entity in entities {
-        for property in properties {
-            match property {
-                Property::Color(color) => commands.entity(*entity).insert(UiColor((*color).into())),
-                _ => continue,
-            };
-        }
-    }
 }
