@@ -2,7 +2,7 @@ use bevy::{
     ecs::system::SystemParam,
     prelude::{
         debug, AssetEvent, Assets, Changed, Children, Component, DetectChanges, Entity,
-        EventReader, Name, Query, Res, ResMut, With, warn,
+        EventReader, Name, Query, Res, ResMut, With,
     },
     ui::Node,
 };
@@ -43,6 +43,7 @@ pub(crate) fn hot_reload_style_sheets(
 /// Clear temporary state
 pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
     if sheet_rule.is_changed() {
+        debug!("Finished applying style sheet.");
         sheet_rule.clear();
     }
 }
@@ -56,8 +57,16 @@ pub(crate) fn prepare_state(
 ) {
     for (entity, children, sheet_handle) in &q_nodes {
         if let Some(sheet) = sheets.get(sheet_handle.handle()) {
+            debug!("Applying style {}", sheet.path());
+
             for rule in sheet.iter() {
                 let entities = select_entities(entity, children, &rule.selector, &css_query);
+
+                debug!(
+                    "Applying rule ({}) on {} entities",
+                    rule.selector.to_string(),
+                    entities.len()
+                );
 
                 sheet_rule
                     .entry(sheet_handle.handle().clone())

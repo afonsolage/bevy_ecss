@@ -1,7 +1,4 @@
-use bevy::{
-    ecs::query::{Fetch, WorldQueryGats, QueryItem},
-    prelude::*,
-};
+use bevy::{ecs::query::QueryItem, prelude::*};
 
 use crate::parser::EcssError;
 

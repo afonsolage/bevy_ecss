@@ -7,8 +7,7 @@ mod system;
 
 use bevy::{
     asset::AssetServerSettings,
-    prelude::{AddAsset, CoreStage, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
-    ui::UiSystem,
+    prelude::{AddAsset, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
 };
 use property::{Property, StyleSheetState};
 use stylesheet::StyleSheetLoader;
@@ -28,13 +27,11 @@ impl RegisterProperty for bevy::prelude::App {
     where
         T: Property + 'static,
     {
-        self.add_system_to_stage(
-            CoreStage::PostUpdate,
+        self.add_system(
             T::apply_system
-                .with_run_criteria(T::have_property)
                 .label(EcssSystem::Apply)
-                .after(EcssSystem::Prepare)
-                .before(EcssSystem::Cleanup),
+                .before(EcssSystem::Cleanup)
+                .after(EcssSystem::Prepare), // .with_run_criteria(T::have_property)
         );
     }
 }
@@ -56,18 +53,17 @@ impl Plugin for EcssPlugin {
             .add_asset::<CssRules>()
             .init_resource::<StyleSheetState>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system_to_stage(
-                CoreStage::PostUpdate,
-                system::prepare_state
-                    .label(EcssSystem::Prepare)
-                    .before(EcssSystem::Apply),
-            )
-            .add_system_to_stage(
-                CoreStage::PostUpdate,
+            .add_system(
                 system::clear_state
                     .label(EcssSystem::Cleanup)
                     .after(EcssSystem::Apply)
-                    .before(UiSystem::Flex),
+                    .after(EcssSystem::Prepare),
+            )
+            .add_system(
+                system::prepare_state
+                    .label(EcssSystem::Prepare)
+                    .before(EcssSystem::Apply)
+                    .before(EcssSystem::Cleanup),
             );
 
         register_properties(app);

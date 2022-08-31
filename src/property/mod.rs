@@ -1,15 +1,16 @@
-use std::{any::Any};
+use std::any::Any;
 
 use bevy::{
     ecs::{
-        query::{Fetch, WorldQuery, WorldQueryGats, QueryItem},
+        query::{QueryItem, WorldQuery},
         schedule::ShouldRun,
     },
     prelude::{
-        AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res, error,
+        debug, error, trace, AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle,
+        Local, Query, Res,
     },
     ui::{UiRect, Val},
-    utils::{HashMap},
+    utils::HashMap,
 };
 
 use cssparser::Token;
@@ -167,7 +168,7 @@ pub enum CacheState<T> {
     #[default]
     None,
     Ok(T),
-    Error
+    Error,
 }
 
 #[derive(Debug, Default, Deref, DerefMut)]
@@ -177,24 +178,35 @@ pub struct CachedProperties<T>(HashMap<Selector, CacheState<T>>);
 pub struct PropertyMeta<T: Property>(HashMap<u64, CachedProperties<T::Cache>>);
 
 impl<T: Property> PropertyMeta<T> {
+    fn get_cached_properties(&mut self, hash: u64) -> &mut CachedProperties<T::Cache> {
+        if self.contains_key(&hash) {
+            self.get_mut(&hash).unwrap()
+        } else {
+            self.insert(hash, Default::default());
+            self.get_cached_properties(hash)
+        }
+    }
+
     fn get_or_parse(&mut self, rules: &CssRules, selector: Selector) -> &CacheState<T::Cache> {
-        self.entry(rules.hash())
-            .or_insert(CachedProperties(Default::default()))
-            .entry(selector)
-            .or_insert_with_key(|selector| {
-                rules
-                    .get_properties(selector, T::name())
-                    .map(|values| {
-                        match T::parse(values) {
-                            Ok(cache) => CacheState::Ok(cache),
-                            Err(err) => {
-                                error!("Failed to parse property {}. Error: {}", T::name(), err);
-                                CacheState::Error
-                            },
-                        }
-                    })
-                    .unwrap()
-            })
+        let cached_properties = self.get_cached_properties(rules.hash());
+
+        if cached_properties.contains_key(&selector) {
+            cached_properties.get(&selector).unwrap()
+        } else {
+            let new_cache = rules
+                .get_properties(&selector, T::name())
+                .map(|values| match T::parse(values) {
+                    Ok(cache) => CacheState::Ok(cache),
+                    Err(err) => {
+                        error!("Failed to parse property {}. Error: {}", T::name(), err);
+                        CacheState::Error
+                    }
+                })
+                .unwrap_or(CacheState::None);
+
+            cached_properties.insert(selector.clone(), new_cache);
+            cached_properties.get(&selector).unwrap()
+        }
     }
 }
 
@@ -223,6 +235,10 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         apply_sheets: Res<StyleSheetState>,
         assets: Res<Assets<CssRules>>,
     ) -> ShouldRun {
+        if apply_sheets.is_empty() {
+            return ShouldRun::No;
+        }
+
         if apply_sheets
             .iter()
             .filter_map(|(handle, _)| assets.get(handle))
@@ -230,6 +246,12 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         {
             ShouldRun::Yes
         } else {
+            // if apply_sheets.len() > 0{
+            debug!(
+                "Skipping property {} since it wasn't found on sheet",
+                Self::name()
+            );
+            // }
             ShouldRun::No
         }
     }
@@ -244,6 +266,12 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     ) {
         for (handle, selected) in apply_sheets.iter() {
             if let Some(rules) = assets.get(handle) {
+                trace!(
+                    "Applying property {} from sheet {}",
+                    Self::name(),
+                    rules.path()
+                );
+
                 for (selector, entities) in selected.iter() {
                     if let CacheState::Ok(cached) = local.get_or_parse(rules, selector.clone()) {
                         for entity in entities {

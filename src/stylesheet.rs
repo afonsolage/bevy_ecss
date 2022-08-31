@@ -12,17 +12,19 @@ use crate::{parser::StyleSheetParser, property::PropertyValues, selector::Select
 #[derive(Debug, TypeUuid)]
 #[uuid = "14b98dd6-5425-4692-a561-5e6ae9180554"]
 pub struct CssRules {
+    path: String,
     hash: u64,
     rules: SmallVec<[StyleRule; 8]>,
 }
 
 impl CssRules {
-    pub fn parse(content: &str) -> Self {
+    pub fn parse(path: &str, content: &str) -> Self {
         let mut hasher = AHasher::default();
         content.hash(&mut hasher);
         let hash = hasher.finish();
 
         Self {
+            path: path.to_string(),
             hash,
             rules: StyleSheetParser::parse(content),
         }
@@ -46,6 +48,10 @@ impl CssRules {
 
     pub fn hash(&self) -> u64 {
         self.hash
+    }
+
+    pub fn path(&self) -> &str {
+        &self.path
     }
 }
 
@@ -72,7 +78,8 @@ impl AssetLoader for StyleSheetLoader {
     ) -> bevy::utils::BoxedFuture<'a, Result<(), bevy::asset::Error>> {
         Box::pin(async move {
             let content = std::str::from_utf8(bytes)?;
-            let stylesheet = CssRules::parse(content);
+            let stylesheet =
+                CssRules::parse(load_context.path().to_str().unwrap_or_default(), content);
             load_context.set_default_asset(LoadedAsset::new(stylesheet));
             Ok(())
         })

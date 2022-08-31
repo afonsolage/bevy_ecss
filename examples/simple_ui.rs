@@ -1,8 +1,9 @@
-use bevy::prelude::*;
+use bevy::{ecs::schedule::ReportExecutionOrderAmbiguities, prelude::*};
 use bevy_ecss::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
+        .insert_resource(ReportExecutionOrderAmbiguities)
         .add_plugins(DefaultPlugins)
         .add_plugin(EcssPlugin)
         .add_startup_system(setup)
