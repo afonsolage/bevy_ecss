@@ -53,7 +53,7 @@ impl PropertyValues {
             match &self.0[0] {
                 PropertyToken::Identifier(name) => colors::parse_named_color(name.as_str()),
                 PropertyToken::Hash(hash) => {
-                    if let Ok(color) = cssparser::Color::parse_hash(hash.as_bytes()) 
+                    if let Ok(color) = cssparser::Color::parse_hash(hash.as_bytes())
                         && let cssparser::Color::RGBA(cssparser::RGBA {
                             red,
                             green,
@@ -178,23 +178,15 @@ pub struct CachedProperties<T>(HashMap<Selector, CacheState<T>>);
 pub struct PropertyMeta<T: Property>(HashMap<u64, CachedProperties<T::Cache>>);
 
 impl<T: Property> PropertyMeta<T> {
-    fn get_cached_properties(&mut self, hash: u64) -> &mut CachedProperties<T::Cache> {
-        if self.contains_key(&hash) {
-            self.get_mut(&hash).unwrap()
-        } else {
-            self.insert(hash, Default::default());
-            self.get_cached_properties(hash)
-        }
-    }
+    fn get_or_parse(&mut self, rules: &CssRules, selector: &Selector) -> &CacheState<T::Cache> {
+        let cached_properties = self.entry(rules.hash()).or_default();
 
-    fn get_or_parse(&mut self, rules: &CssRules, selector: Selector) -> &CacheState<T::Cache> {
-        let cached_properties = self.get_cached_properties(rules.hash());
-
-        if cached_properties.contains_key(&selector) {
-            cached_properties.get(&selector).unwrap()
+        // Avoid using HashMap::entry since it requires ownership of key
+        if cached_properties.contains_key(selector) {
+            cached_properties.get(selector).unwrap()
         } else {
             let new_cache = rules
-                .get_properties(&selector, T::name())
+                .get_properties(selector, T::name())
                 .map(|values| match T::parse(values) {
                     Ok(cache) => CacheState::Ok(cache),
                     Err(err) => {
@@ -205,7 +197,7 @@ impl<T: Property> PropertyMeta<T> {
                 .unwrap_or(CacheState::None);
 
             cached_properties.insert(selector.clone(), new_cache);
-            cached_properties.get(&selector).unwrap()
+            cached_properties.get(selector).unwrap()
         }
     }
 }
@@ -246,12 +238,12 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         {
             ShouldRun::Yes
         } else {
-            // if apply_sheets.len() > 0{
-            debug!(
-                "Skipping property {} since it wasn't found on sheet",
-                Self::name()
-            );
-            // }
+            if apply_sheets.len() > 0 {
+                debug!(
+                    "Skipping property {} since it wasn't found on sheet",
+                    Self::name()
+                );
+            }
             ShouldRun::No
         }
     }
@@ -273,7 +265,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
                 );
 
                 for (selector, entities) in selected.iter() {
-                    if let CacheState::Ok(cached) = local.get_or_parse(rules, selector.clone()) {
+                    if let CacheState::Ok(cached) = local.get_or_parse(rules, selector) {
                         for entity in entities {
                             if let Ok(components) = q_nodes.get_mut(*entity) {
                                 Self::apply(cached, components, &asset_server, &mut commands);
