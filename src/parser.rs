@@ -1,38 +1,16 @@
-use std::{error::Error, fmt::Display};
-
 use bevy::prelude::error;
 use cssparser::{
     AtRuleParser, DeclarationListParser, DeclarationParser, ParseError, Parser, ParserInput,
     QualifiedRuleParser, RuleListParser, ToCss, Token,
 };
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 
 use crate::{
-    property::Property,
+    property::PropertyValues,
     selector::{Selector, SelectorElement},
     stylesheet::StyleRule,
+    EcssError,
 };
-
-#[derive(Debug)]
-pub enum EcssError {
-    UnsupportedSelector,
-    UnsupportedProperty(String),
-    InvalidPropertyValue(String),
-}
-
-impl Error for EcssError {}
-
-impl Display for EcssError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            EcssError::UnsupportedSelector => {
-                write!(f, "Unsupported selector")
-            }
-            EcssError::UnsupportedProperty(p) => write!(f, "Unsupported property: {}", p),
-            EcssError::InvalidPropertyValue(p) => write!(f, "Invalid property value: {}", p),
-        }
-    }
-}
 
 pub(crate) struct StyleSheetParser;
 
@@ -100,23 +78,28 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
         _start: &cssparser::ParserState,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
-        let mut properties = SmallVec::new();
+        let mut rule = StyleRule {
+            selector: prelude,
+            tokens: Default::default(),
+        };
 
         for property in DeclarationListParser::new(input, PropertyParser) {
             match property {
-                Ok(property) => properties.push(property),
+                Ok((name, property)) => {
+                    rule.tokens.insert(name, property);
+                }
                 Err((err, a)) => println!("Failed: {:?} ({})", err, a),
             }
         }
 
-        Ok(StyleRule(prelude, properties))
+        Ok(rule)
     }
 }
 
 fn parse_selector<'i, 'tt>(
     parser: &mut Parser<'i, 'tt>,
 ) -> Result<Selector, ParseError<'i, EcssError>> {
-    let mut values = vec![];
+    let mut elements = smallvec![];
 
     let mut next_is_class = false;
 
@@ -126,13 +109,13 @@ fn parse_selector<'i, 'tt>(
             Ident(v) => {
                 if next_is_class {
                     next_is_class = false;
-                    values.push(SelectorElement::Class(v.to_string()));
+                    elements.push(SelectorElement::Class(v.to_string()));
                 } else {
-                    values.push(SelectorElement::Component(v.to_string()));
+                    elements.push(SelectorElement::Component(v.to_string()));
                 }
             }
-            IDHash(v) => values.push(SelectorElement::Name(v.to_string())),
-            WhiteSpace(_) => values.push(SelectorElement::Child),
+            IDHash(v) => elements.push(SelectorElement::Name(v.to_string())),
+            WhiteSpace(_) => elements.push(SelectorElement::Child),
             Delim(c) if *c == '.' => next_is_class = true,
             _ => {
                 println!("Unexpected token: {:?}", token);
@@ -141,11 +124,11 @@ fn parse_selector<'i, 'tt>(
     }
 
     // Remove noise the trailing white spaces, if any
-    while values.len() > 0 && values.last().unwrap() == &SelectorElement::Child {
-        values.remove(values.len() - 1);
+    while elements.len() > 0 && elements.last().unwrap() == &SelectorElement::Child {
+        elements.remove(elements.len() - 1);
     }
 
-    Ok(Selector(values))
+    Ok(Selector::new(elements))
 }
 
 impl<'i> AtRuleParser<'i> for StyleSheetParser {
@@ -159,7 +142,7 @@ impl<'i> AtRuleParser<'i> for StyleSheetParser {
 struct PropertyParser;
 
 impl<'i> DeclarationParser<'i> for PropertyParser {
-    type Declaration = Property;
+    type Declaration = (String, PropertyValues);
 
     type Error = EcssError;
 
@@ -168,16 +151,21 @@ impl<'i> DeclarationParser<'i> for PropertyParser {
         name: cssparser::CowRcStr<'i>,
         parser: &mut Parser<'i, 't>,
     ) -> Result<Self::Declaration, ParseError<'i, EcssError>> {
-        match Property::new(&name, parse_values(parser)?.into()) {
-            Ok(p) => Ok(p),
-            Err(err) => Err(parser.new_custom_error(err)),
+        let mut tokens = smallvec![];
+        for token in parse_values(parser)? {
+            match token.try_into() {
+                Ok(t) => tokens.push(t),
+                Err(_) => continue,
+            }
         }
+
+        Ok((name.to_string(), PropertyValues(tokens)))
     }
 }
 
 impl<'i> AtRuleParser<'i> for PropertyParser {
     type Prelude = ();
-    type AtRule = Property;
+    type AtRule = (String, PropertyValues);
     type Error = EcssError;
 }
 

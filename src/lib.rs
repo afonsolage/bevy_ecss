@@ -1,4 +1,3 @@
-mod colors;
 mod component;
 mod parser;
 mod property;
@@ -6,19 +5,67 @@ mod selector;
 mod stylesheet;
 mod system;
 
+use std::{error::Error, fmt::Display};
+
 use bevy::{
     asset::AssetServerSettings,
-    prelude::{AddAsset, CoreStage, Plugin, SystemLabel, SystemSet},
-    ui::UiSystem,
+    prelude::{AddAsset, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
 };
+use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
 
 pub use component::{Class, StyleSheet};
-pub use stylesheet::CssRules;
+pub use property::{Property, PropertyToken, PropertyValues};
+pub use selector::{Selector, SelectorElement};
+pub use stylesheet::{CssRules, StyleRule};
+
+#[derive(Debug)]
+pub enum EcssError {
+    UnsupportedSelector,
+    // TODO: Change this to Cow<'static, str>
+    UnsupportedProperty(String),
+    InvalidPropertyValue(String),
+}
+
+impl Error for EcssError {}
+
+impl Display for EcssError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EcssError::UnsupportedSelector => {
+                write!(f, "Unsupported selector")
+            }
+            EcssError::UnsupportedProperty(p) => write!(f, "Unsupported property: {}", p),
+            EcssError::InvalidPropertyValue(p) => write!(f, "Invalid property value: {}", p),
+        }
+    }
+}
+
+pub trait RegisterProperty {
+    fn register_property<T>(&mut self)
+    where
+        T: Property + 'static;
+}
+
+impl RegisterProperty for bevy::prelude::App {
+    fn register_property<T>(&mut self)
+    where
+        T: Property + 'static,
+    {
+        self.add_system(
+            T::apply_system
+                .label(EcssSystem::Apply)
+                .before(EcssSystem::Cleanup)
+                .after(EcssSystem::Prepare), // .with_run_criteria(T::have_property)
+        );
+    }
+}
 
 #[derive(SystemLabel)]
 pub enum EcssSystem {
+    Prepare,
     Apply,
+    Cleanup,
 }
 
 #[derive(Default)]
@@ -29,17 +76,67 @@ impl Plugin for EcssPlugin {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
             .add_asset::<CssRules>()
+            .init_resource::<StyleSheetState>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system_set_to_stage(
-                CoreStage::PostUpdate,
-                SystemSet::new()
-                    .label(EcssSystem::Apply)
-                    .with_system(system::apply_style_sheet)
-                    .before(UiSystem::Flex),
+            .add_system(
+                system::clear_state
+                    .label(EcssSystem::Cleanup)
+                    .after(EcssSystem::Apply)
+                    .after(EcssSystem::Prepare),
+            )
+            .add_system(
+                system::prepare_state
+                    .label(EcssSystem::Prepare)
+                    .before(EcssSystem::Apply)
+                    .before(EcssSystem::Cleanup),
             );
 
+        register_properties(app);
+
         if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
-            app.add_system(system::reload_style_sheets);
+            app.add_system(system::hot_reload_style_sheets.before(EcssSystem::Prepare));
         }
     }
+}
+
+fn register_properties(app: &mut bevy::prelude::App) {
+    use property::impls::*;
+
+    app.register_property::<DisplayProperty>();
+    app.register_property::<PositionTypeProperty>();
+    app.register_property::<DirectionProperty>();
+    app.register_property::<FlexDirectionProperty>();
+    app.register_property::<FlexWrapProperty>();
+    app.register_property::<AlignItemsProperty>();
+    app.register_property::<AlignSelfProperty>();
+    app.register_property::<AlignContentProperty>();
+    app.register_property::<JustifyContentProperty>();
+    app.register_property::<OverflowProperty>();
+
+    app.register_property::<LeftProperty>();
+    app.register_property::<RightProperty>();
+    app.register_property::<TopProperty>();
+    app.register_property::<BottomProperty>();
+    app.register_property::<WidthProperty>();
+    app.register_property::<HeightProperty>();
+    app.register_property::<MinWidthProperty>();
+    app.register_property::<MinHeightProperty>();
+    app.register_property::<MaxWidthProperty>();
+    app.register_property::<MaxHeightProperty>();
+    app.register_property::<FlexBasisProperty>();
+    app.register_property::<FlexGrowProperty>();
+    app.register_property::<FlexShrinkProperty>();
+    app.register_property::<AspectRatioProperty>();
+
+    app.register_property::<MarginProperty>();
+    app.register_property::<PaddingProperty>();
+    app.register_property::<BorderProperty>();
+
+    app.register_property::<FontColorProperty>();
+    app.register_property::<FontProperty>();
+    app.register_property::<FontSizeProperty>();
+    app.register_property::<VerticalAlignProperty>();
+    app.register_property::<HorizontalAlignProperty>();
+
+    app.register_property::<UiColorProperty>();
 }

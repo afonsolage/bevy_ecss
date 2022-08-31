@@ -11,15 +11,18 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=bevy_ecss",
-                    "--package=bevy_ecss"
+                    "--example",
+                    "simple_ui"
                 ],
                 "filter": {
-                    "name": "bevy_ecss",
-                    "kind": "bin"
+                    "name": "simple_ui",
+                    "kind": "example",
                 }
             },
             "args": [],
+            "env": {
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}",
+            },
             "cwd": "${workspaceFolder}"
         },
         {
