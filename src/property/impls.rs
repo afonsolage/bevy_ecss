@@ -53,14 +53,14 @@ mod style {
     impl_style_rect!("padding", PaddingProperty, padding);
     impl_style_rect!("border", BorderProperty, border);
 
-    macro_rules! impl_style_single_val {
-        ($name:expr, $struct:ident, $style_prop:ident$(.$style_field:ident)*) => {
+    macro_rules! impl_style_single_value {
+        ($name:expr, $struct:ident, $cache:ty, $parse_func:ident, $style_prop:ident$(.$style_field:ident)*) => {
             #[derive(Default)]
             /// [`Property`](crate::Property) implementation for [`Style`]
             pub(crate) struct $struct;
 
             impl Property for $struct {
-                type Cache = Val;
+                type Cache = $cache;
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
@@ -69,7 +69,7 @@ mod style {
                 }
 
                 fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
-                    if let Some(val) = values.single_val() {
+                    if let Some(val) = values.$parse_func() {
                         Ok(val)
                     } else {
                         Err(EcssError::InvalidPropertyValue($name.to_string()))
@@ -90,21 +90,69 @@ mod style {
         };
     }
 
-    impl_style_single_val!("left", LeftProperty, position.left);
-    impl_style_single_val!("right", RightProperty, position.right);
-    impl_style_single_val!("top", TopProperty, position.top);
-    impl_style_single_val!("bottom", BottomProperty, position.bottom);
+    // Val properties
+    impl_style_single_value!("left", LeftProperty, Val, single_val, position.left);
+    impl_style_single_value!("right", RightProperty, Val, single_val, position.right);
+    impl_style_single_value!("top", TopProperty, Val, single_val, position.top);
+    impl_style_single_value!("bottom", BottomProperty, Val, single_val, position.bottom);
 
-    impl_style_single_val!("width", WidthProperty, size.width);
-    impl_style_single_val!("height", HeightProperty, size.height);
+    impl_style_single_value!("width", WidthProperty, Val, single_val, size.width);
+    impl_style_single_value!("height", HeightProperty, Val, single_val, size.height);
 
-    impl_style_single_val!("min-width", MinWidthProperty, min_size.width);
-    impl_style_single_val!("min-height", MinHeightProperty, min_size.height);
+    impl_style_single_value!(
+        "min-width",
+        MinWidthProperty,
+        Val,
+        single_val,
+        min_size.width
+    );
+    impl_style_single_value!(
+        "min-height",
+        MinHeightProperty,
+        Val,
+        single_val,
+        min_size.height
+    );
 
-    impl_style_single_val!("max-width", MaxWidthProperty, max_size.width);
-    impl_style_single_val!("max-height", MaxHeightProperty, max_size.height);
+    impl_style_single_value!(
+        "max-width",
+        MaxWidthProperty,
+        Val,
+        single_val,
+        max_size.width
+    );
+    impl_style_single_value!(
+        "max-height",
+        MaxHeightProperty,
+        Val,
+        single_val,
+        max_size.height
+    );
 
-    impl_style_single_val!("flex-basis", FlexBasisProperty, max_size.height);
+    impl_style_single_value!(
+        "flex-basis",
+        FlexBasisProperty,
+        Val,
+        single_val,
+        max_size.height
+    );
+
+    impl_style_single_value!("flex-grow", FlexGrowProperty, f32, single_f32, flex_grow);
+    impl_style_single_value!(
+        "flex-shrink",
+        FlexShrinkProperty,
+        f32,
+        single_f32,
+        flex_shrink
+    );
+
+    impl_style_single_value!(
+        "aspect-ratio",
+        AspectRatioProperty,
+        Option<f32>,
+        option_f32,
+        aspect_ratio
+    );
 
     macro_rules! impl_style_enum {
         ($cache:ty, $name:expr, $struct:ident, $style_prop:ident, $($prop:expr => $variant:expr),+$(,)?) => {

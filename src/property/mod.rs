@@ -52,6 +52,28 @@ impl PropertyValues {
         })
     }
 
+    fn single_f32(&self) -> Option<f32> {
+        self.0.iter().find_map(|token| match token {
+            PropertyToken::Percentage(val)
+            | PropertyToken::Dimension(val)
+            | PropertyToken::Number(val) => Some(*val),
+            _ => None,
+        })
+    }
+
+    fn option_f32(&self) -> Option<Option<f32>> {
+        self.0.iter().find_map(|token| match token {
+            PropertyToken::Percentage(val)
+            | PropertyToken::Dimension(val)
+            | PropertyToken::Number(val) => Some(Some(*val)),
+            PropertyToken::Identifier(ident) => match ident.as_str() {
+                "none" => Some(None),
+                _ => None,
+            },
+            _ => None,
+        })
+    }
+
     fn rect(&self) -> Option<UiRect<Val>> {
         if self.0.len() == 1 {
             self.single_val().map(|val| UiRect::all(val))
@@ -90,7 +112,7 @@ impl<'i> TryFrom<Token<'i>> for PropertyToken {
             Token::IDHash(val) => Ok(Self::Hash(val.to_string())),
             Token::QuotedString(val) => Ok(Self::String(val.to_string())),
             Token::Number { value, .. } => Ok(Self::Number(value)),
-            Token::Percentage { unit_value, .. } => Ok(Self::Percentage(unit_value)),
+            Token::Percentage { unit_value, .. } => Ok(Self::Percentage(unit_value * 100.0)),
             Token::Dimension { value, .. } => Ok(Self::Dimension(value)),
             _ => Err(()),
         }
