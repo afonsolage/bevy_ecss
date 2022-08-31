@@ -1,8 +1,8 @@
 use bevy::{
     ecs::system::SystemParam,
     prelude::{
-        debug, AssetEvent, Assets, Changed, Children, Component, Entity, EventReader, Name, Query,
-        Res, ResMut, With, DetectChanges,
+        debug, AssetEvent, Assets, Changed, Children, Component, DetectChanges, Entity,
+        EventReader, Name, Query, Res, ResMut, With,
     },
     ui::Node,
 };

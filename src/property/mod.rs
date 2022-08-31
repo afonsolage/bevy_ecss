@@ -5,10 +5,7 @@ use bevy::{
         query::{Fetch, WorldQuery, WorldQueryGats},
         schedule::ShouldRun,
     },
-    prelude::{
-        AssetServer, Assets, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res, With,
-    },
-    ui::{Display, Node, PositionType, Style},
+    prelude::{AssetServer, Assets, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res},
     utils::HashMap,
 };
 
@@ -16,6 +13,8 @@ use cssparser::Token;
 use smallvec::SmallVec;
 
 use crate::{parser::EcssError, selector::Selector, CssRules};
+
+pub(crate) mod impls;
 
 #[derive(Debug, Clone)]
 pub enum PropertyToken {
@@ -29,6 +28,14 @@ pub enum PropertyToken {
 
 #[derive(Debug, Default, Clone, Deref)]
 pub struct PropertyValues(pub SmallVec<[PropertyToken; 8]>);
+
+impl PropertyValues {
+    fn identifiers(&self) -> impl Iterator<Item = &PropertyToken> {
+        self.0
+            .iter()
+            .filter(|token| matches!(token, PropertyToken::Identifier(_)))
+    }
+}
 
 impl<'i> TryFrom<Token<'i>> for PropertyToken {
     type Error = ();
@@ -62,7 +69,7 @@ impl<T: Property> PropertyMeta<T> {
                 rules
                     .get_properties(selector, T::name())
                     .map(|values| {
-                        T::parse(&*values)
+                        T::parse(values)
                             .expect("This function should be called only when there is a property")
                     })
                     .unwrap()
@@ -82,7 +89,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     type Filters: WorldQuery;
 
     fn name() -> &'static str;
-    fn parse<'a>(token: &[PropertyToken]) -> Result<Self::Cache, EcssError>;
+    fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError>;
 
     fn apply<'w>(
         cache: &Self::Cache,
@@ -126,63 +133,5 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
                 }
             }
         }
-    }
-}
-
-#[derive(Default)]
-pub(crate) struct DisplayProperty;
-
-impl Property for DisplayProperty {
-    type Cache = Display;
-
-    type Components = &'static mut Style;
-
-    type Filters = With<Node>;
-
-    fn name() -> &'static str {
-        "display"
-    }
-
-    fn parse<'a>(_token: &[PropertyToken]) -> Result<Self::Cache, EcssError> {
-        Ok(Display::Flex)
-    }
-
-    fn apply<'w>(
-        cache: &Self::Cache,
-        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
-        _asset_server: &AssetServer,
-        _commands: &mut Commands,
-    ) {
-        let mut style = components;
-        style.display = *cache;
-    }
-}
-
-#[derive(Default)]
-pub(crate) struct PositionTypeProperty;
-
-impl Property for PositionTypeProperty {
-    type Cache = PositionType;
-
-    type Components = &'static mut Style;
-
-    type Filters = With<Node>;
-
-    fn name() -> &'static str {
-        "position-type"
-    }
-
-    fn parse<'a>(_token: &[PropertyToken]) -> Result<Self::Cache, EcssError> {
-        Ok(PositionType::Relative)
-    }
-
-    fn apply<'w>(
-        cache: &Self::Cache,
-        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
-        _asset_server: &AssetServer,
-        _commands: &mut Commands,
-    ) {
-        let mut style = components;
-        style.position_type = *cache;
     }
 }

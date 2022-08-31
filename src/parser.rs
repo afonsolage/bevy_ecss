@@ -16,6 +16,7 @@ use crate::{
 #[derive(Debug)]
 pub enum EcssError {
     UnsupportedSelector,
+    // TODO: Change this to Cow<'static, str>
     UnsupportedProperty(String),
     InvalidPropertyValue(String),
 }

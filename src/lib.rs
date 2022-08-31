@@ -11,12 +11,34 @@ use bevy::{
     prelude::{AddAsset, CoreStage, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
     ui::UiSystem,
 };
-use property::{DisplayProperty, Property};
+use property::Property;
 use stylesheet::StyleSheetLoader;
 
 pub use component::{Class, StyleSheet};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::CssRules;
+
+pub trait RegisterProperty {
+    fn register_property<T>(&mut self)
+    where
+        T: Property + 'static;
+}
+
+impl RegisterProperty for bevy::prelude::App {
+    fn register_property<T>(&mut self)
+    where
+        T: Property + 'static,
+    {
+        self.add_system_to_stage(
+            CoreStage::PostUpdate,
+            T::apply_system
+                .with_run_criteria(T::have_property)
+                .label(EcssSystem::Apply)
+                .after(EcssSystem::Prepare)
+                .before(EcssSystem::Cleanup),
+        );
+    }
+}
 
 #[derive(SystemLabel)]
 pub enum EcssSystem {
@@ -48,7 +70,7 @@ impl Plugin for EcssPlugin {
                     .before(UiSystem::Flex),
             );
 
-        app.register_property::<DisplayProperty>();
+        register_properties(app);
 
         if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
             app.add_system(system::hot_reload_style_sheets);
@@ -56,24 +78,17 @@ impl Plugin for EcssPlugin {
     }
 }
 
-pub trait RegisterProperty {
-    fn register_property<T>(&mut self)
-    where
-        T: Property + 'static;
-}
+fn register_properties(app: &mut bevy::prelude::App) {
+    use property::impls::*;
 
-impl RegisterProperty for bevy::prelude::App {
-    fn register_property<T>(&mut self)
-    where
-        T: Property + 'static,
-    {
-        self.add_system_to_stage(
-            CoreStage::PostUpdate,
-            T::apply_system
-                .with_run_criteria(T::have_property)
-                .label(EcssSystem::Apply)
-                .after(EcssSystem::Prepare)
-                .before(EcssSystem::Cleanup),
-        );
-    }
+    app.register_property::<DisplayProperty>();
+    app.register_property::<PositionTypeProperty>();
+    app.register_property::<DirectionProperty>();
+    app.register_property::<FlexDirectionProperty>();
+    app.register_property::<FlexWrapProperty>();
+    app.register_property::<AlignItemsProperty>();
+    app.register_property::<AlignSelfProperty>();
+    app.register_property::<AlignContentProperty>();
+    app.register_property::<JustifyContentProperty>();
+    app.register_property::<OverflowProperty>();
 }

@@ -17,8 +17,8 @@ name = "simple_ui"
 path = "examples/simple_ui.rs"
 
 [[example]]
-name = "apply_on_load"
-path = "examples/apply_on_load.rs"
+name = "hot_reload"
+path = "examples/hot_reload.rs"
 
 [[example]]
 name = "stress_test"
