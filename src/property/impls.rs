@@ -5,16 +5,69 @@ use bevy::{
 
 use crate::parser::EcssError;
 
-use super::{Property, PropertyToken, PropertyValues};
+use super::{Property, PropertyValues};
 
 pub(crate) use style::*;
 
 mod style {
     use super::*;
 
+    macro_rules! impl_style_single_val {
+        ($name:expr, $struct:ident, $style_prop:ident$(.$style_field:ident)*) => {
+            #[derive(Default)]
+            /// [`Property`](crate::Property) implementation for [`Style`]
+            pub(crate) struct $struct;
+
+            impl Property for $struct {
+                type Cache = Val;
+                type Components = &'static mut Style;
+                type Filters = With<Node>;
+
+                fn name() -> &'static str {
+                    $name
+                }
+
+                fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+                    if let Some(val) = values.single_val() {
+                        Ok(val)
+                    } else {
+                        Err(EcssError::InvalidPropertyValue($name.to_string()))
+                    }
+                }
+
+                fn apply<'w>(
+                    cache: &Self::Cache,
+                    mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<
+                        'w,
+                    >>::Item,
+                    _asset_server: &AssetServer,
+                    _commands: &mut Commands,
+                ) {
+                    components.$style_prop$(.$style_field)? = *cache;
+                }
+            }
+        };
+    }
+
+    impl_style_single_val!("left", LeftProperty, position.left);
+    impl_style_single_val!("right", RightProperty, position.right);
+    impl_style_single_val!("top", TopProperty, position.top);
+    impl_style_single_val!("bottom", BottomProperty, position.bottom);
+
+    impl_style_single_val!("width", WidthProperty, size.width);
+    impl_style_single_val!("height", HeightProperty, size.height);
+
+    impl_style_single_val!("min-width", MinWidthProperty, min_size.width);
+    impl_style_single_val!("min-height", MinHeightProperty, min_size.height);
+
+    impl_style_single_val!("max-width", MaxWidthProperty, max_size.width);
+    impl_style_single_val!("max-height", MaxHeightProperty, max_size.height);
+
+
     macro_rules! impl_style_enum {
         ($cache:ty, $name:expr, $struct:ident, $style_prop:ident, $($prop:expr => $variant:expr),+$(,)?) => {
             #[derive(Default)]
+            /// [`Property`](crate::Property) implementation for [`Style`]
             pub(crate) struct $struct;
 
             impl Property for $struct {
@@ -27,15 +80,13 @@ mod style {
                 }
 
                 fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
-                    if let Some(token) = values.identifiers().next() {
+                    if let Some(identifier) = values.single_identifier() {
                         use $cache::*;
                         // Chain if-let when `cargofmt` supports it
                         // https://github.com/rust-lang/rustfmt/pull/5203
-                        if let PropertyToken::Identifier(ident) = token {
-                            match ident.as_str() {
-                                $($prop => return Ok($variant)),+,
-                                _ => (),
-                            }
+                        match identifier {
+                            $($prop => return Ok($variant)),+,
+                            _ => (),
                         }
                     }
 

@@ -91,4 +91,17 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<AlignContentProperty>();
     app.register_property::<JustifyContentProperty>();
     app.register_property::<OverflowProperty>();
+
+    app.register_property::<LeftProperty>();
+    app.register_property::<RightProperty>();
+    app.register_property::<TopProperty>();
+    app.register_property::<BottomProperty>();
+    app.register_property::<WidthProperty>();
+    app.register_property::<HeightProperty>();
+    app.register_property::<MinWidthProperty>();
+    app.register_property::<MinHeightProperty>();
+    app.register_property::<MaxWidthProperty>();
+    app.register_property::<MaxHeightProperty>();
+
+    
 }

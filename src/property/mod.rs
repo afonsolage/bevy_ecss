@@ -6,6 +6,7 @@ use bevy::{
         schedule::ShouldRun,
     },
     prelude::{AssetServer, Assets, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res},
+    ui::Val,
     utils::HashMap,
 };
 
@@ -30,10 +31,25 @@ pub enum PropertyToken {
 pub struct PropertyValues(pub SmallVec<[PropertyToken; 8]>);
 
 impl PropertyValues {
-    fn identifiers(&self) -> impl Iterator<Item = &PropertyToken> {
-        self.0
-            .iter()
-            .filter(|token| matches!(token, PropertyToken::Identifier(_)))
+    fn single_identifier(&self) -> Option<&str> {
+        self.0.iter().find_map(|token| match token {
+            PropertyToken::Identifier(id) => {
+                if id.is_empty() {
+                    None
+                } else {
+                    Some(id.as_str())
+                }
+            }
+            _ => None,
+        })
+    }
+
+    fn single_val(&self) -> Option<Val> {
+        self.0.iter().find_map(|token| match token {
+            PropertyToken::Percentage(val) => Some(Val::Percent(*val)),
+            PropertyToken::Dimension(val) => Some(Val::Px(*val)),
+            _ => None,
+        })
     }
 }
 
