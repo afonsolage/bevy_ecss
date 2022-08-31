@@ -12,6 +12,47 @@ pub(crate) use style::*;
 mod style {
     use super::*;
 
+    macro_rules! impl_style_rect {
+        ($name:expr, $struct:ident, $style_prop:ident$(.$style_field:ident)*) => {
+            #[derive(Default)]
+            /// [`Property`](crate::Property) implementation for [`Style`]
+            pub(crate) struct $struct;
+
+            impl Property for $struct {
+                type Cache = UiRect<Val>;
+                type Components = &'static mut Style;
+                type Filters = With<Node>;
+
+                fn name() -> &'static str {
+                    $name
+                }
+
+                fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+                    if let Some(val) = values.rect() {
+                        Ok(val)
+                    } else {
+                        Err(EcssError::InvalidPropertyValue($name.to_string()))
+                    }
+                }
+
+                fn apply<'w>(
+                    cache: &Self::Cache,
+                    mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<
+                        'w,
+                    >>::Item,
+                    _asset_server: &AssetServer,
+                    _commands: &mut Commands,
+                ) {
+                    components.$style_prop$(.$style_field)? = *cache;
+                }
+            }
+        };
+    }
+
+    impl_style_rect!("margin", MarginProperty, margin);
+    impl_style_rect!("padding", PaddingProperty, padding);
+    impl_style_rect!("border", BorderProperty, border);
+
     macro_rules! impl_style_single_val {
         ($name:expr, $struct:ident, $style_prop:ident$(.$style_field:ident)*) => {
             #[derive(Default)]
@@ -63,6 +104,7 @@ mod style {
     impl_style_single_val!("max-width", MaxWidthProperty, max_size.width);
     impl_style_single_val!("max-height", MaxHeightProperty, max_size.height);
 
+    impl_style_single_val!("flex-basis", FlexBasisProperty, max_size.height);
 
     macro_rules! impl_style_enum {
         ($cache:ty, $name:expr, $struct:ident, $style_prop:ident, $($prop:expr => $variant:expr),+$(,)?) => {

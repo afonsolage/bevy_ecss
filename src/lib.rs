@@ -102,6 +102,9 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<MinHeightProperty>();
     app.register_property::<MaxWidthProperty>();
     app.register_property::<MaxHeightProperty>();
+    app.register_property::<FlexBasisProperty>();
 
-    
+    app.register_property::<MarginProperty>();
+    app.register_property::<PaddingProperty>();
+    app.register_property::<BorderProperty>();
 }

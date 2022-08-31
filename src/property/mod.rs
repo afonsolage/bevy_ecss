@@ -6,7 +6,7 @@ use bevy::{
         schedule::ShouldRun,
     },
     prelude::{AssetServer, Assets, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res},
-    ui::Val,
+    ui::{UiRect, Val},
     utils::HashMap,
 };
 
@@ -50,6 +50,33 @@ impl PropertyValues {
             PropertyToken::Dimension(val) => Some(Val::Px(*val)),
             _ => None,
         })
+    }
+
+    fn rect(&self) -> Option<UiRect<Val>> {
+        if self.0.len() == 1 {
+            self.single_val().map(|val| UiRect::all(val))
+        } else {
+            self.0
+                .iter()
+                .fold((None, 0), |(rect, idx), token| {
+                    let val = match token {
+                        PropertyToken::Percentage(val) => Val::Percent(*val),
+                        PropertyToken::Dimension(val) => Val::Px(*val),
+                        _ => return (rect, idx),
+                    };
+                    let mut rect: UiRect<Val> = rect.unwrap_or_default();
+
+                    match idx {
+                        0 => rect.top = val,
+                        1 => rect.right = val,
+                        2 => rect.bottom = val,
+                        3 => rect.left = val,
+                        _ => (),
+                    }
+                    (Some(rect), idx + 1)
+                })
+                .0
+        }
     }
 }
 
