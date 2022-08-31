@@ -1,6 +1,6 @@
 use bevy::{ecs::query::QueryItem, prelude::*};
 
-use crate::parser::EcssError;
+use crate::EcssError;
 
 use super::{Property, PropertyValues};
 

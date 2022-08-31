@@ -16,7 +16,7 @@ use bevy::{
 use cssparser::Token;
 use smallvec::SmallVec;
 
-use crate::{parser::EcssError, selector::Selector, CssRules};
+use crate::{selector::Selector, CssRules, EcssError};
 
 mod colors;
 pub(crate) mod impls;

@@ -1,5 +1,3 @@
-use std::{error::Error, fmt::Display};
-
 use bevy::prelude::error;
 use cssparser::{
     AtRuleParser, DeclarationListParser, DeclarationParser, ParseError, Parser, ParserInput,
@@ -11,29 +9,8 @@ use crate::{
     property::PropertyValues,
     selector::{Selector, SelectorElement},
     stylesheet::StyleRule,
+    EcssError,
 };
-
-#[derive(Debug)]
-pub enum EcssError {
-    UnsupportedSelector,
-    // TODO: Change this to Cow<'static, str>
-    UnsupportedProperty(String),
-    InvalidPropertyValue(String),
-}
-
-impl Error for EcssError {}
-
-impl Display for EcssError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            EcssError::UnsupportedSelector => {
-                write!(f, "Unsupported selector")
-            }
-            EcssError::UnsupportedProperty(p) => write!(f, "Unsupported property: {}", p),
-            EcssError::InvalidPropertyValue(p) => write!(f, "Invalid property value: {}", p),
-        }
-    }
-}
 
 pub(crate) struct StyleSheetParser;
 

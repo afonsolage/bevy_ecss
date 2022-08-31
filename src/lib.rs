@@ -5,16 +5,41 @@ mod selector;
 mod stylesheet;
 mod system;
 
+use std::{error::Error, fmt::Display};
+
 use bevy::{
     asset::AssetServerSettings,
     prelude::{AddAsset, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
 };
-use property::{Property, StyleSheetState};
+use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
 
 pub use component::{Class, StyleSheet};
+pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
-pub use stylesheet::CssRules;
+pub use stylesheet::{CssRules, StyleRule};
+
+#[derive(Debug)]
+pub enum EcssError {
+    UnsupportedSelector,
+    // TODO: Change this to Cow<'static, str>
+    UnsupportedProperty(String),
+    InvalidPropertyValue(String),
+}
+
+impl Error for EcssError {}
+
+impl Display for EcssError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EcssError::UnsupportedSelector => {
+                write!(f, "Unsupported selector")
+            }
+            EcssError::UnsupportedProperty(p) => write!(f, "Unsupported property: {}", p),
+            EcssError::InvalidPropertyValue(p) => write!(f, "Invalid property value: {}", p),
+        }
+    }
+}
 
 pub trait RegisterProperty {
     fn register_property<T>(&mut self)
@@ -66,7 +91,7 @@ impl Plugin for EcssPlugin {
                     .before(EcssSystem::Cleanup),
             );
 
-        register_properties(app); 
+        register_properties(app);
 
         if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
             app.add_system(system::hot_reload_style_sheets.before(EcssSystem::Prepare));

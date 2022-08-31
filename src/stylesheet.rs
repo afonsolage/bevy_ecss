@@ -11,6 +11,7 @@ use crate::{parser::StyleSheetParser, property::PropertyValues, selector::Select
 
 #[derive(Debug, TypeUuid)]
 #[uuid = "14b98dd6-5425-4692-a561-5e6ae9180554"]
+// Find a better name for the StyleSheet asset.
 pub struct CssRules {
     path: String,
     hash: u64,
