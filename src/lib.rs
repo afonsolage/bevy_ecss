@@ -10,7 +10,7 @@ use bevy::{
     prelude::{AddAsset, CoreStage, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
     ui::UiSystem,
 };
-use property::Property;
+use property::{Property, StyleSheetState};
 use stylesheet::StyleSheetLoader;
 
 pub use component::{Class, StyleSheet};
@@ -54,6 +54,7 @@ impl Plugin for EcssPlugin {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
             .add_asset::<CssRules>()
+            .init_resource::<StyleSheetState>()
             .init_asset_loader::<StyleSheetLoader>()
             .add_system_to_stage(
                 CoreStage::PostUpdate,
@@ -117,5 +118,4 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<HorizontalAlignProperty>();
 
     app.register_property::<UiColorProperty>();
-
 }
