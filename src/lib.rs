@@ -1,4 +1,3 @@
-mod colors;
 mod component;
 mod parser;
 mod property;
@@ -110,4 +109,13 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<MarginProperty>();
     app.register_property::<PaddingProperty>();
     app.register_property::<BorderProperty>();
+
+    app.register_property::<FontColorProperty>();
+    app.register_property::<FontProperty>();
+    app.register_property::<FontSizeProperty>();
+    app.register_property::<VerticalAlignProperty>();
+    app.register_property::<HorizontalAlignProperty>();
+
+    app.register_property::<UiColorProperty>();
+
 }

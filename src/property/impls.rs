@@ -8,6 +8,7 @@ use crate::parser::EcssError;
 use super::{Property, PropertyValues};
 
 pub(crate) use style::*;
+pub(crate) use text::*;
 
 mod style {
     use super::*;
@@ -31,7 +32,7 @@ mod style {
                     if let Some(val) = values.rect() {
                         Ok(val)
                     } else {
-                        Err(EcssError::InvalidPropertyValue($name.to_string()))
+                        Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
                     }
                 }
 
@@ -72,7 +73,7 @@ mod style {
                     if let Some(val) = values.$parse_func() {
                         Ok(val)
                     } else {
-                        Err(EcssError::InvalidPropertyValue($name.to_string()))
+                        Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
                     }
                 }
 
@@ -180,7 +181,7 @@ mod style {
                         }
                     }
 
-                    Err(EcssError::InvalidPropertyValue($name.to_string()))
+                    Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
                 }
 
                 fn apply<'w>(
@@ -265,4 +266,204 @@ mod style {
         "visible" => Visible,
         "hidden" => Hidden,
     );
+}
+
+mod text {
+    use super::*;
+
+    #[derive(Default)]
+    pub(crate) struct FontColorProperty;
+    impl Property for FontColorProperty {
+        type Cache = Color;
+        type Components = &'static mut Text;
+        type Filters = With<Node>;
+
+        fn name() -> &'static str {
+            "color"
+        }
+
+        fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+            if let Some(color) = values.color() {
+                Ok(color)
+            } else {
+                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            }
+        }
+
+        fn apply<'w>(
+            cache: &Self::Cache,
+            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            _asset_server: &AssetServer,
+            _commands: &mut Commands,
+        ) {
+            components
+                .sections
+                .iter_mut()
+                .for_each(|section| section.style.color = *cache);
+        }
+    }
+
+    #[derive(Default)]
+    pub(crate) struct FontProperty;
+
+    impl Property for FontProperty {
+        type Cache = String;
+        type Components = &'static mut Text;
+        type Filters = With<Node>;
+
+        fn name() -> &'static str {
+            "font"
+        }
+
+        fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+            if let Some(path) = values.string() {
+                Ok(path)
+            } else {
+                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            }
+        }
+
+        fn apply<'w>(
+            cache: &Self::Cache,
+            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            asset_server: &AssetServer,
+            _commands: &mut Commands,
+        ) {
+            components
+                .sections
+                .iter_mut()
+                .for_each(|section| section.style.font = asset_server.load(cache));
+        }
+    }
+
+    #[derive(Default)]
+    pub(crate) struct FontSizeProperty;
+
+    impl Property for FontSizeProperty {
+        type Cache = f32;
+        type Components = &'static mut Text;
+        type Filters = With<Node>;
+
+        fn name() -> &'static str {
+            "font"
+        }
+
+        fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+            if let Some(size) = values.single_f32() {
+                Ok(size)
+            } else {
+                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            }
+        }
+
+        fn apply<'w>(
+            cache: &Self::Cache,
+            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            _asset_server: &AssetServer,
+            _commands: &mut Commands,
+        ) {
+            components
+                .sections
+                .iter_mut()
+                .for_each(|section| section.style.font_size = *cache);
+        }
+    }
+
+    #[derive(Default)]
+    pub(crate) struct VerticalAlignProperty;
+
+    impl Property for VerticalAlignProperty {
+        type Cache = Option<VerticalAlign>;
+        type Components = &'static mut Text;
+        type Filters = With<Node>;
+
+        fn name() -> &'static str {
+            "vertical-align"
+        }
+
+        fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+            if let Some(ident) = values.single_identifier() {
+                match ident {
+                    "top" => return Ok(Some(VerticalAlign::Top)),
+                    "center" => return Ok(Some(VerticalAlign::Center)),
+                    "bottom" => return Ok(Some(VerticalAlign::Bottom)),
+                    _ => (),
+                }
+            }
+            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+        }
+
+        fn apply<'w>(
+            cache: &Self::Cache,
+            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            _asset_server: &AssetServer,
+            _commands: &mut Commands,
+        ) {
+            components.alignment.vertical = cache.unwrap();
+        }
+    }
+
+    #[derive(Default)]
+    pub(crate) struct HorizontalAlignProperty;
+
+    impl Property for HorizontalAlignProperty {
+        type Cache = Option<HorizontalAlign>;
+        type Components = &'static mut Text;
+        type Filters = With<Node>;
+
+        fn name() -> &'static str {
+            "text-align"
+        }
+
+        fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+            if let Some(ident) = values.single_identifier() {
+                match ident {
+                    "left" => return Ok(Some(HorizontalAlign::Left)),
+                    "center" => return Ok(Some(HorizontalAlign::Center)),
+                    "right" => return Ok(Some(HorizontalAlign::Right)),
+                    _ => (),
+                }
+            }
+            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+        }
+
+        fn apply<'w>(
+            cache: &Self::Cache,
+            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            _asset_server: &AssetServer,
+            _commands: &mut Commands,
+        ) {
+            components.alignment.horizontal = cache.unwrap();
+        }
+    }
+}
+
+#[derive(Default)]
+pub(crate) struct UiColorProperty;
+
+impl Property for UiColorProperty {
+    type Cache = Color;
+    type Components = Entity;
+    type Filters = With<UiColor>;
+
+    fn name() -> &'static str {
+        "background-color"
+    }
+
+    fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+        if let Some(color) = values.color() {
+            Ok(color)
+        } else {
+            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+        }
+    }
+
+    fn apply<'w>(
+        cache: &Self::Cache,
+        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+        _asset_server: &AssetServer,
+        commands: &mut Commands,
+    ) {
+        commands.entity(components).insert(UiColor(*cache));
+    }
 }

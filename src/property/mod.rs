@@ -1,13 +1,15 @@
-use std::any::Any;
+use std::{any::Any};
 
 use bevy::{
     ecs::{
         query::{Fetch, WorldQuery, WorldQueryGats},
         schedule::ShouldRun,
     },
-    prelude::{AssetServer, Assets, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res},
+    prelude::{
+        AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res, error,
+    },
     ui::{UiRect, Val},
-    utils::HashMap,
+    utils::{HashMap},
 };
 
 use cssparser::Token;
@@ -15,6 +17,7 @@ use smallvec::SmallVec;
 
 use crate::{parser::EcssError, selector::Selector, CssRules};
 
+mod colors;
 pub(crate) mod impls;
 
 #[derive(Debug, Clone)]
@@ -31,6 +34,46 @@ pub enum PropertyToken {
 pub struct PropertyValues(pub SmallVec<[PropertyToken; 8]>);
 
 impl PropertyValues {
+    fn string(&self) -> Option<String> {
+        self.0.iter().find_map(|token| match token {
+            PropertyToken::String(id) => {
+                if id.is_empty() {
+                    None
+                } else {
+                    Some(id.clone())
+                }
+            }
+            _ => None,
+        })
+    }
+
+    fn color(&self) -> Option<Color> {
+        if self.0.len() == 1 {
+            match &self.0[0] {
+                PropertyToken::Identifier(name) => colors::parse_named_color(name.as_str()),
+                PropertyToken::Hash(hash) => {
+                    if let Ok(color) = cssparser::Color::parse_hash(hash.as_bytes()) 
+                        && let cssparser::Color::RGBA(cssparser::RGBA {
+                            red,
+                            green,
+                            blue,
+                            alpha,
+                        }) = color
+                        {
+                            Some(Color::rgba_u8(red, green, blue, alpha))
+                        }
+                    else {
+                        None
+                    }
+                }
+                _ => None,
+            }
+        } else {
+            // TODO: Implement color function like rgba(255, 255, 255, 255)
+            None
+        }
+    }
+
     fn single_identifier(&self) -> Option<&str> {
         self.0.iter().find_map(|token| match token {
             PropertyToken::Identifier(id) => {
@@ -119,14 +162,22 @@ impl<'i> TryFrom<Token<'i>> for PropertyToken {
     }
 }
 
+#[derive(Default, Debug, Clone)]
+pub enum CacheState<T> {
+    #[default]
+    None,
+    Ok(T),
+    Error
+}
+
 #[derive(Debug, Default, Deref, DerefMut)]
-pub struct CachedProperties<T>(HashMap<Selector, T>);
+pub struct CachedProperties<T>(HashMap<Selector, CacheState<T>>);
 
 #[derive(Debug, Default, Deref, DerefMut)]
 pub struct PropertyMeta<T: Property>(HashMap<u64, CachedProperties<T::Cache>>);
 
 impl<T: Property> PropertyMeta<T> {
-    fn get_or_parse(&mut self, rules: &CssRules, selector: Selector) -> &T::Cache {
+    fn get_or_parse(&mut self, rules: &CssRules, selector: Selector) -> &CacheState<T::Cache> {
         self.entry(rules.hash())
             .or_insert(CachedProperties(Default::default()))
             .entry(selector)
@@ -134,8 +185,13 @@ impl<T: Property> PropertyMeta<T> {
                 rules
                     .get_properties(selector, T::name())
                     .map(|values| {
-                        T::parse(values)
-                            .expect("This function should be called only when there is a property")
+                        match T::parse(values) {
+                            Ok(cache) => CacheState::Ok(cache),
+                            Err(err) => {
+                                error!("Failed to parse property {}. Error: {}", T::name(), err);
+                                CacheState::Error
+                            },
+                        }
                     })
                     .unwrap()
             })
@@ -189,10 +245,11 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         for (handle, selected) in apply_sheets.iter() {
             if let Some(rules) = assets.get(handle) {
                 for (selector, entities) in selected.iter() {
-                    let cached = local.get_or_parse(rules, selector.clone());
-                    for entity in entities {
-                        if let Ok(components) = q_nodes.get_mut(*entity) {
-                            Self::apply(cached, components, &asset_server, &mut commands);
+                    if let CacheState::Ok(cached) = local.get_or_parse(rules, selector.clone()) {
+                        for entity in entities {
+                            if let Ok(components) = q_nodes.get_mut(*entity) {
+                                Self::apply(cached, components, &asset_server, &mut commands);
+                            }
                         }
                     }
                 }
