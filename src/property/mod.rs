@@ -258,14 +258,14 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     ) {
         for (handle, selected) in apply_sheets.iter() {
             if let Some(rules) = assets.get(handle) {
-                trace!(
-                    "Applying property {} from sheet {}",
-                    Self::name(),
-                    rules.path()
-                );
-
                 for (selector, entities) in selected.iter() {
                     if let CacheState::Ok(cached) = local.get_or_parse(rules, selector) {
+                        trace!(
+                            r#"Applying property "{}" from sheet "{}" ({})"#,
+                            Self::name(),
+                            rules.path(),
+                            selector
+                        );
                         for entity in entities {
                             if let Ok(components) = q_nodes.get_mut(*entity) {
                                 Self::apply(cached, components, &asset_server, &mut commands);
