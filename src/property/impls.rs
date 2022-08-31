@@ -1,5 +1,5 @@
 use bevy::{
-    ecs::query::{Fetch, WorldQueryGats},
+    ecs::query::{Fetch, WorldQueryGats, QueryItem},
     prelude::*,
 };
 
@@ -38,9 +38,7 @@ mod style {
 
                 fn apply<'w>(
                     cache: &Self::Cache,
-                    mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<
-                        'w,
-                    >>::Item,
+                    mut components: QueryItem<Self::Components>,
                     _asset_server: &AssetServer,
                     _commands: &mut Commands,
                 ) {
@@ -79,9 +77,7 @@ mod style {
 
                 fn apply<'w>(
                     cache: &Self::Cache,
-                    mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<
-                        'w,
-                    >>::Item,
+                    mut components: QueryItem<Self::Components>,
                     _asset_server: &AssetServer,
                     _commands: &mut Commands,
                 ) {
@@ -186,9 +182,7 @@ mod style {
 
                 fn apply<'w>(
                     cache: &Self::Cache,
-                    mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<
-                        'w,
-                    >>::Item,
+                    mut components: QueryItem<Self::Components>,
                     _asset_server: &AssetServer,
                     _commands: &mut Commands,
                 ) {
@@ -292,7 +286,7 @@ mod text {
 
         fn apply<'w>(
             cache: &Self::Cache,
-            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            mut components: QueryItem<Self::Components>,
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
@@ -325,7 +319,7 @@ mod text {
 
         fn apply<'w>(
             cache: &Self::Cache,
-            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            mut components: QueryItem<Self::Components>,
             asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
@@ -358,7 +352,7 @@ mod text {
 
         fn apply<'w>(
             cache: &Self::Cache,
-            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            mut components: QueryItem<Self::Components>,
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
@@ -395,7 +389,7 @@ mod text {
 
         fn apply<'w>(
             cache: &Self::Cache,
-            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            mut components: QueryItem<Self::Components>,
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
@@ -429,7 +423,7 @@ mod text {
 
         fn apply<'w>(
             cache: &Self::Cache,
-            mut components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+            mut components: QueryItem<Self::Components>,
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
@@ -460,7 +454,7 @@ impl Property for UiColorProperty {
 
     fn apply<'w>(
         cache: &Self::Cache,
-        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+        components: QueryItem<Self::Components>,
         _asset_server: &AssetServer,
         commands: &mut Commands,
     ) {

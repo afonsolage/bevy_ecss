@@ -2,7 +2,7 @@ use std::{any::Any};
 
 use bevy::{
     ecs::{
-        query::{Fetch, WorldQuery, WorldQueryGats},
+        query::{Fetch, WorldQuery, WorldQueryGats, QueryItem},
         schedule::ShouldRun,
     },
     prelude::{
@@ -214,7 +214,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
 
     fn apply<'w>(
         cache: &Self::Cache,
-        components: <<Self::Components as WorldQueryGats<'w>>::Fetch as Fetch<'w>>::Item,
+        components: QueryItem<Self::Components>,
         asset_server: &AssetServer,
         commands: &mut Commands,
     );
