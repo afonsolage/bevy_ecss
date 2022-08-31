@@ -66,10 +66,10 @@ impl Plugin for EcssPlugin {
                     .before(EcssSystem::Cleanup),
             );
 
-        register_properties(app);
+        register_properties(app); 
 
         if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
-            app.add_system(system::hot_reload_style_sheets);
+            app.add_system(system::hot_reload_style_sheets.before(EcssSystem::Prepare));
         }
     }
 }
