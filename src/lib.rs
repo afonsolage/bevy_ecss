@@ -11,10 +11,11 @@ use bevy::{
     asset::AssetServerSettings,
     ecs::system::SystemState,
     prelude::{
-        AddAsset, Component, Entity, IntoExclusiveSystem, ParallelSystemDescriptorCoercion, Plugin,
-        Query, SystemLabel, With, Button,
+        AddAsset, Button, Component, CoreStage, Entity, IntoExclusiveSystem,
+        ParallelSystemDescriptorCoercion, Plugin, Query, SystemLabel, With,
     },
-    ui::{UiColor, Node, UiImage, Interaction, Style}, text::Text,
+    text::Text,
+    ui::{Interaction, Node, Style, UiColor, UiImage},
 };
 use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
@@ -80,7 +81,7 @@ impl Plugin for EcssPlugin {
         register_properties(app);
 
         if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
-            app.add_system(system::hot_reload_style_sheets.after(EcssSystem::Cleanup));
+            app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
         }
     }
 }

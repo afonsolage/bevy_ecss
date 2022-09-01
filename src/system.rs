@@ -239,7 +239,10 @@ pub(crate) fn hot_reload_style_sheets(
                 q_sheets
                     .iter_mut()
                     .filter(|sheet| sheet.handle() == handle)
-                    .for_each(|mut sheet| sheet.refresh());
+                    .for_each(|mut sheet| {
+                        debug!("Refreshing sheet {:?}", sheet);
+                        sheet.refresh();
+                    });
             }
             _ => (),
         }
