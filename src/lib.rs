@@ -9,7 +9,9 @@ use std::{error::Error, fmt::Display};
 
 use bevy::{
     asset::AssetServerSettings,
-    prelude::{AddAsset, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
+    prelude::{
+        AddAsset, IntoExclusiveSystem, ParallelSystemDescriptorCoercion, Plugin, SystemLabel,
+    },
 };
 use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
@@ -18,6 +20,7 @@ pub use component::{Class, StyleSheet};
 pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::{CssRules, StyleRule};
+use system::{ComponentFilterRegistry, PrepareState};
 
 #[derive(Debug)]
 pub enum EcssError {
@@ -77,19 +80,24 @@ impl Plugin for EcssPlugin {
             .register_type::<StyleSheet>()
             .add_asset::<CssRules>()
             .init_resource::<StyleSheetState>()
+            .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
+            .add_system(system::prepare.exclusive_system())
             .add_system(
                 system::clear_state
                     .label(EcssSystem::Cleanup)
                     .after(EcssSystem::Apply)
                     .after(EcssSystem::Prepare),
-            )
-            .add_system(
-                system::prepare_state
-                    .label(EcssSystem::Prepare)
-                    .before(EcssSystem::Apply)
-                    .before(EcssSystem::Cleanup),
             );
+        // .add_system(
+        //     system::prepare_state
+        //         .label(EcssSystem::Prepare)
+        //         .before(EcssSystem::Apply)
+        //         .before(EcssSystem::Cleanup),
+        // );
+
+        let prepared_state = PrepareState::new(&mut app.world);
+        app.insert_resource(prepared_state);
 
         register_properties(app);
 
