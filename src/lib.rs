@@ -12,9 +12,9 @@ use bevy::{
     ecs::system::SystemState,
     prelude::{
         AddAsset, Component, Entity, IntoExclusiveSystem, ParallelSystemDescriptorCoercion, Plugin,
-        Query, SystemLabel, With,
+        Query, SystemLabel, With, Button,
     },
-    ui::UiColor,
+    ui::{UiColor, Node, UiImage, Interaction, Style}, text::Text,
 };
 use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
@@ -84,9 +84,14 @@ impl Plugin for EcssPlugin {
         }
     }
 }
-
 fn register_component_selector(app: &mut bevy::prelude::App) {
     app.register_component_selector::<UiColor>("ui-color");
+    app.register_component_selector::<Text>("text");
+    app.register_component_selector::<Button>("button");
+    app.register_component_selector::<Node>("button");
+    app.register_component_selector::<Style>("style");
+    app.register_component_selector::<UiImage>("ui-image");
+    app.register_component_selector::<Interaction>("interaction");
 }
 
 fn register_properties(app: &mut bevy::prelude::App) {

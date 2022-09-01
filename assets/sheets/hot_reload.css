@@ -23,8 +23,9 @@
     color: #923192
 }
 
-text {
-    font-size: 14;
+#right-list text {
+    font: 20;
+    vertical-align: bottom;
 }
 
 .container .blue-bg {

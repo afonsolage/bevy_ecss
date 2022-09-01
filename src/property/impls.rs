@@ -336,7 +336,7 @@ mod text {
         type Filters = With<Node>;
 
         fn name() -> &'static str {
-            "font"
+            "font-size"
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
