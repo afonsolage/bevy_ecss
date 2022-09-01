@@ -23,6 +23,11 @@
     color: #923192
 }
 
+#right-list text {
+    font-size: 16;
+    vertical-align: bottom;
+}
+
 .container .blue-bg {
     background-color: #ff00FF10;
 } 

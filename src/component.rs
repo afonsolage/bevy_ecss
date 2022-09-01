@@ -44,7 +44,7 @@ impl PartialEq for StyleSheet {
     }
 }
 
-pub trait MatchSelectorElement {
+pub(crate) trait MatchSelectorElement {
     fn matches(&self, element: &str) -> bool;
 }
 

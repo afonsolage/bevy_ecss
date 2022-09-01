@@ -9,7 +9,13 @@ use std::{error::Error, fmt::Display};
 
 use bevy::{
     asset::AssetServerSettings,
-    prelude::{AddAsset, ParallelSystemDescriptorCoercion, Plugin, SystemLabel},
+    ecs::system::SystemState,
+    prelude::{
+        AddAsset, Button, Component, CoreStage, Entity, IntoExclusiveSystem,
+        ParallelSystemDescriptorCoercion, Plugin, Query, SystemLabel, With,
+    },
+    text::Text,
+    ui::{Interaction, Node, Style, UiColor, UiImage},
 };
 use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
@@ -18,6 +24,7 @@ pub use component::{Class, StyleSheet};
 pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::{CssRules, StyleRule};
+use system::{ComponentFilterRegistry, PrepareState};
 
 #[derive(Debug)]
 pub enum EcssError {
@@ -41,26 +48,6 @@ impl Display for EcssError {
     }
 }
 
-pub trait RegisterProperty {
-    fn register_property<T>(&mut self)
-    where
-        T: Property + 'static;
-}
-
-impl RegisterProperty for bevy::prelude::App {
-    fn register_property<T>(&mut self)
-    where
-        T: Property + 'static,
-    {
-        self.add_system(
-            T::apply_system
-                .label(EcssSystem::Apply)
-                .before(EcssSystem::Cleanup)
-                .after(EcssSystem::Prepare), // .with_run_criteria(T::have_property)
-        );
-    }
-}
-
 #[derive(SystemLabel)]
 pub enum EcssSystem {
     Prepare,
@@ -77,26 +64,35 @@ impl Plugin for EcssPlugin {
             .register_type::<StyleSheet>()
             .add_asset::<CssRules>()
             .init_resource::<StyleSheetState>()
+            .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
+            .add_system(system::prepare.exclusive_system())
             .add_system(
                 system::clear_state
                     .label(EcssSystem::Cleanup)
                     .after(EcssSystem::Apply)
                     .after(EcssSystem::Prepare),
-            )
-            .add_system(
-                system::prepare_state
-                    .label(EcssSystem::Prepare)
-                    .before(EcssSystem::Apply)
-                    .before(EcssSystem::Cleanup),
             );
 
+        let prepared_state = PrepareState::new(&mut app.world);
+        app.insert_resource(prepared_state);
+
+        register_component_selector(app);
         register_properties(app);
 
         if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
-            app.add_system(system::hot_reload_style_sheets.before(EcssSystem::Prepare));
+            app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
         }
     }
+}
+fn register_component_selector(app: &mut bevy::prelude::App) {
+    app.register_component_selector::<UiColor>("ui-color");
+    app.register_component_selector::<Text>("text");
+    app.register_component_selector::<Button>("button");
+    app.register_component_selector::<Node>("button");
+    app.register_component_selector::<Style>("style");
+    app.register_component_selector::<UiImage>("ui-image");
+    app.register_component_selector::<Interaction>("interaction");
 }
 
 fn register_properties(app: &mut bevy::prelude::App) {
@@ -139,4 +135,47 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<HorizontalAlignProperty>();
 
     app.register_property::<UiColorProperty>();
+}
+
+pub trait RegisterComponentSelector {
+    fn register_component_selector<T>(&mut self, name: &'static str)
+    where
+        T: Component;
+}
+
+impl RegisterComponentSelector for bevy::prelude::App {
+    fn register_component_selector<T>(&mut self, name: &'static str)
+    where
+        T: Component,
+    {
+        let system_state = SystemState::<Query<Entity, With<T>>>::new(&mut self.world);
+        let boxed_state = Box::new(system_state);
+
+        self.world
+            .get_resource_or_insert_with::<ComponentFilterRegistry>(|| {
+                ComponentFilterRegistry(Default::default())
+            })
+            .0
+            .insert(name, boxed_state);
+    }
+}
+
+pub trait RegisterProperty {
+    fn register_property<T>(&mut self)
+    where
+        T: Property + 'static;
+}
+
+impl RegisterProperty for bevy::prelude::App {
+    fn register_property<T>(&mut self)
+    where
+        T: Property + 'static,
+    {
+        self.add_system(
+            T::apply_system
+                .label(EcssSystem::Apply)
+                .before(EcssSystem::Cleanup)
+                .after(EcssSystem::Prepare), // .with_run_criteria(T::have_property)
+        );
+    }
 }
