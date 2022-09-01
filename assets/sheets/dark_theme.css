@@ -1,0 +1,69 @@
+#ui-root {
+    background-color: #181414
+}
+
+#left-border {
+    margin: 0px;
+    border: 0px;
+    padding: 5px;
+    background-color: #353535;
+}
+
+#ui-root #left-bg {
+    display: flex;
+    background-color: #242424;
+}
+
+#right-border {
+    background-color: #242424;
+}
+
+#left-bg text {
+    color: #b3b3b3
+}
+
+#right-list {
+    height: 50%;
+    background-color: #3b3b3b;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: #7c7c7c
+}
+
+#mid-blue-border {
+    background-color: #0a0a24;
+}
+
+#mid-blue-border node {
+    background-color: #383838;
+}
+
+title {
+    font-size: 22;
+    vertical-align: bottom;
+    color: #b3b3b3;
+}
+
+.container .blue-bg {
+    background-color: #ff00FF10;
+}
+
+#mid-bevy-logo-image {
+    background-color: #aaaaaa;
+}
+
+button {
+    align-items: center;
+    align-content: center;
+}
+
+button text {
+    width: 100%;
+    height: 25px;
+    left: 10px;
+    font-size: 25;
+    color: azure;
+}

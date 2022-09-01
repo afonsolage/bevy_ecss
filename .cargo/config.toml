@@ -22,4 +22,4 @@ rustflags = ["-Zshare-generics=n"]
 #debug = 1
 
 [env]
-RUST_LOG = "bevy_ecss=trace"
+RUST_LOG = "bevy_ecss=trace,theme=trace"
