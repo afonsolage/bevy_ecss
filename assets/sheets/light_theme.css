@@ -64,6 +64,7 @@ button text {
     width: 100%;
     height: 25px;
     left: 10px;
-    font-size: 25;
+    font-size: 20;
     color: #3b3f3f;
+    text-content: "Change To Dark";
 }

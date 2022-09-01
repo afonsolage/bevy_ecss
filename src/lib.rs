@@ -133,6 +133,7 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<FontSizeProperty>();
     app.register_property::<VerticalAlignProperty>();
     app.register_property::<HorizontalAlignProperty>();
+    app.register_property::<TextContentProperty>();
 
     app.register_property::<UiColorProperty>();
 }
