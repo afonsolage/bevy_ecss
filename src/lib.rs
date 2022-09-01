@@ -12,6 +12,7 @@ use bevy::{
     prelude::{
         AddAsset, IntoExclusiveSystem, ParallelSystemDescriptorCoercion, Plugin, SystemLabel,
     },
+    ui::UiColor,
 };
 use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
@@ -20,7 +21,7 @@ pub use component::{Class, StyleSheet};
 pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::{CssRules, StyleRule};
-use system::{ComponentFilterRegistry, PrepareState};
+use system::{ComponentFilterRegistry, PrepareState, RegisterComponentSelector};
 
 #[derive(Debug)]
 pub enum EcssError {
@@ -89,22 +90,21 @@ impl Plugin for EcssPlugin {
                     .after(EcssSystem::Apply)
                     .after(EcssSystem::Prepare),
             );
-        // .add_system(
-        //     system::prepare_state
-        //         .label(EcssSystem::Prepare)
-        //         .before(EcssSystem::Apply)
-        //         .before(EcssSystem::Cleanup),
-        // );
 
         let prepared_state = PrepareState::new(&mut app.world);
         app.insert_resource(prepared_state);
 
+        register_component_selector(app);
         register_properties(app);
 
         if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
             app.add_system(system::hot_reload_style_sheets.before(EcssSystem::Prepare));
         }
     }
+}
+
+fn register_component_selector(app: &mut bevy::prelude::App) {
+    app.register_component_selector::<UiColor>("ui-color");
 }
 
 fn register_properties(app: &mut bevy::prelude::App) {

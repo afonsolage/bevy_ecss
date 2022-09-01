@@ -1,8 +1,8 @@
 use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
-        debug, error, AssetEvent, Assets, Changed, Children, Component, DetectChanges, Entity,
-        EventReader, Mut, Name, Query, Res, ResMut, With, World,
+        debug, error, AssetEvent, Assets, Changed, Children, Component, Entity, EventReader, Mut,
+        Name, Query, Res, ResMut, With, World,
     },
     ui::Node,
     utils::HashMap,
@@ -43,7 +43,7 @@ pub(crate) fn hot_reload_style_sheets(
 
 /// Clear temporary state
 pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
-    if sheet_rule.is_changed() {
+    if sheet_rule.len() > 0 {
         debug!("Finished applying style sheet.");
         sheet_rule.clear();
     }
@@ -220,8 +220,6 @@ fn get_children_recursively(
         .collect()
 }
 
-// /-------------- APP REGISTER -------------------------/
-
 pub trait RegisterComponentSelector {
     fn register_component_selector<T>(&mut self, name: &'static str)
     where
@@ -245,8 +243,6 @@ impl RegisterComponentSelector for bevy::prelude::App {
     }
 }
 
-/// ------------------ COMPONENT FILTER ------
-
 trait ComponentFilter {
     fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]>;
 }
@@ -261,8 +257,6 @@ impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity,
 pub(crate) struct ComponentFilterRegistry(
     HashMap<&'static str, Box<dyn ComponentFilter + Send + Sync>>,
 );
-
-// --------------- FILTER SYSTEM
 
 pub(crate) struct PrepareState<'w, 's>(
     SystemState<(
@@ -288,7 +282,9 @@ pub(crate) fn prepare(world: &mut World) {
         world.resource_scope(|world, mut registry: Mut<ComponentFilterRegistry>| {
             let (sheets, q_nodes, css_query) = state.0.get(world);
             let state = prepare_state(world, sheets, q_nodes, css_query, &mut registry);
-            world.insert_resource(state);
+            if state.is_empty() == false {
+                world.insert_resource(state);
+            }
         });
     });
 }

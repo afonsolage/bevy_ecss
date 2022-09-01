@@ -23,6 +23,10 @@
     color: #923192
 }
 
+text {
+    font-size: 14;
+}
+
 .container .blue-bg {
     background-color: #ff00FF10;
 } 
