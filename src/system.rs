@@ -16,62 +16,70 @@ use crate::{
     CssRules,
 };
 
+pub(crate) trait ComponentFilter {
+    fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]>;
+}
+
+impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity, With<T>>> {
+    fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]> {
+        self.get(world).iter().collect()
+    }
+}
+
+#[derive(Default)]
+pub(crate) struct ComponentFilterRegistry(
+    pub HashMap<&'static str, Box<dyn ComponentFilter + Send + Sync>>,
+);
+
 #[derive(SystemParam)]
 pub(crate) struct CssQueryParam<'w, 's> {
+    assets: Res<'w, Assets<CssRules>>,
+    nodes: Query<
+        'w,
+        's,
+        (Entity, Option<&'static Children>, &'static StyleSheet),
+        Changed<StyleSheet>,
+    >,
     names: Query<'w, 's, (Entity, &'static Name)>,
     classes: Query<'w, 's, (Entity, &'static Class)>,
     children: Query<'w, 's, &'static Children, With<Node>>,
 }
 
-/// Auto reapply style sheets when hot reloading is enabled
-pub(crate) fn hot_reload_style_sheets(
-    mut assets_events: EventReader<AssetEvent<CssRules>>,
-    mut q_sheets: Query<&mut StyleSheet>,
-) {
-    for evt in assets_events.iter() {
-        match evt {
-            AssetEvent::Modified { handle } => {
-                q_sheets
-                    .iter_mut()
-                    .filter(|sheet| sheet.handle() == handle)
-                    .for_each(|mut sheet| sheet.refresh());
-            }
-            _ => (),
-        }
+pub(crate) struct PrepareState<'w, 's>(SystemState<CssQueryParam<'w, 's>>);
+
+impl<'w, 's> PrepareState<'w, 's> {
+    pub fn new(world: &mut World) -> Self {
+        Self(SystemState::new(world))
     }
 }
 
-/// Clear temporary state
-pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
-    if sheet_rule.len() > 0 {
-        debug!("Finished applying style sheet.");
-        sheet_rule.clear();
-    }
+pub(crate) fn prepare(world: &mut World) {
+    world.resource_scope(|world, mut state: Mut<PrepareState>| {
+        world.resource_scope(|world, mut registry: Mut<ComponentFilterRegistry>| {
+            let css_query = state.0.get(world);
+            let state = prepare_state(world, css_query, &mut registry);
+            if state.is_empty() == false {
+                world.insert_resource(state);
+            }
+        });
+    });
 }
 
 /// Prepare state to be used by [`Property`](crate::Property) systems
 pub(crate) fn prepare_state(
     world: &World,
-    sheets: Res<Assets<CssRules>>,
-    q_nodes: Query<(Entity, Option<&Children>, &StyleSheet), Changed<StyleSheet>>,
-    css_query: CssQueryParam,
+    params: CssQueryParam,
     registry: &mut ComponentFilterRegistry,
 ) -> StyleSheetState {
     let mut state = StyleSheetState::default();
 
-    for (entity, children, sheet_handle) in &q_nodes {
-        if let Some(sheet) = sheets.get(sheet_handle.handle()) {
+    for (entity, children, sheet_handle) in &params.nodes {
+        if let Some(sheet) = params.assets.get(sheet_handle.handle()) {
             debug!("Applying style {}", sheet.path());
 
             for rule in sheet.iter() {
-                let entities = select_entities(
-                    entity,
-                    children,
-                    &rule.selector,
-                    world,
-                    &css_query,
-                    registry,
-                );
+                let entities =
+                    select_entities(entity, children, &rule.selector, world, &params, registry);
 
                 debug!(
                     "Applying rule ({}) on {} entities",
@@ -220,71 +228,28 @@ fn get_children_recursively(
         .collect()
 }
 
-pub trait RegisterComponentSelector {
-    fn register_component_selector<T>(&mut self, name: &'static str)
-    where
-        T: Component;
-}
-
-impl RegisterComponentSelector for bevy::prelude::App {
-    fn register_component_selector<T>(&mut self, name: &'static str)
-    where
-        T: Component,
-    {
-        let system_state = SystemState::<Query<Entity, With<T>>>::new(&mut self.world);
-        let boxed_state = Box::new(system_state);
-
-        self.world
-            .get_resource_or_insert_with::<ComponentFilterRegistry>(|| {
-                ComponentFilterRegistry(Default::default())
-            })
-            .0
-            .insert(name, boxed_state);
-    }
-}
-
-trait ComponentFilter {
-    fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]>;
-}
-
-impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity, With<T>>> {
-    fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]> {
-        self.get(world).iter().collect()
-    }
-}
-
-#[derive(Default)]
-pub(crate) struct ComponentFilterRegistry(
-    HashMap<&'static str, Box<dyn ComponentFilter + Send + Sync>>,
-);
-
-pub(crate) struct PrepareState<'w, 's>(
-    SystemState<(
-        Res<'w, Assets<CssRules>>,
-        Query<
-            'w,
-            's,
-            (Entity, Option<&'static Children>, &'static StyleSheet),
-            Changed<StyleSheet>,
-        >,
-        CssQueryParam<'w, 's>,
-    )>,
-);
-
-impl<'w, 's> PrepareState<'w, 's> {
-    pub fn new(world: &mut World) -> Self {
-        Self(SystemState::new(world))
-    }
-}
-
-pub(crate) fn prepare(world: &mut World) {
-    world.resource_scope(|world, mut state: Mut<PrepareState>| {
-        world.resource_scope(|world, mut registry: Mut<ComponentFilterRegistry>| {
-            let (sheets, q_nodes, css_query) = state.0.get(world);
-            let state = prepare_state(world, sheets, q_nodes, css_query, &mut registry);
-            if state.is_empty() == false {
-                world.insert_resource(state);
+/// Auto reapply style sheets when hot reloading is enabled
+pub(crate) fn hot_reload_style_sheets(
+    mut assets_events: EventReader<AssetEvent<CssRules>>,
+    mut q_sheets: Query<&mut StyleSheet>,
+) {
+    for evt in assets_events.iter() {
+        match evt {
+            AssetEvent::Modified { handle } => {
+                q_sheets
+                    .iter_mut()
+                    .filter(|sheet| sheet.handle() == handle)
+                    .for_each(|mut sheet| sheet.refresh());
             }
-        });
-    });
+            _ => (),
+        }
+    }
+}
+
+/// Clear temporary state
+pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
+    if sheet_rule.len() > 0 {
+        debug!("Finished applying style sheet.");
+        sheet_rule.clear();
+    }
 }
