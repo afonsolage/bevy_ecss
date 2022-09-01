@@ -427,6 +427,39 @@ mod text {
             components.alignment.horizontal = cache.unwrap();
         }
     }
+
+    #[derive(Default)]
+    pub(crate) struct TextContentProperty;
+
+    impl Property for TextContentProperty {
+        type Cache = String;
+        type Components = &'static mut Text;
+        type Filters = With<Node>;
+
+        fn name() -> &'static str {
+            "text-content"
+        }
+
+        fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+            if let Some(content) = values.string() {
+                Ok(content)
+            } else {
+                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            }
+        }
+
+        fn apply<'w>(
+            cache: &Self::Cache,
+            mut components: QueryItem<Self::Components>,
+            _asset_server: &AssetServer,
+            _commands: &mut Commands,
+        ) {
+            components
+                .sections
+                .iter_mut()
+                .for_each(|section| section.value = cache.clone());
+        }
+    }
 }
 
 #[derive(Default)]

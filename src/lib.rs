@@ -89,7 +89,7 @@ fn register_component_selector(app: &mut bevy::prelude::App) {
     app.register_component_selector::<UiColor>("ui-color");
     app.register_component_selector::<Text>("text");
     app.register_component_selector::<Button>("button");
-    app.register_component_selector::<Node>("button");
+    app.register_component_selector::<Node>("node");
     app.register_component_selector::<Style>("style");
     app.register_component_selector::<UiImage>("ui-image");
     app.register_component_selector::<Interaction>("interaction");
@@ -133,18 +133,19 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<FontSizeProperty>();
     app.register_property::<VerticalAlignProperty>();
     app.register_property::<HorizontalAlignProperty>();
+    app.register_property::<TextContentProperty>();
 
     app.register_property::<UiColorProperty>();
 }
 
 pub trait RegisterComponentSelector {
-    fn register_component_selector<T>(&mut self, name: &'static str)
+    fn register_component_selector<T>(&mut self, name: &'static str) -> &mut Self
     where
         T: Component;
 }
 
 impl RegisterComponentSelector for bevy::prelude::App {
-    fn register_component_selector<T>(&mut self, name: &'static str)
+    fn register_component_selector<T>(&mut self, name: &'static str) -> &mut Self
     where
         T: Component,
     {
@@ -157,17 +158,19 @@ impl RegisterComponentSelector for bevy::prelude::App {
             })
             .0
             .insert(name, boxed_state);
+
+        self
     }
 }
 
 pub trait RegisterProperty {
-    fn register_property<T>(&mut self)
+    fn register_property<T>(&mut self) -> &mut Self
     where
         T: Property + 'static;
 }
 
 impl RegisterProperty for bevy::prelude::App {
-    fn register_property<T>(&mut self)
+    fn register_property<T>(&mut self) -> &mut Self
     where
         T: Property + 'static,
     {
@@ -177,5 +180,7 @@ impl RegisterProperty for bevy::prelude::App {
                 .before(EcssSystem::Cleanup)
                 .after(EcssSystem::Prepare), // .with_run_criteria(T::have_property)
         );
+
+        self
     }
 }

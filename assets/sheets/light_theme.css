@@ -1,0 +1,70 @@
+#ui-root {
+    background-color: #b8b6b6
+}
+
+#left-border {
+    margin: 0px;
+    border: 0px;
+    padding: 5px;
+    background-color: #dddddd;
+}
+
+#ui-root #left-bg {
+    display: flex;
+    background-color: darkgray;
+}
+
+#right-border {
+    background-color: #a5a1a1;
+}
+
+#left-bg text {
+    color: #252525
+}
+
+#right-list {
+    height: 50%;
+    background-color: #ebebeb;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: #252525
+}
+
+#mid-blue-border {
+    background-color: #28288d;
+}
+
+#mid-blue-border node {
+    background-color: #a5a1a1;
+}
+
+title {
+    font-size: 22;
+    vertical-align: bottom;
+    color: #3f3f3f;
+}
+
+.container .blue-bg {
+    background-color: #44004410;
+}
+
+#mid-bevy-logo-image {
+    background-color: #424242;
+}
+
+button {
+    align-items: center;
+    align-content: center;
+}
+
+button text {
+    width: 100%;
+    height: 25px;
+    left: 10px;
+    font-size: 20;
+    color: #3b3f3f;
+    text-content: "Change To Dark";
+}

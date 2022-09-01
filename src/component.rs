@@ -36,6 +36,10 @@ impl StyleSheet {
     pub fn handle(&self) -> &Handle<CssRules> {
         &self.sheet
     }
+
+    pub fn set(&mut self, handle: Handle<CssRules>) {
+        self.sheet = handle;
+    }
 }
 
 impl PartialEq for StyleSheet {
