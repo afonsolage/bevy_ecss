@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod component;
 mod parser;
 mod property;
@@ -17,19 +19,20 @@ use bevy::{
     text::Text,
     ui::{Interaction, Node, Style, UiColor, UiImage},
 };
-use component::{Class, StyleSheet};
-use prelude::StyleSheetAsset;
-use property::{Property, StyleSheetState};
+
+use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
 
 use system::{ComponentFilterRegistry, PrepareParams};
 
+pub use component::{Class, StyleSheet};
+pub use property::{Property, PropertyToken, PropertyValues};
+pub use selector::{Selector, SelectorElement};
+pub use stylesheet::{StyleRule, StyleSheetAsset};
+
 pub mod prelude {
     pub use super::component::{Class, StyleSheet};
-    pub use super::property::{Property, PropertyToken, PropertyValues};
-    pub use super::selector::{Selector, SelectorElement};
-    pub use super::stylesheet::{StyleSheetAsset, StyleRule};
-    pub use super::EcssError;
+    pub use super::stylesheet::StyleSheetAsset;
     pub use super::EcssPlugin;
     pub use super::RegisterComponentSelector;
     pub use super::RegisterProperty;
