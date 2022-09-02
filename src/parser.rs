@@ -80,13 +80,13 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
     ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
         let mut rule = StyleRule {
             selector: prelude,
-            tokens: Default::default(),
+            properties: Default::default(),
         };
 
         for property in DeclarationListParser::new(input, PropertyParser) {
             match property {
                 Ok((name, property)) => {
-                    rule.tokens.insert(name, property);
+                    rule.properties.insert(name, property);
                 }
                 Err((err, a)) => println!("Failed: {:?} ({})", err, a),
             }
@@ -241,7 +241,7 @@ mod tests {
             _ => assert!(false, "Should have a name selector"),
         }
 
-        assert!(rule.tokens.is_empty(), "Should have no token");
+        assert!(rule.properties.is_empty(), "Should have no token");
     }
 
     #[test]
@@ -261,7 +261,7 @@ mod tests {
             _ => assert!(false, "Should have a class selector"),
         }
 
-        assert!(rule.tokens.is_empty(), "Should have no token");
+        assert!(rule.properties.is_empty(), "Should have no token");
     }
 
     #[test]
@@ -281,7 +281,7 @@ mod tests {
             _ => assert!(false, "Should have a class selector"),
         }
 
-        assert!(rule.tokens.is_empty(), "Should have no token");
+        assert!(rule.properties.is_empty(), "Should have no token");
     }
 
     #[test]
@@ -314,7 +314,7 @@ mod tests {
                 assert_eq!(expected, **element);
             });
 
-        assert!(rule.tokens.is_empty(), "Should have no token");
+        assert!(rule.properties.is_empty(), "Should have no token");
     }
 
     #[test]
@@ -344,7 +344,7 @@ mod tests {
                 assert_eq!(expected, **element);
             });
 
-        assert!(rule.tokens.is_empty(), "Should have no token");
+        assert!(rule.properties.is_empty(), "Should have no token");
     }
 
     #[test]
@@ -383,6 +383,17 @@ mod tests {
                     });
             });
 
-        assert!(rule.tokens.is_empty(), "Should have no token");
+        assert!(rule.properties.is_empty(), "Should have no properties");
+    }
+
+    
+    #[test]
+    fn parse_single_token() {
+        let rules = StyleSheetParser::parse("a {b: c}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+
+        // rule.properties
     }
 }
