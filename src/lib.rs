@@ -38,13 +38,19 @@ pub mod prelude {
     pub use super::RegisterProperty;
 }
 
+/// Errors which can happens while parsing `css` into [`Selector`] or [`Property`].
+// TODO: Change this to Cow<'static, str>
 #[derive(Debug)]
 pub enum EcssError {
+    /// An unsupported selector was found on a style sheet rule.
     UnsupportedSelector,
-    // TODO: Change this to Cow<'static, str>
+    /// An unsupported property was found on a style sheet rule.
     UnsupportedProperty(String),
+    /// An invalid property value was found on a style sheet rule.
     InvalidPropertyValue(String),
+    /// An invalid selector was found on a style sheet rule.
     InvalidSelector,
+    /// An unexpected token was found on a style sheet rule.
     UnexpectedToken(String),
 }
 
@@ -64,12 +70,20 @@ impl Display for EcssError {
     }
 }
 
+/// System labels used by `bevy_ecss` systems
+/// Note that there is also an exclusive system which isn't labeled, but runs on [`CoreStage::Update`]
 #[derive(SystemLabel)]
 pub enum EcssSystem {
+    /// All [`Property`] implementation `systems` are run on this system.
+    /// Those stages runs on [`CoreStage::Update`]
     Apply,
+    /// Clears the [`StyleSheetState`] used by [`Property`] implementation `systems`.
+    /// This system runs on [`CoreStage::PostUpdate`]
     Cleanup,
 }
 
+/// Plugin which add all types, assets, systems and internal resources needed by `bevy_ecss`.
+/// You must add this plugin in order to use `bevy_ecss`.
 #[derive(Default)]
 pub struct EcssPlugin;
 
@@ -98,6 +112,7 @@ impl Plugin for EcssPlugin {
         }
     }
 }
+
 fn register_component_selector(app: &mut bevy::prelude::App) {
     app.register_component_selector::<UiColor>("ui-color");
     app.register_component_selector::<Text>("text");
@@ -151,6 +166,33 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<UiColorProperty>();
 }
 
+/// Utility trait which adds the [`register_component_selector`] function on [`App`](bevy::prelude::App) to add a new component selector.
+///
+/// You can register any component you want and name it as you like.
+/// It's advised to use `lower-case` and `kebab-case` to match CSS coding style.
+///
+/// # Examples
+///
+/// ```
+/// # use bevy::prelude::*;
+/// use bevy_ecss::prelude::*;
+///
+/// #[derive(Component)]
+/// struct FancyPants;
+///
+/// fn main() {
+///     App::new()
+///         .add_plugins(DefaultPlugins)
+///         .add_plugin(EcssPlugin);
+///         // You may use it as selector now, like
+///         // fancy-pants {
+///         //      background-color: pink;
+///         // }
+///         .register_component_selector::<FancyPants>("fancy-pants")
+///         .run();
+/// }
+///
+/// ```
 pub trait RegisterComponentSelector {
     fn register_component_selector<T>(&mut self, name: &'static str) -> &mut Self
     where
@@ -176,6 +218,9 @@ impl RegisterComponentSelector for bevy::prelude::App {
     }
 }
 
+/// Utility trait which adds the [`register_property`] function on [`App`](bevy::prelude::App) to add a [`Property`] parser.
+///
+/// You need to register only custom properties which implements [`Property`] trait.
 pub trait RegisterProperty {
     fn register_property<T>(&mut self) -> &mut Self
     where
