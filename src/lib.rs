@@ -11,8 +11,8 @@ use bevy::{
     asset::AssetServerSettings,
     ecs::system::SystemState,
     prelude::{
-        AddAsset, Button, Component, CoreStage, Entity, IntoExclusiveSystem,
-        ParallelSystemDescriptorCoercion, Plugin, Query, SystemLabel, With,
+        AddAsset, Button, Component, CoreStage, Entity, ExclusiveSystemDescriptorCoercion,
+        IntoExclusiveSystem, ParallelSystemDescriptorCoercion, Plugin, Query, SystemLabel, With,
     },
     text::Text,
     ui::{Interaction, Node, Style, UiColor, UiImage},
@@ -24,7 +24,7 @@ pub use component::{Class, StyleSheet};
 pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::{CssRules, StyleRule};
-use system::{ComponentFilterRegistry, PrepareState};
+use system::{ComponentFilterRegistry, PrepareParams};
 
 #[derive(Debug)]
 pub enum EcssError {
@@ -54,7 +54,6 @@ impl Display for EcssError {
 
 #[derive(SystemLabel)]
 pub enum EcssSystem {
-    Prepare,
     Apply,
     Cleanup,
 }
@@ -70,15 +69,13 @@ impl Plugin for EcssPlugin {
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system(system::prepare.exclusive_system())
-            .add_system(
-                system::clear_state
-                    .label(EcssSystem::Cleanup)
-                    .after(EcssSystem::Apply)
-                    .after(EcssSystem::Prepare),
+            .add_system(system::prepare.exclusive_system().at_start())
+            .add_system_to_stage(
+                CoreStage::PostUpdate,
+                system::clear_state.label(EcssSystem::Cleanup),
             );
 
-        let prepared_state = PrepareState::new(&mut app.world);
+        let prepared_state = PrepareParams::new(&mut app.world);
         app.insert_resource(prepared_state);
 
         register_component_selector(app);
@@ -181,8 +178,7 @@ impl RegisterProperty for bevy::prelude::App {
         self.add_system(
             T::apply_system
                 .label(EcssSystem::Apply)
-                .before(EcssSystem::Cleanup)
-                .after(EcssSystem::Prepare), // .with_run_criteria(T::have_property)
+                .with_run_criteria(T::have_property),
         );
 
         self

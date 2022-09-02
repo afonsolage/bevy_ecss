@@ -97,26 +97,26 @@ mod style {
     }
 
     // Val properties
-    impl_style_single_value!("left", LeftProperty, Val, single_val, position.left);
-    impl_style_single_value!("right", RightProperty, Val, single_val, position.right);
-    impl_style_single_value!("top", TopProperty, Val, single_val, position.top);
-    impl_style_single_value!("bottom", BottomProperty, Val, single_val, position.bottom);
+    impl_style_single_value!("left", LeftProperty, Val, val, position.left);
+    impl_style_single_value!("right", RightProperty, Val, val, position.right);
+    impl_style_single_value!("top", TopProperty, Val, val, position.top);
+    impl_style_single_value!("bottom", BottomProperty, Val, val, position.bottom);
 
-    impl_style_single_value!("width", WidthProperty, Val, single_val, size.width);
-    impl_style_single_value!("height", HeightProperty, Val, single_val, size.height);
+    impl_style_single_value!("width", WidthProperty, Val, val, size.width);
+    impl_style_single_value!("height", HeightProperty, Val, val, size.height);
 
     impl_style_single_value!(
         "min-width",
         MinWidthProperty,
         Val,
-        single_val,
+        val,
         min_size.width
     );
     impl_style_single_value!(
         "min-height",
         MinHeightProperty,
         Val,
-        single_val,
+        val,
         min_size.height
     );
 
@@ -124,14 +124,14 @@ mod style {
         "max-width",
         MaxWidthProperty,
         Val,
-        single_val,
+        val,
         max_size.width
     );
     impl_style_single_value!(
         "max-height",
         MaxHeightProperty,
         Val,
-        single_val,
+        val,
         max_size.height
     );
 
@@ -139,16 +139,16 @@ mod style {
         "flex-basis",
         FlexBasisProperty,
         Val,
-        single_val,
+        val,
         max_size.height
     );
 
-    impl_style_single_value!("flex-grow", FlexGrowProperty, f32, single_f32, flex_grow);
+    impl_style_single_value!("flex-grow", FlexGrowProperty, f32, f32, flex_grow);
     impl_style_single_value!(
         "flex-shrink",
         FlexShrinkProperty,
         f32,
-        single_f32,
+        f32,
         flex_shrink
     );
 
@@ -183,7 +183,7 @@ mod style {
                 }
 
                 fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
-                    if let Some(identifier) = values.single_identifier() {
+                    if let Some(identifier) = values.identifier() {
                         use $cache::*;
                         // Chain if-let when `cargofmt` supports it
                         // https://github.com/rust-lang/rustfmt/pull/5203
@@ -364,7 +364,7 @@ mod text {
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
-            if let Some(size) = values.single_f32() {
+            if let Some(size) = values.f32() {
                 Ok(size)
             } else {
                 Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
@@ -399,7 +399,7 @@ mod text {
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
-            if let Some(ident) = values.single_identifier() {
+            if let Some(ident) = values.identifier() {
                 match ident {
                     "top" => return Ok(Some(VerticalAlign::Top)),
                     "center" => return Ok(Some(VerticalAlign::Center)),
@@ -435,7 +435,7 @@ mod text {
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
-            if let Some(ident) = values.single_identifier() {
+            if let Some(ident) = values.identifier() {
                 match ident {
                     "left" => return Ok(Some(HorizontalAlign::Left)),
                     "center" => return Ok(Some(HorizontalAlign::Center)),

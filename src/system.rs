@@ -1,8 +1,8 @@
 use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
-        debug, error, AssetEvent, Assets, Changed, Children, Component, Entity, EventReader, Mut,
-        Name, Query, Res, ResMut, With, World,
+        debug, error, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity,
+        EventReader, Mut, Name, Query, Res, ResMut, With, World,
     },
     ui::Node,
     utils::HashMap,
@@ -45,22 +45,26 @@ pub(crate) struct CssQueryParam<'w, 's> {
     children: Query<'w, 's, &'static Children, With<Node>>,
 }
 
-pub(crate) struct PrepareState<'w, 's>(SystemState<CssQueryParam<'w, 's>>);
+#[derive(Deref, DerefMut)]
+pub(crate) struct PrepareParams<'w, 's>(SystemState<CssQueryParam<'w, 's>>);
 
-impl<'w, 's> PrepareState<'w, 's> {
+impl<'w, 's> PrepareParams<'w, 's> {
     pub fn new(world: &mut World) -> Self {
         Self(SystemState::new(world))
     }
 }
 
 pub(crate) fn prepare(world: &mut World) {
-    world.resource_scope(|world, mut state: Mut<PrepareState>| {
+    world.resource_scope(|world, mut params: Mut<PrepareParams>| {
         world.resource_scope(|world, mut registry: Mut<ComponentFilterRegistry>| {
-            let css_query = state.0.get(world);
+            let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
-            if state.is_empty() == false {
-                world.insert_resource(state);
-            }
+
+            let mut state_res = world
+                .get_resource_mut::<StyleSheetState>()
+                .expect("Should be added by plugin");
+
+            *state_res = state;
         });
     });
 }
