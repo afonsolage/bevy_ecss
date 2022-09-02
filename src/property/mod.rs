@@ -21,7 +21,7 @@ use crate::{selector::Selector, CssRules, EcssError};
 mod colors;
 pub(crate) mod impls;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum PropertyToken {
     Percentage(f32),
     Dimension(f32),
@@ -32,7 +32,7 @@ pub enum PropertyToken {
 }
 
 #[derive(Debug, Default, Clone, Deref)]
-pub struct PropertyValues(pub SmallVec<[PropertyToken; 8]>);
+pub struct PropertyValues(pub(crate) SmallVec<[PropertyToken; 8]>);
 
 impl PropertyValues {
     fn string(&self) -> Option<String> {

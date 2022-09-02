@@ -35,7 +35,7 @@ impl CssRules {
         self.rules
             .iter()
             .find(|&rule| &rule.selector == selector)
-            .map(|rule| rule.tokens.get(name).map(|prop| &*prop))
+            .map(|rule| rule.properties.get(name).map(|prop| &*prop))
             .flatten()
     }
 
@@ -59,12 +59,12 @@ impl CssRules {
 #[derive(Debug, Clone)]
 pub struct StyleRule {
     pub selector: Selector,
-    pub tokens: HashMap<String, PropertyValues>,
+    pub properties: HashMap<String, PropertyValues>,
 }
 
 impl StyleRule {
     pub(crate) fn has_property(&self, name: &str) -> bool {
-        self.tokens.keys().any(|str| str == name)
+        self.properties.keys().any(|str| str == name)
     }
 }
 

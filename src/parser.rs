@@ -194,6 +194,8 @@ fn parse_values<'i, 'tt>(
 
 #[cfg(test)]
 mod tests {
+    use crate::PropertyToken;
+
     use super::*;
 
     #[test]
@@ -386,14 +388,122 @@ mod tests {
         assert!(rule.properties.is_empty(), "Should have no properties");
     }
 
-    
     #[test]
     fn parse_single_token() {
         let rules = StyleSheetParser::parse("a {b: c}");
         assert_eq!(rules.len(), 1, "Should have a single rule");
 
-        let rule = &rules[0];
+        let properties = &rules[0].properties;
 
-        // rule.properties
+        assert_eq!(properties.len(), 1, "Should have a single property");
+        assert!(
+            properties.contains_key(&"b".to_string()),
+            "Should have a property named \"b\""
+        );
+
+        let values = properties.get(&"b".to_string()).unwrap();
+
+        assert_eq!(values.len(), 1, "Should have a single property value");
+
+        match &values[0] {
+            PropertyToken::Identifier(ident) => assert_eq!(ident, "c"),
+            _ => assert!(
+                false,
+                "Should have a property value of type identifier token"
+            ),
+        }
+    }
+
+    #[test]
+    fn parse_multiple_complex_properties() {
+        let rules = StyleSheetParser::parse(
+            r#"a {
+            b: c;
+            d: 0px;
+            e: #f; 
+            g: h i j; 
+            k-k: 100%;
+            l: 15.3px 3%;
+            m: 12.9;
+            n: "str";
+            o: p q #r #s "t" 1 45.67% 33px;
+        }"#,
+        );
+
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let properties = &rules[0].properties;
+
+        use PropertyToken::*;
+        let expected = [
+            ("b", vec![Identifier("c".to_string())]),
+            ("d", vec![Dimension(0.0)]),
+            ("e", vec![Hash("f".to_string())]),
+            (
+                "g",
+                vec![
+                    Identifier("h".to_string()),
+                    Identifier("i".to_string()),
+                    Identifier("j".to_string()),
+                ],
+            ),
+            ("k-k", vec![Percentage(100.0)]),
+            ("l", vec![Dimension(15.3), Percentage(3.0)]),
+            ("m", vec![Number(12.9)]),
+            ("n", vec![String("str".to_string())]),
+            (
+                "o",
+                vec![
+                    Identifier("p".to_string()),
+                    Identifier("q".to_string()),
+                    Hash("r".to_string()),
+                    Hash("s".to_string()),
+                    String("t".to_string()),
+                    Number(1.0),
+                    Percentage(45.67),
+                    Dimension(33.0),
+                ],
+            ),
+        ];
+
+        assert_eq!(properties.len(), expected.len(), "{:?}", properties);
+        expected.into_iter().for_each(|(name, values)| {
+            assert!(properties.contains_key(name));
+            values
+                .iter()
+                .zip(properties.get(name).unwrap().iter())
+                .for_each(|(expected, token)| {
+                    assert_eq!(token, expected);
+                })
+        });
+    }
+
+    #[test]
+    fn parse_multiple_rules() {
+        let rules = StyleSheetParser::parse(r#"a{a:a}a{a:a}a{a:a}a{a:a}"#);
+
+        assert_eq!(rules.len(), 4, "Should have 4 rules");
+
+        for rule in rules {
+            match rule.selector.get_parent_tree()[0][0] {
+                SelectorElement::Component(a) => assert_eq!(a, "a"),
+                _ => assert!(false, "Should have only a single component \"a\""),
+            }
+
+            match rule
+                .properties
+                .get(&"a".to_string())
+                .expect("Should have a single property named \"a\"")
+                .iter()
+                .next()
+                .expect("Should have a single property value")
+            {
+                PropertyToken::Identifier(a) => assert_eq!(a, "a"),
+                _ => assert!(
+                    false,
+                    "Should have only a single property value of type identifier"
+                ),
+            }
+        }
     }
 }
