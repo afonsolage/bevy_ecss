@@ -273,20 +273,38 @@ pub struct StyleSheetState(HashMap<Handle<CssRules>, SelectedEntities>);
 /// like only inserting [`TextAlignment`](bevy::prelude::TextAlignment) if the entity also has a [`Text`](bevy::prelude::Text) component.
 ///  Check [`WorldQuery`] for more.
 ///
-/// These are the functions required to be implemented:
+/// These are tree functions required to be implemented:
 /// - [`name`](Property::name) indicates which property name should matched for.
 /// - [`parse`](Property::parse) parses the [`PropertyValues`] into the [`Cache`](Property::Cache) value to be reused across multiple entities.
+/// - [`apply`](Property::apply) applies on the given [`Components`](Property::Components) the [`Cache`](Property::Cache) value.
+/// Additionally, an [`AssetServer`] and [`Commands`] parameters are provided for more complex use cases.
 ///
 /// Also, there one function which have default implementations:
-/// - [`have_property`](Property::have_property) is a [`run criteria`](bevy::prelude::RunCriteria)
+/// - [`apply_system`](Property::apply_system) is a [`system`](https://docs.rs/bevy_ecs/0.8.1/bevy_ecs/system/index.html) which interacts with
+/// [ecs world](`bevy::prelude::World`) and call the [`apply`](Property::apply) function on every matched entity.
 pub trait Property: Default + Sized + Send + Sync + 'static {
+    /// The cached value type to be applied by property.
     type Cache: Default + Any + Send + Sync;
+    /// Which components should be queried when applying the modification. Check [`WorldQuery`] for more.
     type Components: WorldQuery;
+    /// Filters conditions to be applied when querying entities by this property. Check [`WorldQuery`] for more.
     type Filters: WorldQuery;
 
+    /// Indicates which property name should matched for. Must match the same property name as on `css` file.
+    ///
+    /// For compliance, use always `lower-case` and `kebab-case` names.
     fn name() -> &'static str;
+
+    /// Parses the [`PropertyValues`] into the [`Cache`](Property::Cache) value to be reused across multiple entities.
+    ///
+    /// This function is called only once, on the first time a matching property is found while applying style rule.
+    /// If an error is returned, it is also cached so no more attempt are made.
     fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError>;
 
+    /// Applies on the given [`Components`](Property::Components) the [`Cache`](Property::Cache) value.
+    /// Additionally, an [`AssetServer`] and [`Commands`] parameters are provided for more complex use cases.
+    ///
+    /// If mutability is desired while applying the changes, declare [`Components`](Property::Components) as mutable.
     fn apply<'w>(
         cache: &Self::Cache,
         components: QueryItem<Self::Components>,
@@ -294,6 +312,10 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         commands: &mut Commands,
     );
 
+    /// The [`system`](https://docs.rs/bevy_ecs/0.8.1/bevy_ecs/system/index.html) which interacts with
+    /// [ecs world](`bevy::prelude::World`) and call [`apply`](Property::apply) function on every matched entity.
+    ///
+    /// The default implementation will cover most use cases, by just implementing [`apply`](Property::apply)
     fn apply_system(
         mut local: Local<PropertyMeta<Self>>,
         assets: Res<Assets<CssRules>>,
