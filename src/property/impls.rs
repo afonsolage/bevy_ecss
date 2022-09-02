@@ -7,13 +7,19 @@ use super::{Property, PropertyValues};
 pub(crate) use style::*;
 pub(crate) use text::*;
 
+/// Impls for `bevy_ui` [`Style`] component
 mod style {
     use super::*;
-
+    /// Implements a new property for [`Style`] component which expects a rect value.
     macro_rules! impl_style_rect {
         ($name:expr, $struct:ident, $style_prop:ident$(.$style_field:ident)*) => {
+            #[doc = "Applies the `"]
+            #[doc = $name]
+            #[doc = "` property on [Style::"]
+            #[doc = stringify!($style_prop)]
+            $(#[doc = concat!("::",stringify!($style_field))])*
+            #[doc = "](`Style`) field of all sections on matched [`Style`] components."]
             #[derive(Default)]
-            /// [`Property`](crate::Property) implementation for [`Style`]
             pub(crate) struct $struct;
 
             impl Property for $struct {
@@ -49,10 +55,16 @@ mod style {
     impl_style_rect!("padding", PaddingProperty, padding);
     impl_style_rect!("border", BorderProperty, border);
 
+    /// Implements a new property for [`Style`] component which expects a single value.
     macro_rules! impl_style_single_value {
         ($name:expr, $struct:ident, $cache:ty, $parse_func:ident, $style_prop:ident$(.$style_field:ident)*) => {
+            #[doc = "Applies the `"]
+            #[doc = $name]
+            #[doc = "` property on [Style::"]
+            #[doc = stringify!($style_prop)]
+            $(#[doc = concat!("::",stringify!($style_field))])*
+            #[doc = "](`Style`) field of all sections on matched [`Style`] components."]
             #[derive(Default)]
-            /// [`Property`](crate::Property) implementation for [`Style`]
             pub(crate) struct $struct;
 
             impl Property for $struct {
@@ -148,10 +160,17 @@ mod style {
         aspect_ratio
     );
 
+    /// Implements a new property for [`Style`] component which expects an enum.
     macro_rules! impl_style_enum {
         ($cache:ty, $name:expr, $struct:ident, $style_prop:ident, $($prop:expr => $variant:expr),+$(,)?) => {
+            #[doc = "Applies the `"]
+            #[doc = $name]
+            #[doc = "` property on [Style::"]
+            #[doc = stringify!($style_prop)]
+            #[doc = "]("]
+            #[doc = concat!("`", stringify!($cache), "`")]
+            #[doc = ") field of all sections on matched [`Style`] components."]
             #[derive(Default)]
-            /// [`Property`](crate::Property) implementation for [`Style`]
             pub(crate) struct $struct;
 
             impl Property for $struct {
@@ -259,11 +278,14 @@ mod style {
     );
 }
 
+/// Impls for `bevy_text` [`Text`] component
 mod text {
     use super::*;
 
+    /// Applies the `color` property on [`TextStyle::color`](`TextStyle`) field of all sections on matched [`Text`] components.
     #[derive(Default)]
     pub(crate) struct FontColorProperty;
+
     impl Property for FontColorProperty {
         type Cache = Color;
         type Components = &'static mut Text;
@@ -294,6 +316,7 @@ mod text {
         }
     }
 
+    /// Applies the `font` property on [`TextStyle::font`](`TextStyle`) property of all sections on matched [`Text`] components.
     #[derive(Default)]
     pub(crate) struct FontProperty;
 
@@ -327,6 +350,7 @@ mod text {
         }
     }
 
+    /// Applies the `font-size` property on [`TextStyle::font_size`](`TextStyle`) property of all sections on matched [`Text`] components.
     #[derive(Default)]
     pub(crate) struct FontSizeProperty;
 
@@ -360,10 +384,12 @@ mod text {
         }
     }
 
+    /// Applies the `vertical-align` property on [`TextAlignment::vertical`](`TextAlignment`) property of matched [`Text`] components.
     #[derive(Default)]
     pub(crate) struct VerticalAlignProperty;
 
     impl Property for VerticalAlignProperty {
+        // Using Option since Cache must impl Default, which VerticalAlign doesn't
         type Cache = Option<VerticalAlign>;
         type Components = &'static mut Text;
         type Filters = With<Node>;
@@ -390,14 +416,16 @@ mod text {
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
-            components.alignment.vertical = cache.unwrap();
+            components.alignment.vertical = cache.expect("Should always have a inner value");
         }
     }
 
+    /// Applies the `text-align` property on [`TextAlignment::horizontal`](`TextAlignment`) property of matched [`Text`] components.
     #[derive(Default)]
     pub(crate) struct HorizontalAlignProperty;
 
     impl Property for HorizontalAlignProperty {
+        // Using Option since Cache must impl Default, which HorizontalAlign doesn't
         type Cache = Option<HorizontalAlign>;
         type Components = &'static mut Text;
         type Filters = With<Node>;
@@ -424,10 +452,11 @@ mod text {
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
-            components.alignment.horizontal = cache.unwrap();
+            components.alignment.horizontal = cache.expect("Should always have a inner value");
         }
     }
 
+    /// Apply a custom `text-content` which updates [`TextSection::value`](`TextSection`) of all sections on matched [`Text`] components
     #[derive(Default)]
     pub(crate) struct TextContentProperty;
 
@@ -457,11 +486,13 @@ mod text {
             components
                 .sections
                 .iter_mut()
+                // TODO: Maybe change this so each line break is a new section
                 .for_each(|section| section.value = cache.clone());
         }
     }
 }
 
+/// Applies the `background-color` property on [`UiColor`] component of matched entities.
 #[derive(Default)]
 pub(crate) struct UiColorProperty;
 
