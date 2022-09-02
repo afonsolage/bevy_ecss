@@ -30,6 +30,7 @@ pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::{StyleRule, StyleSheetAsset};
 
+/// use `bevy_ecs::prelude::*;` to import common components, and plugins and utility functions.
 pub mod prelude {
     pub use super::component::{Class, StyleSheet};
     pub use super::stylesheet::StyleSheetAsset;
@@ -77,7 +78,7 @@ pub enum EcssSystem {
     /// All [`Property`] implementation `systems` are run on this system.
     /// Those stages runs on [`CoreStage::Update`]
     Apply,
-    /// Clears the [`StyleSheetState`] used by [`Property`] implementation `systems`.
+    /// Clears the internal state used by [`Property`] implementation `systems`.
     /// This system runs on [`CoreStage::PostUpdate`]
     Cleanup,
 }
@@ -166,7 +167,7 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<UiColorProperty>();
 }
 
-/// Utility trait which adds the [`register_component_selector`] function on [`App`](bevy::prelude::App) to add a new component selector.
+/// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector) function on [`App`](bevy::prelude::App) to add a new component selector.
 ///
 /// You can register any component you want and name it as you like.
 /// It's advised to use `lower-case` and `kebab-case` to match CSS coding style.
@@ -218,7 +219,7 @@ impl RegisterComponentSelector for bevy::prelude::App {
     }
 }
 
-/// Utility trait which adds the [`register_property`] function on [`App`](bevy::prelude::App) to add a [`Property`] parser.
+/// Utility trait which adds the [`register_property`](RegisterProperty::register_property) function on [`App`](bevy::prelude::App) to add a [`Property`] parser.
 ///
 /// You need to register only custom properties which implements [`Property`] trait.
 pub trait RegisterProperty {
