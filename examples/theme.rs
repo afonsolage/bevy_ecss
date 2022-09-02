@@ -1,5 +1,5 @@
 use bevy::{asset::AssetServerSettings, prelude::*, ui::FocusPolicy};
-use bevy_ecss::prelude::{Class, CssRules, EcssPlugin, RegisterComponentSelector, StyleSheet};
+use bevy_ecss::prelude::{Class, StyleSheetAsset, EcssPlugin, RegisterComponentSelector, StyleSheet};
 use bevy_inspector_egui::WorldInspectorPlugin;
 
 #[derive(Component, Debug, Default, Reflect)]
@@ -24,8 +24,8 @@ fn main() {
 
 struct Themes {
     pub root: Entity,
-    pub dark: Handle<CssRules>,
-    pub light: Handle<CssRules>,
+    pub dark: Handle<StyleSheetAsset>,
+    pub light: Handle<StyleSheetAsset>,
 }
 
 fn change_theme(

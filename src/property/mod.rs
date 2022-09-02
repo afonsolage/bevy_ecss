@@ -13,7 +13,7 @@ use bevy::{
 use cssparser::Token;
 use smallvec::SmallVec;
 
-use crate::{selector::Selector, CssRules, EcssError};
+use crate::{selector::Selector, StyleSheetAsset, EcssError};
 
 mod colors;
 pub(crate) mod impls;
@@ -224,7 +224,7 @@ impl<T: Property> PropertyMeta<T> {
     /// Gets a cached property value or try to parse.
     ///
     /// If there are some error while parsing, a [`CacheState::Error`] is stored to avoid trying to parse again on next try.
-    fn get_or_parse(&mut self, rules: &CssRules, selector: &Selector) -> &CacheState<T::Cache> {
+    fn get_or_parse(&mut self, rules: &StyleSheetAsset, selector: &Selector) -> &CacheState<T::Cache> {
         let cached_properties = self.entry(rules.hash()).or_default();
 
         // Avoid using HashMap::entry since it requires ownership of key
@@ -253,9 +253,9 @@ impl<T: Property> PropertyMeta<T> {
 #[derive(Debug, Clone, Default, Deref, DerefMut)]
 pub struct SelectedEntities(HashMap<Selector, SmallVec<[Entity; 8]>>);
 
-/// Maps sheets for each [`CssRules`].
+/// Maps sheets for each [`StyleSheetAsset`].
 #[derive(Debug, Clone, Default, Deref, DerefMut)]
-pub struct StyleSheetState(HashMap<Handle<CssRules>, SelectedEntities>);
+pub struct StyleSheetState(HashMap<Handle<StyleSheetAsset>, SelectedEntities>);
 
 /// Determines how a property should interact and modify the [ecs world](`bevy::prelude::World`).
 ///
@@ -318,7 +318,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     /// The default implementation will cover most use cases, by just implementing [`apply`](Property::apply)
     fn apply_system(
         mut local: Local<PropertyMeta<Self>>,
-        assets: Res<Assets<CssRules>>,
+        assets: Res<Assets<StyleSheetAsset>>,
         apply_sheets: Res<StyleSheetState>,
         mut q_nodes: Query<Self::Components, Self::Filters>,
         asset_server: Res<AssetServer>,

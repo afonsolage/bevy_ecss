@@ -13,7 +13,7 @@ use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
     property::StyleSheetState,
     selector::{Selector, SelectorElement},
-    CssRules,
+    StyleSheetAsset,
 };
 
 pub(crate) trait ComponentFilter {
@@ -33,7 +33,7 @@ pub(crate) struct ComponentFilterRegistry(
 
 #[derive(SystemParam)]
 pub(crate) struct CssQueryParam<'w, 's> {
-    assets: Res<'w, Assets<CssRules>>,
+    assets: Res<'w, Assets<StyleSheetAsset>>,
     nodes: Query<
         'w,
         's,
@@ -244,7 +244,7 @@ fn get_children_recursively(
 
 /// Auto reapply style sheets when hot reloading is enabled
 pub(crate) fn hot_reload_style_sheets(
-    mut assets_events: EventReader<AssetEvent<CssRules>>,
+    mut assets_events: EventReader<AssetEvent<StyleSheetAsset>>,
     mut q_sheets: Query<&mut StyleSheet>,
 ) {
     for evt in assets_events.iter() {

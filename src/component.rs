@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use bevy::prelude::{Component, Deref, Handle, Name, Reflect, ReflectComponent};
 
-use crate::CssRules;
+use crate::StyleSheetAsset;
 
 /// Sets the entities class to be matched by selectors in on`css`.
 ///
@@ -37,7 +37,7 @@ impl Class {
     }
 }
 
-/// Applied a [`CssRules`] asset on the entity which has this component.
+/// Applies a [`StyleSheetAsset`] on the entity which has this component.
 ///
 /// Note that style rules are applied only once when the component is added, or if the asset is changed
 /// and [hot_reloading](https://github.com/bevyengine/bevy/blob/main/examples/asset/hot_asset_reloading.rs) is enabled.
@@ -58,12 +58,12 @@ impl Class {
 #[derive(Component, Debug, Reflect, Clone, Default)]
 #[reflect(Component)]
 pub struct StyleSheet {
-    sheet: Handle<CssRules>,
+    sheet: Handle<StyleSheetAsset>,
 }
 
 impl StyleSheet {
     /// Creates a new [`StyleSheet`] from the given asset.
-    pub fn new(handle: Handle<CssRules>) -> Self {
+    pub fn new(handle: Handle<StyleSheetAsset>) -> Self {
         Self { sheet: handle }
     }
 
@@ -72,14 +72,14 @@ impl StyleSheet {
         // Just to trigger DerefMut
     }
 
-    /// Internal [`CssRules`] asset handle
-    pub fn handle(&self) -> &Handle<CssRules> {
+    /// Internal [`StyleSheetAsset`] handle
+    pub fn handle(&self) -> &Handle<StyleSheetAsset> {
         &self.sheet
     }
 
-    /// Change the internal [`CssRules`] asset handle.
+    /// Change the internal [`StyleSheetAsset`] handle.
     /// This will automatically trigger the systems to reapply the style sheet.
-    pub fn set(&mut self, handle: Handle<CssRules>) {
+    pub fn set(&mut self, handle: Handle<StyleSheetAsset>) {
         self.sheet = handle;
     }
 }

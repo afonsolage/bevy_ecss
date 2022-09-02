@@ -18,7 +18,7 @@ use bevy::{
     ui::{Interaction, Node, Style, UiColor, UiImage},
 };
 use component::{Class, StyleSheet};
-use prelude::CssRules;
+use prelude::StyleSheetAsset;
 use property::{Property, StyleSheetState};
 use stylesheet::StyleSheetLoader;
 
@@ -28,7 +28,7 @@ pub mod prelude {
     pub use super::component::{Class, StyleSheet};
     pub use super::property::{Property, PropertyToken, PropertyValues};
     pub use super::selector::{Selector, SelectorElement};
-    pub use super::stylesheet::{CssRules, StyleRule};
+    pub use super::stylesheet::{StyleSheetAsset, StyleRule};
     pub use super::EcssError;
     pub use super::EcssPlugin;
     pub use super::RegisterComponentSelector;
@@ -74,7 +74,7 @@ impl Plugin for EcssPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
-            .add_asset::<CssRules>()
+            .add_asset::<StyleSheetAsset>()
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
