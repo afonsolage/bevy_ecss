@@ -194,7 +194,7 @@ fn parse_values<'i, 'tt>(
 
 #[cfg(test)]
 mod tests {
-    use crate::PropertyToken;
+    use crate::property::PropertyToken;
 
     use super::*;
 

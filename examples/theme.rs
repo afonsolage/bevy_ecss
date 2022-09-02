@@ -1,5 +1,5 @@
 use bevy::{asset::AssetServerSettings, prelude::*, ui::FocusPolicy};
-use bevy_ecss::{Class, CssRules, EcssPlugin, RegisterComponentSelector, StyleSheet};
+use bevy_ecss::prelude::{Class, CssRules, EcssPlugin, RegisterComponentSelector, StyleSheet};
 use bevy_inspector_egui::WorldInspectorPlugin;
 
 #[derive(Component, Debug, Default, Reflect)]

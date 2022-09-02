@@ -17,14 +17,23 @@ use bevy::{
     text::Text,
     ui::{Interaction, Node, Style, UiColor, UiImage},
 };
-use property::StyleSheetState;
+use component::{Class, StyleSheet};
+use prelude::CssRules;
+use property::{Property, StyleSheetState};
 use stylesheet::StyleSheetLoader;
 
-pub use component::{Class, StyleSheet};
-pub use property::{Property, PropertyToken, PropertyValues};
-pub use selector::{Selector, SelectorElement};
-pub use stylesheet::{CssRules, StyleRule};
 use system::{ComponentFilterRegistry, PrepareParams};
+
+pub mod prelude {
+    pub use super::component::{Class, StyleSheet};
+    pub use super::property::{Property, PropertyToken, PropertyValues};
+    pub use super::selector::{Selector, SelectorElement};
+    pub use super::stylesheet::{CssRules, StyleRule};
+    pub use super::EcssError;
+    pub use super::EcssPlugin;
+    pub use super::RegisterComponentSelector;
+    pub use super::RegisterProperty;
+}
 
 #[derive(Debug)]
 pub enum EcssError {
