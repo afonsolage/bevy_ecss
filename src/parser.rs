@@ -114,13 +114,24 @@ fn parse_selector<'i, 'tt>(
                     elements.push(SelectorElement::Component(v.to_string()));
                 }
             }
-            IDHash(v) => elements.push(SelectorElement::Name(v.to_string())),
+            IDHash(v) => {
+                if v.is_empty() {
+                    return Err(parser.new_custom_error(EcssError::InvalidSelector));
+                } else {
+                    elements.push(SelectorElement::Name(v.to_string()));
+                }
+            }
             WhiteSpace(_) => elements.push(SelectorElement::Child),
             Delim(c) if *c == '.' => next_is_class = true,
             _ => {
-                println!("Unexpected token: {:?}", token);
+                let token = token.to_css_string();
+                return Err(parser.new_custom_error(EcssError::UnexpectedToken(token)));
             }
         }
+    }
+
+    if elements.is_empty() {
+        return Err(parser.new_custom_error(EcssError::InvalidSelector));
     }
 
     // Remove noise the trailing white spaces, if any
@@ -179,4 +190,199 @@ fn parse_values<'i, 'tt>(
     }
 
     Ok(values)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_empty() {
+        assert!(
+            StyleSheetParser::parse("").is_empty(),
+            "Should return an empty list of rules"
+        );
+        assert!(
+            StyleSheetParser::parse("{}").is_empty(),
+            "\"{{}}\" Should return an empty list of rules"
+        );
+        assert!(
+            StyleSheetParser::parse(" {}").is_empty(),
+            "\" {{}}\" Should return an empty list of rules"
+        );
+        assert!(
+            StyleSheetParser::parse("# {}").is_empty(),
+            "\"# {{}}\" Should return an empty list of rules"
+        );
+        assert!(
+            StyleSheetParser::parse("@@@ {}").is_empty(),
+            "Should return an empty list of rules"
+        );
+        assert!(
+            StyleSheetParser::parse("{}{}").is_empty(),
+            "Should return an empty list of rules"
+        );
+    }
+
+    #[test]
+    fn parse_single_name_selector_no_property() {
+        let rules = StyleSheetParser::parse("#id {}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+        let tree = rule.selector.get_parent_tree();
+        assert_eq!(tree.len(), 1, "Should have a single selector node");
+
+        let node = &tree[0];
+        assert_eq!(tree.len(), 1, "Should have a single selector");
+
+        match node[0] {
+            SelectorElement::Name(name) => assert_eq!(name, "id"),
+            _ => assert!(false, "Should have a name selector"),
+        }
+
+        assert!(rule.tokens.is_empty(), "Should have no token");
+    }
+
+    #[test]
+    fn parse_single_class_selector_no_property() {
+        let rules = StyleSheetParser::parse(".class {}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+        let tree = rule.selector.get_parent_tree();
+        assert_eq!(tree.len(), 1, "Should have a single selector node");
+
+        let node = &tree[0];
+        assert_eq!(tree.len(), 1, "Should have a single selector");
+
+        match node[0] {
+            SelectorElement::Class(name) => assert_eq!(name, "class"),
+            _ => assert!(false, "Should have a class selector"),
+        }
+
+        assert!(rule.tokens.is_empty(), "Should have no token");
+    }
+
+    #[test]
+    fn parse_single_component_selector_no_property() {
+        let rules = StyleSheetParser::parse("button {}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+        let tree = rule.selector.get_parent_tree();
+        assert_eq!(tree.len(), 1, "Should have a single selector node");
+
+        let node = &tree[0];
+        assert_eq!(tree.len(), 1, "Should have a single selector");
+
+        match node[0] {
+            SelectorElement::Component(name) => assert_eq!(name, "button"),
+            _ => assert!(false, "Should have a class selector"),
+        }
+
+        assert!(rule.tokens.is_empty(), "Should have no token");
+    }
+
+    #[test]
+    fn parse_single_complex_class_selector_no_property() {
+        let rules = StyleSheetParser::parse(".a.b.c.d.e.f.g {}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+        let tree = rule.selector.get_parent_tree();
+        assert_eq!(tree.len(), 1, "Should have a single selector node");
+
+        let node = &tree[0];
+        assert_eq!(node.len(), 7, "Should have a 7 selector class");
+
+        use SelectorElement::*;
+        let expected: SmallVec<[SelectorElement; 8]> = smallvec![
+            Class("a".to_string()),
+            Class("b".to_string()),
+            Class("c".to_string()),
+            Class("d".to_string()),
+            Class("e".to_string()),
+            Class("f".to_string()),
+            Class("g".to_string()),
+        ];
+
+        expected
+            .into_iter()
+            .zip(node.into_iter())
+            .for_each(|(expected, element)| {
+                assert_eq!(expected, **element);
+            });
+
+        assert!(rule.tokens.is_empty(), "Should have no token");
+    }
+
+    #[test]
+    fn parse_single_composed_selector_no_property() {
+        let rules = StyleSheetParser::parse("a.b#c.d {}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+        let tree = rule.selector.get_parent_tree();
+        assert_eq!(tree.len(), 1, "Should have a single selector node");
+
+        let node = &tree[0];
+        assert_eq!(node.len(), 4, "Should have a 4 selectors");
+
+        use SelectorElement::*;
+        let expected: SmallVec<[SelectorElement; 8]> = smallvec![
+            Component("a".to_string()),
+            Class("b".to_string()),
+            Name("c".to_string()),
+            Class("d".to_string()),
+        ];
+
+        expected
+            .into_iter()
+            .zip(node.into_iter())
+            .for_each(|(expected, element)| {
+                assert_eq!(expected, **element);
+            });
+
+        assert!(rule.tokens.is_empty(), "Should have no token");
+    }
+
+    #[test]
+    fn parse_multiple_composed_selector_no_property() {
+        let rules = StyleSheetParser::parse("a.b #c .d e#f .g.h i j.k#l {}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+        let tree = rule.selector.get_parent_tree();
+        assert_eq!(tree.len(), 7, "Should have a single selector node");
+
+        use SelectorElement::*;
+        let expected: SmallVec<[SmallVec<[SelectorElement; 8]>; 8]> = smallvec![
+            smallvec![Component("a".to_string()), Class("b".to_string())],
+            smallvec![Name("c".to_string())],
+            smallvec![Class("d".to_string())],
+            smallvec![Component("e".to_string()), Name("f".to_string())],
+            smallvec![Class("g".to_string()), Class("h".to_string())],
+            smallvec![Component("i".to_string())],
+            smallvec![
+                Component("j".to_string()),
+                Class("k".to_string()),
+                Name("l".to_string())
+            ],
+        ];
+
+        expected
+            .into_iter()
+            .zip(tree.into_iter())
+            .for_each(|(node_expected, node)| {
+                node_expected
+                    .into_iter()
+                    .zip(node)
+                    .for_each(|(expected, element)| {
+                        assert_eq!(expected, *element);
+                    });
+            });
+
+        assert!(rule.tokens.is_empty(), "Should have no token");
+    }
 }

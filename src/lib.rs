@@ -32,6 +32,8 @@ pub enum EcssError {
     // TODO: Change this to Cow<'static, str>
     UnsupportedProperty(String),
     InvalidPropertyValue(String),
+    InvalidSelector,
+    UnexpectedToken(String),
 }
 
 impl Error for EcssError {}
@@ -44,6 +46,8 @@ impl Display for EcssError {
             }
             EcssError::UnsupportedProperty(p) => write!(f, "Unsupported property: {}", p),
             EcssError::InvalidPropertyValue(p) => write!(f, "Invalid property value: {}", p),
+            EcssError::InvalidSelector => write!(f, "Invalid selector"),
+            EcssError::UnexpectedToken(t) => write!(f, "Unexpected token: {}", t),
         }
     }
 }
