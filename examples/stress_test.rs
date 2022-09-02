@@ -1,5 +1,5 @@
 use bevy::{asset::AssetServerSettings, prelude::*};
-use bevy_ecss::{Class, EcssPlugin, StyleSheet};
+use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()

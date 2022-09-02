@@ -11,14 +11,22 @@ use crate::{parser::StyleSheetParser, property::PropertyValues, selector::Select
 
 #[derive(Debug, TypeUuid)]
 #[uuid = "14b98dd6-5425-4692-a561-5e6ae9180554"]
-// Find a better name for the StyleSheet asset.
-pub struct CssRules {
+/// A cascading style sheet (`css`) asset file.
+///
+/// _Note_: This asset only store intermediate data, like rules and properties.
+/// The parsing to final ECS component values is done by a internal `exclusive_system` and is
+/// cached on [`Local`](bevy::prelude::Local) resources, which isn't possible to get outside the system.
+pub struct StyleSheetAsset {
     path: String,
     hash: u64,
     rules: SmallVec<[StyleRule; 8]>,
 }
 
-impl CssRules {
+impl StyleSheetAsset {
+    /// Parses a string with a valid CSS into a list of [`StyleRule`]s.
+    ///
+    /// This used by internal asset loader to keep track of where each asset came from.
+    /// If you are creating this struct by hand, you can safely supply an  empty string as path.
     pub fn parse(path: &str, content: &str) -> Self {
         let mut hasher = AHasher::default();
         content.hash(&mut hasher);
@@ -31,6 +39,7 @@ impl CssRules {
         }
     }
 
+    /// Returns the [`PropertyValues`] on the given [`Selector`] with the given name.
     pub fn get_properties(&self, selector: &Selector, name: &str) -> Option<&PropertyValues> {
         self.rules
             .iter()
@@ -39,33 +48,33 @@ impl CssRules {
             .flatten()
     }
 
-    pub fn has_property(&self, name: &str) -> bool {
-        self.rules.iter().any(|rule| rule.has_property(name))
-    }
-
+    /// Iterates over all existing rules
     pub fn iter(&self) -> impl Iterator<Item = &StyleRule> {
         self.rules.iter()
     }
 
+    /// Internal hash computed from content and used for equality and ordering comparison
     pub fn hash(&self) -> u64 {
         self.hash
     }
 
+    /// Asset path, for debug reasons only
     pub fn path(&self) -> &str {
         &self.path
     }
 }
 
+/// Represents a single rule inside a style sheet with a [`Selector`] which determines which entities
+/// should be applied the [`PropertyValues`].
+///
+/// Note that this struct holds intermediate data, the final value is parsed by [`Property`](crate::Property) on
+/// the first time it's [`system`](crate::Property::apply_system) is invoked.
 #[derive(Debug, Clone)]
 pub struct StyleRule {
+    /// Selector used to match entities to apply properties.
     pub selector: Selector,
+    /// Properties values to be applied on selected entities.
     pub properties: HashMap<String, PropertyValues>,
-}
-
-impl StyleRule {
-    pub(crate) fn has_property(&self, name: &str) -> bool {
-        self.properties.keys().any(|str| str == name)
-    }
 }
 
 #[derive(Default)]
@@ -80,7 +89,7 @@ impl AssetLoader for StyleSheetLoader {
         Box::pin(async move {
             let content = std::str::from_utf8(bytes)?;
             let stylesheet =
-                CssRules::parse(load_context.path().to_str().unwrap_or_default(), content);
+                StyleSheetAsset::parse(load_context.path().to_str().unwrap_or_default(), content);
             load_context.set_default_asset(LoadedAsset::new(stylesheet));
             Ok(())
         })

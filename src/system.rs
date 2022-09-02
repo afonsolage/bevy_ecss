@@ -1,8 +1,8 @@
 use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
-        debug, error, AssetEvent, Assets, Changed, Children, Component, Entity, EventReader, Mut,
-        Name, Query, Res, ResMut, With, World,
+        debug, error, trace, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut,
+        Entity, EventReader, Mut, Name, Query, Res, ResMut, With, World,
     },
     ui::Node,
     utils::HashMap,
@@ -13,7 +13,7 @@ use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
     property::StyleSheetState,
     selector::{Selector, SelectorElement},
-    CssRules,
+    StyleSheetAsset,
 };
 
 pub(crate) trait ComponentFilter {
@@ -33,7 +33,7 @@ pub(crate) struct ComponentFilterRegistry(
 
 #[derive(SystemParam)]
 pub(crate) struct CssQueryParam<'w, 's> {
-    assets: Res<'w, Assets<CssRules>>,
+    assets: Res<'w, Assets<StyleSheetAsset>>,
     nodes: Query<
         'w,
         's,
@@ -45,21 +45,28 @@ pub(crate) struct CssQueryParam<'w, 's> {
     children: Query<'w, 's, &'static Children, With<Node>>,
 }
 
-pub(crate) struct PrepareState<'w, 's>(SystemState<CssQueryParam<'w, 's>>);
+#[derive(Deref, DerefMut)]
+pub(crate) struct PrepareParams<'w, 's>(SystemState<CssQueryParam<'w, 's>>);
 
-impl<'w, 's> PrepareState<'w, 's> {
+impl<'w, 's> PrepareParams<'w, 's> {
     pub fn new(world: &mut World) -> Self {
         Self(SystemState::new(world))
     }
 }
 
+/// Exclusive system which selects all entities and prepare the internal state used by [`Property`](crate::prelude::Property) systems.
 pub(crate) fn prepare(world: &mut World) {
-    world.resource_scope(|world, mut state: Mut<PrepareState>| {
+    world.resource_scope(|world, mut params: Mut<PrepareParams>| {
         world.resource_scope(|world, mut registry: Mut<ComponentFilterRegistry>| {
-            let css_query = state.0.get(world);
+            let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
+
             if state.is_empty() == false {
-                world.insert_resource(state);
+                let mut state_res = world
+                    .get_resource_mut::<StyleSheetState>()
+                    .expect("Should be added by plugin");
+
+                *state_res = state;
             }
         });
     });
@@ -81,7 +88,7 @@ pub(crate) fn prepare_state(
                 let entities =
                     select_entities(entity, children, &rule.selector, world, &params, registry);
 
-                debug!(
+                trace!(
                     "Applying rule ({}) on {} entities",
                     rule.selector.to_string(),
                     entities.len()
@@ -98,7 +105,7 @@ pub(crate) fn prepare_state(
     state
 }
 
-/// Select all entities using the given [`Selector`](crate::Selector).
+/// Select all entities using the given [`Selector`](crate::prelude::Selector).
 ///
 /// If no [`Children`] is supplied, then the selector is applied only on root entity.
 fn select_entities(
@@ -116,14 +123,14 @@ fn select_entities(
     }
 
     let mut filter = children.map(|children| {
-        // Include root, since stylesheet may be applied on root too.
+        // Include root, since style sheet may be applied on root too.
         std::iter::once(root)
             .chain(get_children_recursively(children, &css_query.children).into_iter())
             .collect()
     });
 
     loop {
-        // Rework this to use a index to avoid recreating parent_tree every time the systems runs.
+        // TODO: Rework this to use a index to avoid recreating parent_tree every time the systems runs.
         // This is has little to no impact on performance, since this system doesn't runs often.
         let node = parent_tree.remove(0);
 
@@ -143,6 +150,8 @@ fn select_entities(
     }
 }
 
+/// Filter entities matching the given selectors.
+/// This function is called once per node on tree returned by [`get_parent_tree`](Selector::get_parent_tree)
 fn select_entities_node(
     node: SmallVec<[&SelectorElement; 8]>,
     world: &World,
@@ -162,12 +171,14 @@ fn select_entities_node(
                 SelectorElement::Component(component) => {
                     get_entities_with_component(component.as_str(), world, registry, filter)
                 }
+                // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
                 SelectorElement::Child => unreachable!(),
             })
         })
         .unwrap_or_default()
 }
 
+/// Utility function to filter any entities by using a component with implements [`MatchSelectorElement`]
 fn get_entities_with<T>(
     name: &str,
     query: &Query<(Entity, &'static T)>,
@@ -189,6 +200,9 @@ where
         .collect()
 }
 
+/// Filters entities which have the components specified on selector, like "a" or "button".
+///
+/// The component must be registered on [`ComponentFilterRegistry`]
 fn get_entities_with_component(
     name: &str,
     world: &World,
@@ -230,7 +244,7 @@ fn get_children_recursively(
 
 /// Auto reapply style sheets when hot reloading is enabled
 pub(crate) fn hot_reload_style_sheets(
-    mut assets_events: EventReader<AssetEvent<CssRules>>,
+    mut assets_events: EventReader<AssetEvent<StyleSheetAsset>>,
     mut q_sheets: Query<&mut StyleSheet>,
 ) {
     for evt in assets_events.iter() {

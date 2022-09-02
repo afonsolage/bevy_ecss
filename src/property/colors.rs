@@ -1,6 +1,10 @@
 use bevy::prelude::Color;
 
 // Source: https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
+
+/// Parses a named color, like "silver" or "azure" into a [`Color`]
+/// 
+/// Accepts any [valid CSS named-colors](https://developer.mozilla.org/en-US/docs/Web/CSS/named-color).
 pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
     match name {
         // CSS Level 1 values

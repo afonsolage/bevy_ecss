@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod component;
 mod parser;
 mod property;
@@ -11,28 +13,45 @@ use bevy::{
     asset::AssetServerSettings,
     ecs::system::SystemState,
     prelude::{
-        AddAsset, Button, Component, CoreStage, Entity, IntoExclusiveSystem,
-        ParallelSystemDescriptorCoercion, Plugin, Query, SystemLabel, With,
+        AddAsset, Button, Component, CoreStage, Entity, ExclusiveSystemDescriptorCoercion,
+        IntoExclusiveSystem, ParallelSystemDescriptorCoercion, Plugin, Query, SystemLabel, With,
     },
     text::Text,
     ui::{Interaction, Node, Style, UiColor, UiImage},
 };
+
 use property::StyleSheetState;
 use stylesheet::StyleSheetLoader;
+
+use system::{ComponentFilterRegistry, PrepareParams};
 
 pub use component::{Class, StyleSheet};
 pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
-pub use stylesheet::{CssRules, StyleRule};
-use system::{ComponentFilterRegistry, PrepareState};
+pub use stylesheet::{StyleRule, StyleSheetAsset};
 
+/// use `bevy_ecss::prelude::*;` to import common components, and plugins and utility functions.
+pub mod prelude {
+    pub use super::component::{Class, StyleSheet};
+    pub use super::stylesheet::StyleSheetAsset;
+    pub use super::EcssPlugin;
+    pub use super::RegisterComponentSelector;
+    pub use super::RegisterProperty;
+}
+
+/// Errors which can happens while parsing `css` into [`Selector`] or [`Property`].
+// TODO: Change this to Cow<'static, str>
 #[derive(Debug)]
 pub enum EcssError {
+    /// An unsupported selector was found on a style sheet rule.
     UnsupportedSelector,
-    // TODO: Change this to Cow<'static, str>
+    /// An unsupported property was found on a style sheet rule.
     UnsupportedProperty(String),
+    /// An invalid property value was found on a style sheet rule.
     InvalidPropertyValue(String),
+    /// An invalid selector was found on a style sheet rule.
     InvalidSelector,
+    /// An unexpected token was found on a style sheet rule.
     UnexpectedToken(String),
 }
 
@@ -52,13 +71,20 @@ impl Display for EcssError {
     }
 }
 
+/// System labels used by `bevy_ecss` systems
+/// Note that there is also an exclusive system which isn't labeled, but runs on [`CoreStage::Update`]
 #[derive(SystemLabel)]
 pub enum EcssSystem {
-    Prepare,
+    /// All [`Property`] implementation `systems` are run on this system.
+    /// Those stages runs on [`CoreStage::Update`]
     Apply,
+    /// Clears the internal state used by [`Property`] implementation `systems`.
+    /// This system runs on [`CoreStage::PostUpdate`]
     Cleanup,
 }
 
+/// Plugin which add all types, assets, systems and internal resources needed by `bevy_ecss`.
+/// You must add this plugin in order to use `bevy_ecss`.
 #[derive(Default)]
 pub struct EcssPlugin;
 
@@ -66,19 +92,17 @@ impl Plugin for EcssPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
-            .add_asset::<CssRules>()
+            .add_asset::<StyleSheetAsset>()
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system(system::prepare.exclusive_system())
-            .add_system(
-                system::clear_state
-                    .label(EcssSystem::Cleanup)
-                    .after(EcssSystem::Apply)
-                    .after(EcssSystem::Prepare),
+            .add_system(system::prepare.exclusive_system().at_start())
+            .add_system_to_stage(
+                CoreStage::PostUpdate,
+                system::clear_state.label(EcssSystem::Cleanup),
             );
 
-        let prepared_state = PrepareState::new(&mut app.world);
+        let prepared_state = PrepareParams::new(&mut app.world);
         app.insert_resource(prepared_state);
 
         register_component_selector(app);
@@ -89,6 +113,7 @@ impl Plugin for EcssPlugin {
         }
     }
 }
+
 fn register_component_selector(app: &mut bevy::prelude::App) {
     app.register_component_selector::<UiColor>("ui-color");
     app.register_component_selector::<Text>("text");
@@ -142,6 +167,31 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<UiColorProperty>();
 }
 
+/// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector) function on [`App`](bevy::prelude::App) to add a new component selector.
+///
+/// You can register any component you want and name it as you like.
+/// It's advised to use `lower-case` and `kebab-case` to match CSS coding style.
+///
+/// # Examples
+///
+/// ```
+/// # use bevy::prelude::*;
+/// # use bevy_ecss::prelude::*;
+/// #
+/// # #[derive(Component)]
+/// # struct MyFancyComponentSelector;
+/// #
+/// # fn some_main() {
+/// #    let mut app = App::new();
+/// #    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin);
+/// // You may use it as selector now, like
+/// // fancy-pants {
+/// //      background-color: pink;
+/// // }
+/// app.register_component_selector::<MyFancyComponentSelector>("fancy-pants");
+/// # }
+/// ```
+
 pub trait RegisterComponentSelector {
     fn register_component_selector<T>(&mut self, name: &'static str) -> &mut Self
     where
@@ -167,6 +217,9 @@ impl RegisterComponentSelector for bevy::prelude::App {
     }
 }
 
+/// Utility trait which adds the [`register_property`](RegisterProperty::register_property) function on [`App`](bevy::prelude::App) to add a [`Property`] parser.
+///
+/// You need to register only custom properties which implements [`Property`] trait.
 pub trait RegisterProperty {
     fn register_property<T>(&mut self) -> &mut Self
     where
@@ -178,12 +231,7 @@ impl RegisterProperty for bevy::prelude::App {
     where
         T: Property + 'static,
     {
-        self.add_system(
-            T::apply_system
-                .label(EcssSystem::Apply)
-                .before(EcssSystem::Cleanup)
-                .after(EcssSystem::Prepare), // .with_run_criteria(T::have_property)
-        );
+        self.add_system(T::apply_system.label(EcssSystem::Apply));
 
         self
     }

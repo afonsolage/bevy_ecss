@@ -4,18 +4,22 @@ use bevy::utils::AHasher;
 use cssparser::CowRcStr;
 use smallvec::{smallvec, SmallVec};
 
+/// Represents a selector element on a style sheet rule.
+/// A single selector can have multiple elements, for instance a selector of `button.enabled`
+/// Would generated two elements, one for `button` and another for `.enabled`.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub enum SelectorElement {
-    // #score_window
+    /// A name selector element, like `#score_window`. On CSS used on web, this is as known as id.
     Name(String),
-    // window
+    /// A component selector element, like `window` or `button`
     Component(String),
-    // .border
+    /// A class name component selector element, `.border`
     Class(String),
-    // window .border
+    /// Indicates a parent-child relation between previous elements and next elements, like `window .border`
     Child,
 }
 
+/// A selector parsed from a `css` rule. Each selector has a internal hash used to differentiate between many rules in the same sheet.
 #[derive(Debug, Default, Clone)]
 pub struct Selector {
     hash: u64,
@@ -23,6 +27,7 @@ pub struct Selector {
 }
 
 impl Selector {
+    /// Creates a new selector for the given elements.
     pub fn new(elements: SmallVec<[SelectorElement; 8]>) -> Self {
         let hasher = AHasher::default();
 
@@ -36,6 +41,8 @@ impl Selector {
         Self { elements, hash }
     }
 
+    /// Builds a selector tree for this selector.
+    /// Each node in the tree is composed of many elements, also each node is parent of the next one.
     pub fn get_parent_tree(&self) -> SmallVec<[SmallVec<[&SelectorElement; 8]>; 8]> {
         let mut tree = SmallVec::new();
         let mut current_level = SmallVec::new();

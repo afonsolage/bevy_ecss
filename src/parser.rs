@@ -12,6 +12,7 @@ use crate::{
     EcssError,
 };
 
+/// Parses a `css` string using [`RuleListParser`].
 pub(crate) struct StyleSheetParser;
 
 impl StyleSheetParser {
@@ -60,9 +61,7 @@ fn format_error<'i>(error: ParseError<'i, EcssError>) -> String {
 
 impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
     type Prelude = Selector;
-
     type QualifiedRule = StyleRule;
-
     type Error = EcssError;
 
     fn parse_prelude<'t>(
@@ -144,9 +143,7 @@ fn parse_selector<'i, 'tt>(
 
 impl<'i> AtRuleParser<'i> for StyleSheetParser {
     type Prelude = ();
-
     type AtRule = StyleRule;
-
     type Error = EcssError;
 }
 
@@ -194,7 +191,7 @@ fn parse_values<'i, 'tt>(
 
 #[cfg(test)]
 mod tests {
-    use crate::PropertyToken;
+    use crate::property::PropertyToken;
 
     use super::*;
 
