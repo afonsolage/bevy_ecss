@@ -105,52 +105,16 @@ mod style {
     impl_style_single_value!("width", WidthProperty, Val, val, size.width);
     impl_style_single_value!("height", HeightProperty, Val, val, size.height);
 
-    impl_style_single_value!(
-        "min-width",
-        MinWidthProperty,
-        Val,
-        val,
-        min_size.width
-    );
-    impl_style_single_value!(
-        "min-height",
-        MinHeightProperty,
-        Val,
-        val,
-        min_size.height
-    );
+    impl_style_single_value!("min-width", MinWidthProperty, Val, val, min_size.width);
+    impl_style_single_value!("min-height", MinHeightProperty, Val, val, min_size.height);
 
-    impl_style_single_value!(
-        "max-width",
-        MaxWidthProperty,
-        Val,
-        val,
-        max_size.width
-    );
-    impl_style_single_value!(
-        "max-height",
-        MaxHeightProperty,
-        Val,
-        val,
-        max_size.height
-    );
+    impl_style_single_value!("max-width", MaxWidthProperty, Val, val, max_size.width);
+    impl_style_single_value!("max-height", MaxHeightProperty, Val, val, max_size.height);
 
-    impl_style_single_value!(
-        "flex-basis",
-        FlexBasisProperty,
-        Val,
-        val,
-        max_size.height
-    );
+    impl_style_single_value!("flex-basis", FlexBasisProperty, Val, val, max_size.height);
 
     impl_style_single_value!("flex-grow", FlexGrowProperty, f32, f32, flex_grow);
-    impl_style_single_value!(
-        "flex-shrink",
-        FlexShrinkProperty,
-        f32,
-        f32,
-        flex_shrink
-    );
+    impl_style_single_value!("flex-shrink", FlexShrinkProperty, f32, f32, flex_shrink);
 
     impl_style_single_value!(
         "aspect-ratio",

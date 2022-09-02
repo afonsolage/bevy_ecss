@@ -13,7 +13,7 @@ use bevy::{
 use cssparser::Token;
 use smallvec::SmallVec;
 
-use crate::{selector::Selector, StyleSheetAsset, EcssError};
+use crate::{selector::Selector, EcssError, StyleSheetAsset};
 
 mod colors;
 pub(crate) mod impls;
@@ -224,7 +224,11 @@ impl<T: Property> PropertyMeta<T> {
     /// Gets a cached property value or try to parse.
     ///
     /// If there are some error while parsing, a [`CacheState::Error`] is stored to avoid trying to parse again on next try.
-    fn get_or_parse(&mut self, rules: &StyleSheetAsset, selector: &Selector) -> &CacheState<T::Cache> {
+    fn get_or_parse(
+        &mut self,
+        rules: &StyleSheetAsset,
+        selector: &Selector,
+    ) -> &CacheState<T::Cache> {
         let cached_properties = self.entry(rules.hash()).or_default();
 
         // Avoid using HashMap::entry since it requires ownership of key

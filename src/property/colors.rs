@@ -3,7 +3,7 @@ use bevy::prelude::Color;
 // Source: https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
 
 /// Parses a named color, like "silver" or "azure" into a [`Color`]
-/// 
+///
 /// Accepts any [valid CSS named-colors](https://developer.mozilla.org/en-US/docs/Web/CSS/named-color).
 pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
     match name {
@@ -154,7 +154,7 @@ pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
         "tan" => Some(Color::rgba(0.8235, 0.7059, 0.5490, 1.0000)),
         "thistle" => Some(Color::rgba(0.8471, 0.7490, 0.8471, 1.0000)),
         "tomato" => Some(Color::rgba(1.0000, 0.3882, 0.2784, 1.0000)),
-        "transparent"  => Some(Color::rgba(0.0000, 0.0000, 0.0000, 0.0000)),
+        "transparent" => Some(Color::rgba(0.0000, 0.0000, 0.0000, 0.0000)),
         "turquoise" => Some(Color::rgba(0.2510, 0.8784, 0.8157, 1.0000)),
         "violet" => Some(Color::rgba(0.9333, 0.5098, 0.9333, 1.0000)),
         "wheat" => Some(Color::rgba(0.9608, 0.8706, 0.7020, 1.0000)),
