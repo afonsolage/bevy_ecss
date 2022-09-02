@@ -1,7 +1,9 @@
 use bevy::prelude::Color;
 
+// Source: https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
 pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
     match name {
+        // CSS Level 1 values
         "black" => Some(Color::rgba(0.0000, 0.0000, 0.0000, 1.0000)),
         "silver" => Some(Color::rgba(0.7529, 0.7529, 0.7529, 1.0000)),
         "gray" => Some(Color::rgba(0.5020, 0.5020, 0.5020, 1.0000)),
@@ -18,6 +20,11 @@ pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
         "blue" => Some(Color::rgba(0.0000, 0.0000, 1.0000, 1.0000)),
         "teal" => Some(Color::rgba(0.0000, 0.5020, 0.5020, 1.0000)),
         "aqua" => Some(Color::rgba(0.0000, 1.0000, 1.0000, 1.0000)),
+
+        // CSS Level 2 values
+        "orange" => Some(Color::rgba(1.0000, 0.6471, 0.0000, 1.0000)),
+
+        // CSS Level 3 values
         "aliceblue" => Some(Color::rgba(0.9412, 0.9725, 1.0000, 1.0000)),
         "antiquewhite" => Some(Color::rgba(0.9804, 0.9216, 0.8431, 1.0000)),
         "aquamarine" => Some(Color::rgba(0.4980, 1.0000, 0.8314, 1.0000)),
@@ -113,7 +120,6 @@ pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
         "navajowhite" => Some(Color::rgba(1.0000, 0.8706, 0.6784, 1.0000)),
         "oldlace" => Some(Color::rgba(0.9922, 0.9608, 0.9020, 1.0000)),
         "olivedrab" => Some(Color::rgba(0.4196, 0.5569, 0.1373, 1.0000)),
-        "orange" => Some(Color::rgba(1.0000, 0.6471, 0.0000, 1.0000)),
         "orangered" => Some(Color::rgba(1.0000, 0.2706, 0.0000, 1.0000)),
         "orchid" => Some(Color::rgba(0.8549, 0.4392, 0.8392, 1.0000)),
         "palegoldenrod" => Some(Color::rgba(0.9333, 0.9098, 0.6667, 1.0000)),
@@ -126,7 +132,6 @@ pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
         "pink" => Some(Color::rgba(1.0000, 0.7529, 0.7961, 1.0000)),
         "plum" => Some(Color::rgba(0.8667, 0.6275, 0.8667, 1.0000)),
         "powderblue" => Some(Color::rgba(0.6902, 0.8784, 0.9020, 1.0000)),
-        "rebeccapurple" => Some(Color::rgba(0.4000, 0.2000, 0.6000, 1.0000)),
         "rosybrown" => Some(Color::rgba(0.7373, 0.5608, 0.5608, 1.0000)),
         "royalblue" => Some(Color::rgba(0.2549, 0.4118, 0.8824, 1.0000)),
         "saddlebrown" => Some(Color::rgba(0.5451, 0.2706, 0.0745, 1.0000)),
@@ -145,11 +150,15 @@ pub(crate) fn parse_named_color(name: &str) -> Option<Color> {
         "tan" => Some(Color::rgba(0.8235, 0.7059, 0.5490, 1.0000)),
         "thistle" => Some(Color::rgba(0.8471, 0.7490, 0.8471, 1.0000)),
         "tomato" => Some(Color::rgba(1.0000, 0.3882, 0.2784, 1.0000)),
+        "transparent"  => Some(Color::rgba(0.0000, 0.0000, 0.0000, 0.0000)),
         "turquoise" => Some(Color::rgba(0.2510, 0.8784, 0.8157, 1.0000)),
         "violet" => Some(Color::rgba(0.9333, 0.5098, 0.9333, 1.0000)),
         "wheat" => Some(Color::rgba(0.9608, 0.8706, 0.7020, 1.0000)),
         "whitesmoke" => Some(Color::rgba(0.9608, 0.9608, 0.9608, 1.0000)),
         "yellowgreen" => Some(Color::rgba(0.6039, 0.8039, 0.1961, 1.0000)),
+
+        // CSS Level 4 values
+        "rebeccapurple" => Some(Color::rgba(0.4000, 0.2000, 0.6000, 1.0000)),
         _ => None,
     }
 }
