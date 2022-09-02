@@ -37,7 +37,7 @@ impl StyleSheetParser {
     }
 }
 
-fn format_error<'i>(error: ParseError<'i, EcssError>) -> String {
+fn format_error(error: ParseError<EcssError>) -> String {
     let error_description = match error.kind {
         cssparser::ParseErrorKind::Basic(b) => match b {
             cssparser::BasicParseErrorKind::UnexpectedToken(token) => {
@@ -45,10 +45,12 @@ fn format_error<'i>(error: ParseError<'i, EcssError>) -> String {
             }
             cssparser::BasicParseErrorKind::EndOfInput => "End of input".to_string(),
             cssparser::BasicParseErrorKind::AtRuleInvalid(token) => {
-                format!("At rule isn't supported {}", token.to_string())
+                format!("At rule isn't supported {}", token)
             }
-            cssparser::BasicParseErrorKind::AtRuleBodyInvalid => format!("At rule isn't supported"),
-            cssparser::BasicParseErrorKind::QualifiedRuleInvalid => format!("Invalid rule"),
+            cssparser::BasicParseErrorKind::AtRuleBodyInvalid => {
+                "At rule isn't supported".to_string()
+            }
+            cssparser::BasicParseErrorKind::QualifiedRuleInvalid => "Invalid rule".to_string(),
         },
         cssparser::ParseErrorKind::Custom(c) => c.to_string(),
     };
@@ -68,7 +70,47 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
         &mut self,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
-        Ok(parse_selector(input)?)
+        let mut elements = smallvec![];
+
+        let mut next_is_class = false;
+
+        while let Ok(token) = input.next_including_whitespace() {
+            use cssparser::Token::*;
+            match token {
+                Ident(v) => {
+                    if next_is_class {
+                        next_is_class = false;
+                        elements.push(SelectorElement::Class(v.to_string()));
+                    } else {
+                        elements.push(SelectorElement::Component(v.to_string()));
+                    }
+                }
+                IDHash(v) => {
+                    if v.is_empty() {
+                        return Err(input.new_custom_error(EcssError::InvalidSelector));
+                    } else {
+                        elements.push(SelectorElement::Name(v.to_string()));
+                    }
+                }
+                WhiteSpace(_) => elements.push(SelectorElement::Child),
+                Delim(c) if *c == '.' => next_is_class = true,
+                _ => {
+                    let token = token.to_css_string();
+                    return Err(input.new_custom_error(EcssError::UnexpectedToken(token)));
+                }
+            }
+        }
+
+        if elements.is_empty() {
+            return Err(input.new_custom_error(EcssError::InvalidSelector));
+        }
+
+        // Remove noise the trailing white spaces, if any
+        while !elements.is_empty() && elements.last().unwrap() == &SelectorElement::Child {
+            elements.remove(elements.len() - 1);
+        }
+
+        Ok(Selector::new(elements))
     }
 
     fn parse_block<'t>(
@@ -93,52 +135,6 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
 
         Ok(rule)
     }
-}
-
-fn parse_selector<'i, 'tt>(
-    parser: &mut Parser<'i, 'tt>,
-) -> Result<Selector, ParseError<'i, EcssError>> {
-    let mut elements = smallvec![];
-
-    let mut next_is_class = false;
-
-    while let Ok(token) = parser.next_including_whitespace() {
-        use cssparser::Token::*;
-        match token {
-            Ident(v) => {
-                if next_is_class {
-                    next_is_class = false;
-                    elements.push(SelectorElement::Class(v.to_string()));
-                } else {
-                    elements.push(SelectorElement::Component(v.to_string()));
-                }
-            }
-            IDHash(v) => {
-                if v.is_empty() {
-                    return Err(parser.new_custom_error(EcssError::InvalidSelector));
-                } else {
-                    elements.push(SelectorElement::Name(v.to_string()));
-                }
-            }
-            WhiteSpace(_) => elements.push(SelectorElement::Child),
-            Delim(c) if *c == '.' => next_is_class = true,
-            _ => {
-                let token = token.to_css_string();
-                return Err(parser.new_custom_error(EcssError::UnexpectedToken(token)));
-            }
-        }
-    }
-
-    if elements.is_empty() {
-        return Err(parser.new_custom_error(EcssError::InvalidSelector));
-    }
-
-    // Remove noise the trailing white spaces, if any
-    while elements.len() > 0 && elements.last().unwrap() == &SelectorElement::Child {
-        elements.remove(elements.len() - 1);
-    }
-
-    Ok(Selector::new(elements))
 }
 
 impl<'i> AtRuleParser<'i> for StyleSheetParser {

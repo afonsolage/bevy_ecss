@@ -157,7 +157,7 @@ impl PropertyValues {
     /// Note that it is not possible to create a [`UiRect`] with only `top` value, since it'll be understood to replicated it on all fields.
     pub fn rect(&self) -> Option<UiRect<Val>> {
         if self.0.len() == 1 {
-            self.val().map(|val| UiRect::all(val))
+            self.val().map(UiRect::all)
         } else {
             self.0
                 .iter()
@@ -303,13 +303,13 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     ///
     /// This function is called only once, on the first time a matching property is found while applying style rule.
     /// If an error is returned, it is also cached so no more attempt are made.
-    fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError>;
+    fn parse(values: &PropertyValues) -> Result<Self::Cache, EcssError>;
 
     /// Applies on the given [`Components`](Property::Components) the [`Cache`](Property::Cache) value.
     /// Additionally, an [`AssetServer`] and [`Commands`] parameters are provided for more complex use cases.
     ///
     /// If mutability is desired while applying the changes, declare [`Components`](Property::Components) as mutable.
-    fn apply<'w>(
+    fn apply(
         cache: &Self::Cache,
         components: QueryItem<Self::Components>,
         asset_server: &AssetServer,

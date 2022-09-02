@@ -61,7 +61,7 @@ pub(crate) fn prepare(world: &mut World) {
             let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
 
-            if state.is_empty() == false {
+            if !state.is_empty() {
                 let mut state_res = world
                     .get_resource_mut::<StyleSheetState>()
                     .expect("Should be added by plugin");
@@ -142,8 +142,7 @@ fn select_entities(
             let children = entities
                 .into_iter()
                 .filter_map(|e| css_query.children.get(e).ok())
-                .map(|children| get_children_recursively(children, &css_query.children))
-                .flatten()
+                .flat_map(|children| get_children_recursively(children, &css_query.children))
                 .collect();
             filter = Some(children);
         }
@@ -231,14 +230,13 @@ fn get_children_recursively(
 ) -> SmallVec<[Entity; 8]> {
     children
         .iter()
-        .map(|&e| {
+        .flat_map(|&e| {
             std::iter::once(e).chain(
                 q_childs
                     .get(e)
                     .map_or(SmallVec::new(), |gc| get_children_recursively(gc, q_childs)),
             )
         })
-        .flatten()
         .collect()
 }
 
@@ -248,17 +246,14 @@ pub(crate) fn hot_reload_style_sheets(
     mut q_sheets: Query<&mut StyleSheet>,
 ) {
     for evt in assets_events.iter() {
-        match evt {
-            AssetEvent::Modified { handle } => {
-                q_sheets
-                    .iter_mut()
-                    .filter(|sheet| sheet.handle() == handle)
-                    .for_each(|mut sheet| {
-                        debug!("Refreshing sheet {:?}", sheet);
-                        sheet.refresh();
-                    });
-            }
-            _ => (),
+        if let AssetEvent::Modified { handle } = evt {
+            q_sheets
+                .iter_mut()
+                .filter(|sheet| sheet.handle() == handle)
+                .for_each(|mut sheet| {
+                    debug!("Refreshing sheet {:?}", sheet);
+                    sheet.refresh();
+                });
         }
     }
 }

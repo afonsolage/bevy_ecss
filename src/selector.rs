@@ -119,21 +119,21 @@ impl<'i> From<Vec<CowRcStr<'i>>> for Selector {
         let mut elements = smallvec![];
         let mut next_is_class = false;
 
-        for value in input.into_iter().filter(|v| v.is_empty() == false) {
+        for value in input.into_iter().filter(|v| !v.is_empty()) {
             if value.as_ref() == "." {
                 next_is_class = true;
                 continue;
-            } else {
-                false;
             }
 
-            if value.chars().next().unwrap() == '#' {
-                elements.push(SelectorElement::Name(value[1..].to_string()));
+            if let Some(value) = value.strip_prefix('#') {
+                elements.push(SelectorElement::Name(value.to_string()));
             } else if next_is_class {
                 elements.push(SelectorElement::Class(value.to_string()))
             } else {
                 elements.push(SelectorElement::Component(value.to_string()))
             }
+
+            next_is_class = false;
         }
 
         Self::new(elements)

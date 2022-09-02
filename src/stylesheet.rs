@@ -44,8 +44,7 @@ impl StyleSheetAsset {
         self.rules
             .iter()
             .find(|&rule| &rule.selector == selector)
-            .map(|rule| rule.properties.get(name).map(|prop| &*prop))
-            .flatten()
+            .and_then(|rule| rule.properties.get(name))
     }
 
     /// Iterates over all existing rules
