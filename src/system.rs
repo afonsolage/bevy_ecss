@@ -1,8 +1,8 @@
 use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
-        debug, error, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity,
-        EventReader, Mut, Name, Query, Res, ResMut, With, World, trace,
+        debug, error, trace, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut,
+        Entity, EventReader, Mut, Name, Query, Res, ResMut, With, World,
     },
     ui::Node,
     utils::HashMap,
@@ -54,6 +54,7 @@ impl<'w, 's> PrepareParams<'w, 's> {
     }
 }
 
+/// Exclusive system which selects all entities and prepare the internal state used by [`Property`](crate::prelude::Property) systems.
 pub(crate) fn prepare(world: &mut World) {
     world.resource_scope(|world, mut params: Mut<PrepareParams>| {
         world.resource_scope(|world, mut registry: Mut<ComponentFilterRegistry>| {
@@ -104,7 +105,7 @@ pub(crate) fn prepare_state(
     state
 }
 
-/// Select all entities using the given [`Selector`](crate::Selector).
+/// Select all entities using the given [`Selector`](crate::prelude::Selector).
 ///
 /// If no [`Children`] is supplied, then the selector is applied only on root entity.
 fn select_entities(
@@ -122,14 +123,14 @@ fn select_entities(
     }
 
     let mut filter = children.map(|children| {
-        // Include root, since stylesheet may be applied on root too.
+        // Include root, since style sheet may be applied on root too.
         std::iter::once(root)
             .chain(get_children_recursively(children, &css_query.children).into_iter())
             .collect()
     });
 
     loop {
-        // Rework this to use a index to avoid recreating parent_tree every time the systems runs.
+        // TODO: Rework this to use a index to avoid recreating parent_tree every time the systems runs.
         // This is has little to no impact on performance, since this system doesn't runs often.
         let node = parent_tree.remove(0);
 
@@ -149,6 +150,8 @@ fn select_entities(
     }
 }
 
+/// Filter entities matching the given selectors.
+/// This function is called once per node on tree returned by [`get_parent_tree`](Selector::get_parent_tree)
 fn select_entities_node(
     node: SmallVec<[&SelectorElement; 8]>,
     world: &World,
@@ -168,12 +171,14 @@ fn select_entities_node(
                 SelectorElement::Component(component) => {
                     get_entities_with_component(component.as_str(), world, registry, filter)
                 }
+                // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
                 SelectorElement::Child => unreachable!(),
             })
         })
         .unwrap_or_default()
 }
 
+/// Utility function to filter any entities by using a component with implements [`MatchSelectorElement`]
 fn get_entities_with<T>(
     name: &str,
     query: &Query<(Entity, &'static T)>,
@@ -195,6 +200,9 @@ where
         .collect()
 }
 
+/// Filters entities which have the components specified on selector, like "a" or "button".
+///
+/// The component must be registered on [`ComponentFilterRegistry`]
 fn get_entities_with_component(
     name: &str,
     world: &World,
