@@ -30,7 +30,7 @@ pub use property::{Property, PropertyToken, PropertyValues};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::{StyleRule, StyleSheetAsset};
 
-/// use `bevy_ecs::prelude::*;` to import common components, and plugins and utility functions.
+/// use `bevy_ecss::prelude::*;` to import common components, and plugins and utility functions.
 pub mod prelude {
     pub use super::component::{Class, StyleSheet};
     pub use super::stylesheet::StyleSheetAsset;
@@ -176,24 +176,22 @@ fn register_properties(app: &mut bevy::prelude::App) {
 ///
 /// ```
 /// # use bevy::prelude::*;
-/// use bevy_ecss::prelude::*;
-///
-/// #[derive(Component)]
-/// struct FancyPants;
-///
-/// fn main() {
-///     App::new()
-///         .add_plugins(DefaultPlugins)
-///         .add_plugin(EcssPlugin);
-///         // You may use it as selector now, like
-///         // fancy-pants {
-///         //      background-color: pink;
-///         // }
-///         .register_component_selector::<FancyPants>("fancy-pants")
-///         .run();
-/// }
-///
+/// # use bevy_ecss::prelude::*;
+/// #
+/// # #[derive(Component)]
+/// # struct MyFancyComponentSelector;
+/// #
+/// # fn some_main() {
+/// #    let mut app = App::new();
+/// #    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin);
+/// // You may use it as selector now, like
+/// // fancy-pants {
+/// //      background-color: pink;
+/// // }
+/// app.register_component_selector::<MyFancyComponentSelector>("fancy-pants");
+/// # }
 /// ```
+
 pub trait RegisterComponentSelector {
     fn register_component_selector<T>(&mut self, name: &'static str) -> &mut Self
     where
