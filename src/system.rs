@@ -2,7 +2,7 @@ use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
         debug, error, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity,
-        EventReader, Mut, Name, Query, Res, ResMut, With, World,
+        EventReader, Mut, Name, Query, Res, ResMut, With, World, trace,
     },
     ui::Node,
     utils::HashMap,
@@ -60,11 +60,13 @@ pub(crate) fn prepare(world: &mut World) {
             let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
 
-            let mut state_res = world
-                .get_resource_mut::<StyleSheetState>()
-                .expect("Should be added by plugin");
+            if state.is_empty() == false {
+                let mut state_res = world
+                    .get_resource_mut::<StyleSheetState>()
+                    .expect("Should be added by plugin");
 
-            *state_res = state;
+                *state_res = state;
+            }
         });
     });
 }
@@ -85,7 +87,7 @@ pub(crate) fn prepare_state(
                 let entities =
                     select_entities(entity, children, &rule.selector, world, &params, registry);
 
-                debug!(
+                trace!(
                     "Applying rule ({}) on {} entities",
                     rule.selector.to_string(),
                     entities.len()

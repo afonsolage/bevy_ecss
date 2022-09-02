@@ -1,13 +1,10 @@
 use std::any::Any;
 
 use bevy::{
-    ecs::{
-        query::{QueryItem, WorldQuery},
-        schedule::ShouldRun,
-    },
+    ecs::query::{QueryItem, WorldQuery},
     prelude::{
-        debug, error, trace, AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle,
-        Local, Query, Res,
+        error, trace, AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle, Local,
+        Query, Res,
     },
     ui::{UiRect, Val},
     utils::HashMap,
@@ -280,7 +277,7 @@ pub struct StyleSheetState(HashMap<Handle<CssRules>, SelectedEntities>);
 /// - [`name`](Property::name) indicates which property name should matched for.
 /// - [`parse`](Property::parse) parses the [`PropertyValues`] into the [`Cache`](Property::Cache) value to be reused across multiple entities.
 ///
-/// Also, there are functions which have default implementations:
+/// Also, there one function which have default implementations:
 /// - [`have_property`](Property::have_property) is a [`run criteria`](bevy::prelude::RunCriteria)
 pub trait Property: Default + Sized + Send + Sync + 'static {
     type Cache: Default + Any + Send + Sync;
@@ -296,31 +293,6 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         asset_server: &AssetServer,
         commands: &mut Commands,
     );
-
-    fn have_property(
-        apply_sheets: Res<StyleSheetState>,
-        assets: Res<Assets<CssRules>>,
-    ) -> ShouldRun {
-        if apply_sheets.is_empty() {
-            return ShouldRun::No;
-        }
-
-        if apply_sheets
-            .iter()
-            .filter_map(|(handle, _)| assets.get(handle))
-            .any(|rules| rules.has_property(Self::name()))
-        {
-            ShouldRun::Yes
-        } else {
-            if apply_sheets.len() > 0 {
-                debug!(
-                    "Skipping property {} since it wasn't found on sheet",
-                    Self::name()
-                );
-            }
-            ShouldRun::No
-        }
-    }
 
     fn apply_system(
         mut local: Local<PropertyMeta<Self>>,

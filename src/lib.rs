@@ -175,11 +175,7 @@ impl RegisterProperty for bevy::prelude::App {
     where
         T: Property + 'static,
     {
-        self.add_system(
-            T::apply_system
-                .label(EcssSystem::Apply)
-                .with_run_criteria(T::have_property),
-        );
+        self.add_system(T::apply_system.label(EcssSystem::Apply));
 
         self
     }

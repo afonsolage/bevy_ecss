@@ -39,10 +39,6 @@ impl CssRules {
             .flatten()
     }
 
-    pub fn has_property(&self, name: &str) -> bool {
-        self.rules.iter().any(|rule| rule.has_property(name))
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &StyleRule> {
         self.rules.iter()
     }
@@ -60,12 +56,6 @@ impl CssRules {
 pub struct StyleRule {
     pub selector: Selector,
     pub properties: HashMap<String, PropertyValues>,
-}
-
-impl StyleRule {
-    pub(crate) fn has_property(&self, name: &str) -> bool {
-        self.properties.keys().any(|str| str == name)
-    }
 }
 
 #[derive(Default)]
