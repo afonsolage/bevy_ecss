@@ -236,7 +236,7 @@ mod style {
         "space-evenly" => SpaceEvenly,
     );
 
-    impl_style_enum!(Overflow, "direction", OverflowProperty, overflow,
+    impl_style_enum!(Overflow, "overflow", OverflowProperty, overflow,
         "visible" => Visible,
         "hidden" => Hidden,
     );
