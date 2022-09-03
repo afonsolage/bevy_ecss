@@ -2,8 +2,14 @@
 name = "bevy_ecss"
 version = "0.1.0"
 edition = "2021"
+categories = ["game-engines", "ui", "css", "bevy", "ecs"]
+description = "Allows using a subset of CSS to interact with Bevy ECS"
+exclude = [".github/"]
+keywords = ["css", "bevy", "style", "bevy", "theme", "ui"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/afonsolage/bevy_ecss"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bevy = { version = "0.8" }
