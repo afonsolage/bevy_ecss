@@ -36,17 +36,14 @@ fn change_theme(
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
 ) {
     for interaction in &interaction_query {
-        match *interaction {
-            Interaction::Clicked => {
-                if let Ok(mut sheet) = styles_query.get_mut(themes.root) {
-                    if sheet.handle() == &themes.dark {
-                        sheet.set(themes.light.clone());
-                    } else {
-                        sheet.set(themes.dark.clone());
-                    }
+        if let Interaction::Clicked = *interaction {
+            if let Ok(mut sheet) = styles_query.get_mut(themes.root) {
+                if sheet.handle() == &themes.dark {
+                    sheet.set(themes.light.clone());
+                } else {
+                    sheet.set(themes.dark.clone());
                 }
             }
-            _ => (),
         }
     }
 }

@@ -233,7 +233,7 @@ mod tests {
 
         match node[0] {
             SelectorElement::Name(name) => assert_eq!(name, "id"),
-            _ => assert!(false, "Should have a name selector"),
+            _ => panic!("Should have a name selector"),
         }
 
         assert!(rule.properties.is_empty(), "Should have no token");
@@ -253,7 +253,7 @@ mod tests {
 
         match node[0] {
             SelectorElement::Class(name) => assert_eq!(name, "class"),
-            _ => assert!(false, "Should have a class selector"),
+            _ => panic!("Should have a class selector"),
         }
 
         assert!(rule.properties.is_empty(), "Should have no token");
@@ -273,7 +273,7 @@ mod tests {
 
         match node[0] {
             SelectorElement::Component(name) => assert_eq!(name, "button"),
-            _ => assert!(false, "Should have a class selector"),
+            _ => panic!("Should have a class selector"),
         }
 
         assert!(rule.properties.is_empty(), "Should have no token");
@@ -400,10 +400,7 @@ mod tests {
 
         match &values[0] {
             PropertyToken::Identifier(ident) => assert_eq!(ident, "c"),
-            _ => assert!(
-                false,
-                "Should have a property value of type identifier token"
-            ),
+            _ => panic!("Should have a property value of type identifier token"),
         }
     }
 
@@ -480,7 +477,7 @@ mod tests {
         for rule in rules {
             match rule.selector.get_parent_tree()[0][0] {
                 SelectorElement::Component(a) => assert_eq!(a, "a"),
-                _ => assert!(false, "Should have only a single component \"a\""),
+                _ => panic!("Should have only a single component \"a\""),
             }
 
             match rule
@@ -492,10 +489,7 @@ mod tests {
                 .expect("Should have a single property value")
             {
                 PropertyToken::Identifier(a) => assert_eq!(a, "a"),
-                _ => assert!(
-                    false,
-                    "Should have only a single property value of type identifier"
-                ),
+                _ => panic!("Should have only a single property value of type identifier"),
             }
         }
     }

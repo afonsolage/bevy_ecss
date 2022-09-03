@@ -108,8 +108,10 @@ impl Plugin for EcssPlugin {
         register_component_selector(app);
         register_properties(app);
 
-        if let Some(settings) = app.world.get_resource::<AssetServerSettings>() && settings.watch_for_changes {
-            app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
+        if let Some(settings) = app.world.get_resource::<AssetServerSettings>() {
+            if settings.watch_for_changes {
+                app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
+            }
         }
     }
 }

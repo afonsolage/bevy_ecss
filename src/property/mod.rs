@@ -64,21 +64,7 @@ impl PropertyValues {
         if self.0.len() == 1 {
             match &self.0[0] {
                 PropertyToken::Identifier(name) => colors::parse_named_color(name.as_str()),
-                PropertyToken::Hash(hash) => {
-                    if let Ok(color) = cssparser::Color::parse_hash(hash.as_bytes())
-                        && let cssparser::Color::RGBA(cssparser::RGBA {
-                            red,
-                            green,
-                            blue,
-                            alpha,
-                        }) = color
-                        {
-                            Some(Color::rgba_u8(red, green, blue, alpha))
-                        }
-                    else {
-                        None
-                    }
-                }
+                PropertyToken::Hash(hash) => colors::parse_hex_color(hash.as_str()),
                 _ => None,
             }
         } else {
