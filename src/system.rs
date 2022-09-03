@@ -54,7 +54,7 @@ impl<'w, 's> PrepareParams<'w, 's> {
     }
 }
 
-/// Exclusive system which selects all entities and prepare the internal state used by [`Property`](crate::prelude::Property) systems.
+/// Exclusive system which selects all entities and prepare the internal state used by [`Property`](crate::Property) systems.
 pub(crate) fn prepare(world: &mut World) {
     world.resource_scope(|world, mut params: Mut<PrepareParams>| {
         world.resource_scope(|world, mut registry: Mut<ComponentFilterRegistry>| {
@@ -105,7 +105,7 @@ pub(crate) fn prepare_state(
     state
 }
 
-/// Select all entities using the given [`Selector`](crate::prelude::Selector).
+/// Select all entities using the given [`Selector`](crate::Selector).
 ///
 /// If no [`Children`] is supplied, then the selector is applied only on root entity.
 fn select_entities(
