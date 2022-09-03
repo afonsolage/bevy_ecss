@@ -7,6 +7,10 @@
 
 Bevy ECSS is a crate which allows the usage of a subset of [`CSS`](https://developer.mozilla.org/en-US/docs/Web/CSS) to interact with [`bevy_ecs`](https://crates.io/crates/bevy_ecs). It's mainly aimed to apply styling on [`bevy_ui`](https://crates.io/crates/bevy) but it can be used by any component by implementing custom properties.
 
+### Why the name?
+
+Just because Bevy ECS + CSS is a perfect fit!
+
 ## Usage
 
 To use Bevy ECSS just add a `StyleSheet` with a loaded `css` file to any entity and all style sheet rules will be applied to the entity and _all_ its [`descendants`](https://stackoverflow.com/questions/1182189/css-child-vs-descendant-selectors) (children of children of children and so on).
@@ -112,8 +116,6 @@ _Before reading properties description, we'll use this notation to describe acce
 |     `padding`     |                                      <`area-short-hand`>                                      | Applies the             property on [`padding`](https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.padding) field of all matched components.                                                                                                          |
 |     `border`      |                                      <`area-short-hand`>                                      | Applies the             property on [`border`](https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.border) field of all matched components.                                                                                                            |
 
-<br>
-
 ### <center>[`Text`](https://docs.rs/bevy/latest/bevy/prelude/struct.Text.html) properties</center>
 
 |     Property     |                                                                            Values                                                                            | Description                                                                                                                                                                                                                             |
@@ -136,9 +138,6 @@ _Before reading properties description, we'll use this notation to describe acce
 |      Property      |                                                                            Values                                                                            | Description                                                                                                                  |
 | :----------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------- |
 | `background-color` | [`named-colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/named-color) \| [`hex_colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color) | Applies the property on [`UiColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiColor.html) of all matched components. |
-<br>
-<hr>
-<br>
 
 ## Component Selector Builtin
 
@@ -235,8 +234,18 @@ Now just register the property on `App`:
 app.register_property::<AlphaProperty>();
 ```
 
-Done! Whenever an `alpha` property is found on any `css` file, the `AlphaProperty` will be applied.
+Done! Whenever an `alpha` property is found on any `css` file, the `AlphaProperty` will be applied. You can find this full example [`here`](https://github.com/afonsolage/bevy_ecss/blob/main/examples/alpha.rs).
 
+
+## Bevy support table
+| bevy  | bevy_ecss |
+| :---: | :-------: |
+|  0.8  |    0.1    |
+
+
+## Contributing
+
+Got some idea, feedback, question or found any bug? Feel free to open an issue at any time!
 
 ## License
 
