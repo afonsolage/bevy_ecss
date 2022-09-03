@@ -2,7 +2,6 @@ use bevy::{asset::AssetServerSettings, prelude::*, ui::FocusPolicy};
 use bevy_ecss::prelude::{
     Class, EcssPlugin, RegisterComponentSelector, StyleSheet, StyleSheetAsset,
 };
-use bevy_inspector_egui::WorldInspectorPlugin;
 
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
@@ -17,7 +16,6 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(EcssPlugin)
-        .add_plugin(WorldInspectorPlugin::default())
         .add_startup_system(setup)
         .add_system(change_theme)
         .register_component_selector::<Title>("title")

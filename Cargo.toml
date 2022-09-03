@@ -12,9 +12,6 @@ heck = "0.4"
 
 smallvec = { version = "1.6", features = ["serde", "union", "const_generics"] }
 
-[dev-dependencies]
-bevy-inspector-egui = "0.12.1"
-
 [[example]]
 name = "simple_ui"
 path = "examples/simple_ui.rs"
