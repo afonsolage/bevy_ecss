@@ -2,6 +2,7 @@
 
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/afonsolage/bevy_ecss#license)
 [![Rust](https://github.com/afonsolage/bevy_ecss/workflows/CI/badge.svg)](https://github.com/afonsolage/bevy_ecss/actions)
+[![Crates.io](https://img.shields.io/crates/d/bevy_ecss.svg)](https://crates.io/crates/bevy_ecss)
 
 ## What is Bevy ECSS?
 
