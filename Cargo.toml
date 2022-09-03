@@ -35,3 +35,7 @@ path = "examples/stress_test.rs"
 [[example]]
 name = "theme"
 path = "examples/theme.rs"
+
+[[example]]
+name = "alpha"
+path = "examples/alpha.rs"

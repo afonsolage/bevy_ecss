@@ -33,11 +33,11 @@ Here you can find a list of all currently supported selectors and properties:
 
 ### <ins>Selectors</ins>
 
-|    Type     | Details                                                                                                         | Example              |
-| :---------: | :-------------------------------------------------------------------------------------------------------------- | :------------------- |
-|   _Name_    | Selects by using `bevy` built-int [`Name`](https://docs.rs/bevy/latest/bevy/core/struct.Name.html) component.   | `#inventory { ... }` |
-|   _Class_   | Selects by using `Class` component, which is provided by Bevy ECSS.                                             | `.enabled { ... }`   |
-| _Component_ | Selects by using any component name, but it has to be registered before usage. You can find more details bellow | `button { ... }`     |
+|    Type     | Details                                                                                                       | Example              |
+| :---------: | :------------------------------------------------------------------------------------------------------------ | :------------------- |
+|   _Name_    | Selects by using `bevy` built-int [`Name`](https://docs.rs/bevy/latest/bevy/core/struct.Name.html) component. | `#inventory { ... }` |
+|   _Class_   | Selects by using `Class` component, which is provided by Bevy ECSS.                                           | `.enabled { ... }`   |
+| _Component_ | Selects by using any component, but it has to be registered before usage. You can find more details bellow.   | `button { ... }`     |
 
 You may combine any of the above selector types to create a complex selector, if you like so. For instance, `window.enabled.pop-up` select all `window`s, which are `enabled` and are of `pop-up` type. The same rules of [`CSS Class selectors`](https://developer.mozilla.org/en-US/docs/Web/CSS/Class_selectors) applies here. 
 
@@ -136,6 +136,101 @@ _Before reading properties description, we'll use this notation to describe acce
 |      Property      |                                                                            Values                                                                            | Description                                                                                                                  |
 | :----------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------- |
 | `background-color` | [`named-colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/named-color) \| [`hex_colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color) | Applies the property on [`UiColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiColor.html) of all matched components. |
+<br>
+<hr>
+<br>
+
+## Component Selector Builtin
+
+Bevy ECSS provites the following components selector:
+
+|   Selector    |                                    Component                                    |
+| :-----------: | :-----------------------------------------------------------------------------: |
+|  `ui-color`   |    [`UiColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiColor.html)    |
+|    `text`     |        [`Text`](https://docs.rs/bevy/latest/bevy/text/struct.Text.html)         |
+|   `button`    |     [`Button`](https://docs.rs/bevy/latest/bevy/prelude/struct.Button.html)     |
+|    `node`     |       [`Node`](https://docs.rs/bevy/latest/bevy/prelude/struct.Node.html)       |
+|    `style`    |      [`Style`](https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html)      |
+|  `ui-image`   |    [`UiImage`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiImage.html)    |
+| `interaction` | [`Interaction`](https://docs.rs/bevy/latest/bevy/prelude/enum.Interaction.html) |
+
+This list will be expanded to match `bevy_ui` and other `bevy` core components.
+
+## Custom Component Selector
+
+You may also register your own components or alias/overwrite builtin components selector.
+```rust
+use bevy::prelude::*;
+use bevy_ecss::prelude::*;
+
+#[derive(Component)]
+struct MyFancyComponentSelector;
+
+#[derive(Component)]
+struct FancyColor;
+
+fn some_main() {
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin);
+    // You may use it as selector now, like
+    // fancy-pants {
+    //      background-color: pink;
+    // }
+    app.register_component_selector::<MyFancyComponentSelector>("fancy-pants");
+    // Or you can overwrite a component selector.
+    app.register_component_selector::<FancyColor>("background-color");
+}
+```
+
+## Custom Property
+
+It's also possible to implement your own properties, be it part of `CSS` standard or not.
+Let's implement a custom `transparent` property with will accept either `yes` or `no` as valid values.
+```rust
+#[derive(Default)]
+pub(crate) struct TransparentProperty;
+
+impl Property for TransparentProperty {
+    // This is the cached value to be used when applying the property value.
+    // It is evaluated only on the first time and futures values are cached for performance reasons.
+    type Cache = bool;
+    // Which components we need when applying the cache. It is the same as using bevy ecs Query.
+    type Components = Entity;
+    // If this property can be set only when there is another property, we may filter there.
+    // It's not recommended to use only With<> and Without<>.
+    type Filters = ();
+
+    fn name() -> &'static str {
+        // The name of property. prefer kebab-case for consistency.
+        "transparent"
+    }
+
+    fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+        // PropertyValues::identifier tries to parse property value into a plain identifier
+        if let Some(ident) = values.identifier() {
+            match ident {
+                "yes" => return Ok(true),
+                "no" => return Ok(false),
+                _ => ()
+            }
+        }
+        Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+    }
+
+    fn apply<'w>(
+        cache: &Self::Cache,
+        components: QueryItem<Self::Components>,
+        _asset_server: &AssetServer,
+        commands: &mut Commands,
+    ) {
+        if cache {
+            commands.entity(components).insert(UiColor(*cache));
+        } else {
+            commands.entity(components).insert(UiColor(*cache));
+        }
+    }
+}
+```
 
 ## License
 
