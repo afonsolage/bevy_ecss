@@ -2,14 +2,13 @@
 name = "bevy_ecss"
 version = "0.1.0"
 edition = "2021"
-categories = ["game-engines", "ui", "css", "bevy", "ecs"]
+categories = ["game-development", "gui", "web-programming"]
 description = "Allows using a subset of CSS to interact with Bevy ECS"
 exclude = [".github/"]
-keywords = ["css", "bevy", "style", "bevy", "theme", "ui"]
+keywords = ["css", "bevy", "style", "theme", "ui"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/afonsolage/bevy_ecss"
-
 
 [dependencies]
 bevy = { version = "0.8" }
