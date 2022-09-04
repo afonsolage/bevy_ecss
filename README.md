@@ -1,10 +1,11 @@
-# <center>[![Bevy](assets/branding/bevy_ecss.png)](https://bevyengine.org)</center>
+# [![Bevy](assets/branding/bevy_ecss.png)](https://bevyengine.org)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/afonsolage/bevy_ecss#license)
+[![Realease Doc](https://docs.rs/bevy_ecss/badge.svg)](https://docs.rs/bevy_ecss)
+[![Rust](https://github.com/afonsolage/bevy_ecss/workflows/CI/badge.svg)](https://github.com/afonsolage/bevy_ecss/actions)
+[![Crate](https://img.shields.io/crates/v/bevy_ecss.svg)](https://crates.io/crates/bevy_ecss)
+[![Bevy tracking](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://github.com/bevyengine/bevy/blob/main/docs/plugins_guidelines.md#main-branch-tracking)
 
 # Bevy ECSS
-
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/afonsolage/bevy_ecss#license)
-[![Rust](https://github.com/afonsolage/bevy_ecss/workflows/CI/badge.svg)](https://github.com/afonsolage/bevy_ecss/actions)
-[![Crates.io](https://img.shields.io/crates/d/bevy_ecss.svg)](https://crates.io/crates/bevy_ecss)
 
 ## What is Bevy ECSS?
 
