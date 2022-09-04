@@ -1,3 +1,5 @@
+# <center>[![Bevy](assets/branding/bevy_ecss.png)](https://bevyengine.org)</center>
+
 # Bevy ECSS
 
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/afonsolage/bevy_ecss#license)
