@@ -11,7 +11,7 @@ readme = "README.md"
 repository = "https://github.com/afonsolage/bevy_ecss"
 
 [dependencies]
-bevy = { version = "0.8" }
+bevy = { version = "0.8", default-features = false}
 cssparser = "0.29"
 
 smallvec = { version = "1.6", features = ["serde", "union", "const_generics"] }
