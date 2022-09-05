@@ -1,6 +1,6 @@
 [package]
 name = "bevy_ecss"
-version = "0.1.0"
+version = "0.1.1-dev"
 edition = "2021"
 categories = ["game-development", "gui", "web-programming"]
 description = "Allows using a subset of CSS to interact with Bevy ECS"
@@ -11,13 +11,24 @@ readme = "README.md"
 repository = "https://github.com/afonsolage/bevy_ecss"
 
 [dependencies]
-bevy = { version = "0.8", default-features = false}
+bevy = { version = "0.8", default-features = false, features = [
+    "bevy_ui",
+    "bevy_asset",
+    "bevy_text",
+    "bevy_render",
+] }
 cssparser = "0.29"
 
 smallvec = { version = "1.6", features = ["serde", "union", "const_generics"] }
 
 [dev-dependencies]
-bevy = { version = "0.8", features = ["filesystem_watcher"] }
+bevy = { version = "0.8", features = [
+    "bevy_ui",
+    "bevy_asset",
+    "bevy_text",
+    "bevy_render",
+    "filesystem_watcher",
+] }
 
 [[example]]
 name = "simple_ui"
