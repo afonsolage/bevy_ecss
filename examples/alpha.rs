@@ -4,7 +4,7 @@ use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues};
 fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
-        .add_plugin(EcssPlugin)
+        .add_plugin(EcssPlugin::default())
         .add_startup_system(setup);
 
     app.register_property::<AlphaProperty>();
@@ -13,22 +13,22 @@ fn main() {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     commands
-        .spawn_bundle(NodeBundle {
+        .spawn(NodeBundle {
             style: Style {
                 size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                 justify_content: JustifyContent::SpaceBetween,
                 ..default()
             },
-            color: Color::NONE.into(),
+            background_color: Color::NONE.into(),
             ..default()
         })
         .insert(StyleSheet::new(asset_server.load("sheets/alpha.css")))
         .with_children(|parent| {
             // bevy logo (image)
-            parent.spawn_bundle(ImageBundle {
+            parent.spawn(ImageBundle {
                 style: Style {
                     size: Size::new(Val::Auto, Val::Auto),
                     ..default()
@@ -47,7 +47,7 @@ impl Property for AlphaProperty {
     // It is evaluated only on the first time and futures values are cached for performance reasons.
     type Cache = f32;
     // Which components we need when applying the cache. It is the same as using bevy ecs Query.
-    type Components = &'static mut UiColor;
+    type Components = &'static mut BackgroundColor;
     // If this property can be set only when there is another property, we may filter there.
     // It's not recommended to use only With<> and Without<>.
     type Filters = ();

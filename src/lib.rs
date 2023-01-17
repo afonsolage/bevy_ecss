@@ -10,14 +10,10 @@ mod system;
 use std::{error::Error, fmt::Display};
 
 use bevy::{
-    asset::AssetServerSettings,
     ecs::system::SystemState,
-    prelude::{
-        AddAsset, Button, Component, CoreStage, Entity, ExclusiveSystemDescriptorCoercion,
-        IntoExclusiveSystem, ParallelSystemDescriptorCoercion, Plugin, Query, SystemLabel, With,
-    },
+    prelude::{AddAsset, Button, Component, CoreStage, Entity, Plugin, Query, SystemLabel, With},
     text::Text,
-    ui::{Interaction, Node, Style, UiColor, UiImage},
+    ui::{BackgroundColor, Interaction, Node, Style, UiImage},
 };
 
 use property::StyleSheetState;
@@ -86,7 +82,15 @@ pub enum EcssSystem {
 /// Plugin which add all types, assets, systems and internal resources needed by `bevy_ecss`.
 /// You must add this plugin in order to use `bevy_ecss`.
 #[derive(Default)]
-pub struct EcssPlugin;
+pub struct EcssPlugin {
+    hot_reload: bool,
+}
+
+impl EcssPlugin {
+    pub fn with_hot_reload() -> EcssPlugin {
+        EcssPlugin { hot_reload: true }
+    }
+}
 
 impl Plugin for EcssPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
@@ -96,11 +100,8 @@ impl Plugin for EcssPlugin {
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system(system::prepare.exclusive_system().at_start())
-            .add_system_to_stage(
-                CoreStage::PostUpdate,
-                system::clear_state.label(EcssSystem::Cleanup),
-            );
+            .add_system(system::prepare)
+            .add_system_to_stage(CoreStage::PostUpdate, system::clear_state);
 
         let prepared_state = PrepareParams::new(&mut app.world);
         app.insert_resource(prepared_state);
@@ -108,16 +109,14 @@ impl Plugin for EcssPlugin {
         register_component_selector(app);
         register_properties(app);
 
-        if let Some(settings) = app.world.get_resource::<AssetServerSettings>() {
-            if settings.watch_for_changes {
-                app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
-            }
+        if self.hot_reload {
+            app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
         }
     }
 }
 
 fn register_component_selector(app: &mut bevy::prelude::App) {
-    app.register_component_selector::<UiColor>("ui-color");
+    app.register_component_selector::<BackgroundColor>("background-color");
     app.register_component_selector::<Text>("text");
     app.register_component_selector::<Button>("button");
     app.register_component_selector::<Node>("node");
@@ -166,7 +165,7 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<HorizontalAlignProperty>();
     app.register_property::<TextContentProperty>();
 
-    app.register_property::<UiColorProperty>();
+    app.register_property::<BackgroundColorProperty>();
 }
 
 /// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector) function on [`App`](bevy::prelude::App) to add a new component selector.
@@ -185,7 +184,7 @@ fn register_properties(app: &mut bevy::prelude::App) {
 /// #
 /// # fn some_main() {
 /// #    let mut app = App::new();
-/// #    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin);
+/// #    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin::default());
 /// // You may use it as selector now, like
 /// // fancy-pants {
 /// //      background-color: pink;
@@ -233,7 +232,7 @@ impl RegisterProperty for bevy::prelude::App {
     where
         T: Property + 'static,
     {
-        self.add_system(T::apply_system.label(EcssSystem::Apply));
+        self.add_system(T::apply_system);
 
         self
     }

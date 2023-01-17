@@ -16,7 +16,7 @@ use crate::StyleSheetAsset;
 /// fn system(mut commands: Commands) {
 ///     // This entity can be selected by either ".yellow-button", ".enabled"
 ///     // or even ".yellow-button.enabled"
-///     commands.spawn().insert(Class::new("yellow-button enabled"));
+///     commands.spawn(Class::new("yellow-button enabled"));
 /// }
 /// ```
 #[derive(Debug, Reflect, Component, Default, Clone, Deref)]
@@ -50,7 +50,7 @@ impl Class {
 /// use bevy_ecss::prelude::*;
 ///
 /// fn setup(asset_server: Res<AssetServer>, mut commands: Commands) {
-///     commands.spawn().insert(StyleSheet::new(asset_server.load("sheets/fancy.css")));
+///     commands.spawn(StyleSheet::new(asset_server.load("sheets/fancy.css")));
 /// }
 ///
 /// ```

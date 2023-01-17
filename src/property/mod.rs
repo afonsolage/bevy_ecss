@@ -1,10 +1,10 @@
 use std::any::Any;
 
 use bevy::{
-    ecs::query::{QueryItem, WorldQuery},
+    ecs::query::{QueryItem, ReadOnlyWorldQuery, WorldQuery},
     prelude::{
         error, trace, AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle, Local,
-        Query, Res,
+        Query, Res, Resource,
     },
     ui::{UiRect, Val},
     utils::HashMap,
@@ -141,7 +141,7 @@ impl PropertyValues {
     /// otherwise values are applied in the following order: `top`, `right`, `bottom` and `left`.
     ///
     /// Note that it is not possible to create a [`UiRect`] with only `top` value, since it'll be understood to replicated it on all fields.
-    pub fn rect(&self) -> Option<UiRect<Val>> {
+    pub fn rect(&self) -> Option<UiRect> {
         if self.0.len() == 1 {
             self.val().map(UiRect::all)
         } else {
@@ -153,7 +153,7 @@ impl PropertyValues {
                         PropertyToken::Dimension(val) => Val::Px(*val),
                         _ => return (rect, idx),
                     };
-                    let mut rect: UiRect<Val> = rect.unwrap_or_default();
+                    let mut rect: UiRect = rect.unwrap_or_default();
 
                     match idx {
                         0 => rect.top = val,
@@ -244,7 +244,7 @@ impl<T: Property> PropertyMeta<T> {
 pub struct SelectedEntities(HashMap<Selector, SmallVec<[Entity; 8]>>);
 
 /// Maps sheets for each [`StyleSheetAsset`].
-#[derive(Debug, Clone, Default, Deref, DerefMut)]
+#[derive(Debug, Clone, Default, Deref, DerefMut, Resource)]
 pub struct StyleSheetState(HashMap<Handle<StyleSheetAsset>, SelectedEntities>);
 
 /// Determines how a property should interact and modify the [ecs world](`bevy::prelude::World`).
@@ -277,8 +277,8 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     type Cache: Default + Any + Send + Sync;
     /// Which components should be queried when applying the modification. Check [`WorldQuery`] for more.
     type Components: WorldQuery;
-    /// Filters conditions to be applied when querying entities by this property. Check [`WorldQuery`] for more.
-    type Filters: WorldQuery;
+    /// Filters conditions to be applied when querying entities by this property. Check [`ReadOnlyWorldQuery`] for more.
+    type Filters: ReadOnlyWorldQuery;
 
     /// Indicates which property name should matched for. Must match the same property name as on `css` file.
     ///

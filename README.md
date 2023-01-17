@@ -139,23 +139,23 @@ _Before reading properties description, we'll use this notation to describe acce
 
 ### <center>Components properties</center>
 
-|      Property      |                                                                            Values                                                                            | Description                                                                                                                  |
-| :----------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------- |
-| `background-color` | [`named-colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/named-color) \| [`hex_colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color) | Applies the property on [`UiColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiColor.html) of all matched components. |
+|      Property      |                                                                            Values                                                                            | Description                                                                                                                                  |
+| :----------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| `background-color` | [`named-colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/named-color) \| [`hex_colors`](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color) | Applies the property on [`BackgroundColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.BackgroundColor.html) of all matched components. |
 
 ## Component Selector Builtin
 
 Bevy ECSS provites the following components selector:
 
-|   Selector    |                                    Component                                    |
-| :-----------: | :-----------------------------------------------------------------------------: |
-|  `ui-color`   |    [`UiColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiColor.html)    |
-|    `text`     |        [`Text`](https://docs.rs/bevy/latest/bevy/text/struct.Text.html)         |
-|   `button`    |     [`Button`](https://docs.rs/bevy/latest/bevy/prelude/struct.Button.html)     |
-|    `node`     |       [`Node`](https://docs.rs/bevy/latest/bevy/prelude/struct.Node.html)       |
-|    `style`    |      [`Style`](https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html)      |
-|  `ui-image`   |    [`UiImage`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiImage.html)    |
-| `interaction` | [`Interaction`](https://docs.rs/bevy/latest/bevy/prelude/enum.Interaction.html) |
+|      Selector      |                                         Component                                         |
+| :----------------: | :---------------------------------------------------------------------------------------: |
+| `background-color` | [`BackgroundColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.BackgroundColor.html) |
+|       `text`       |             [`Text`](https://docs.rs/bevy/latest/bevy/text/struct.Text.html)              |
+|      `button`      |          [`Button`](https://docs.rs/bevy/latest/bevy/prelude/struct.Button.html)          |
+|       `node`       |            [`Node`](https://docs.rs/bevy/latest/bevy/prelude/struct.Node.html)            |
+|      `style`       |           [`Style`](https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html)           |
+|     `ui-image`     |         [`UiImage`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiImage.html)         |
+|   `interaction`    |      [`Interaction`](https://docs.rs/bevy/latest/bevy/prelude/enum.Interaction.html)      |
 
 This list will be expanded to match `bevy_ui` and other `bevy` core components.
 
@@ -174,7 +174,7 @@ struct FancyColor;
 
 fn some_main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin);
+    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin::default());
     // You may use it as selector now, like
     // fancy-pants {
     //      background-color: pink;
@@ -188,7 +188,7 @@ fn some_main() {
 ## Custom Property
 
 It's also possible to implement your own properties, be it part of `CSS` standard or not.
-Let's implement a custom `alpha` property with will set the alpha channel of any [`UiColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.UiColor.html).
+Let's implement a custom `alpha` property with will set the alpha channel of any [`BackgroundColor`](https://docs.rs/bevy/latest/bevy/prelude/struct.BackgroundColor.html).
 ```rust
 # use bevy::{ecs::query::QueryItem, prelude::*};
 # use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues};
@@ -202,7 +202,7 @@ impl Property for AlphaProperty {
     type Cache = f32;
     // Which components the property needs when applying the cached value.
     // It is the same as using bevy_ecs Query<C, F>.
-    type Components = &'static mut UiColor;
+    type Components = &'static mut BackgroundColor;
     // If this property can be set only when there is another property, it's possible to filter here.
     // It's not recommended to use only With<> and Without<>.
     type Filters = ();
@@ -245,6 +245,7 @@ Done! Whenever an `alpha` property is found on any `css` file, the `AlphaPropert
 | bevy  | bevy_ecss |
 | :---: | :-------: |
 |  0.8  |    0.1    |
+|  0.9  |    0.2    |
 
 
 ## Contributing

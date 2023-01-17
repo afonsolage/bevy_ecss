@@ -1,23 +1,22 @@
-use bevy::{asset::AssetServerSettings, prelude::*};
+use bevy::prelude::*;
 use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
-        .insert_resource(AssetServerSettings {
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
             watch_for_changes: true,
-            ..default()
-        })
-        .add_plugins(DefaultPlugins)
-        .add_plugin(EcssPlugin)
+            ..Default::default()
+        }))
+        .add_plugin(EcssPlugin::default())
         .add_startup_system(setup)
         .run();
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     commands
-        .spawn_bundle(NodeBundle {
+        .spawn(NodeBundle {
             ..Default::default()
         })
         .insert(Name::new("root"))
@@ -25,7 +24,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_children(|builder| {
             for _ in 0..10 {
                 builder
-                    .spawn_bundle(NodeBundle {
+                    .spawn(NodeBundle {
                         style: Style {
                             ..Default::default()
                         },
@@ -35,7 +34,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     .with_children(|builder| {
                         for _ in 0..10 {
                             builder
-                                .spawn_bundle(NodeBundle {
+                                .spawn(NodeBundle {
                                     style: Style {
                                         ..Default::default()
                                     },
@@ -45,7 +44,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 .with_children(|builder| {
                                     for _ in 0..10 {
                                         builder
-                                            .spawn_bundle(NodeBundle {
+                                            .spawn(NodeBundle {
                                                 style: Style {
                                                     ..Default::default()
                                                 },
@@ -55,7 +54,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                             .with_children(|builder| {
                                                 for _ in 0..10 {
                                                     builder
-                                                        .spawn_bundle(NodeBundle {
+                                                        .spawn(NodeBundle {
                                                             ..Default::default()
                                                         })
                                                         .insert(Class::new("purple"));
