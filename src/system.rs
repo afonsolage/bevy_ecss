@@ -2,7 +2,7 @@ use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
         debug, error, trace, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut,
-        Entity, EventReader, Mut, Name, Query, Res, ResMut, With, World,
+        Entity, EventReader, Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
     ui::Node,
     utils::HashMap,
@@ -26,7 +26,7 @@ impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity,
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub(crate) struct ComponentFilterRegistry(
     pub HashMap<&'static str, Box<dyn ComponentFilter + Send + Sync>>,
 );
@@ -45,10 +45,10 @@ pub(crate) struct CssQueryParam<'w, 's> {
     children: Query<'w, 's, &'static Children, With<Node>>,
 }
 
-#[derive(Deref, DerefMut)]
-pub(crate) struct PrepareParams<'w, 's>(SystemState<CssQueryParam<'w, 's>>);
+#[derive(Deref, DerefMut, Resource)]
+pub(crate) struct PrepareParams(SystemState<CssQueryParam<'static, 'static>>);
 
-impl<'w, 's> PrepareParams<'w, 's> {
+impl PrepareParams {
     pub fn new(world: &mut World) -> Self {
         Self(SystemState::new(world))
     }

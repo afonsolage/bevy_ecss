@@ -23,7 +23,7 @@ mod style {
             pub(crate) struct $struct;
 
             impl Property for $struct {
-                type Cache = UiRect<Val>;
+                type Cache = UiRect;
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
@@ -456,14 +456,14 @@ mod text {
     }
 }
 
-/// Applies the `background-color` property on [`UiColor`] component of matched entities.
+/// Applies the `background-color` property on [`BackgroundColor`] component of matched entities.
 #[derive(Default)]
-pub(crate) struct UiColorProperty;
+pub(crate) struct BackgroundColorProperty;
 
-impl Property for UiColorProperty {
+impl Property for BackgroundColorProperty {
     type Cache = Color;
     type Components = Entity;
-    type Filters = With<UiColor>;
+    type Filters = With<BackgroundColor>;
 
     fn name() -> &'static str {
         "background-color"
@@ -483,6 +483,6 @@ impl Property for UiColorProperty {
         _asset_server: &AssetServer,
         commands: &mut Commands,
     ) {
-        commands.entity(components).insert(UiColor(*cache));
+        commands.entity(components).insert(BackgroundColor(*cache));
     }
 }
