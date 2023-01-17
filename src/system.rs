@@ -2,7 +2,7 @@ use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
         debug, error, trace, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut,
-        Entity, EventReader, Mut, Name, Query, Res, ResMut, With, World, Resource,
+        Entity, EventReader, Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
     ui::Node,
     utils::HashMap,
