@@ -74,17 +74,17 @@ impl Display for EcssError {
 #[system_set(base)]
 struct EcssHotReload;
 
-/// System labels used by `bevy_ecss` systems
-/// Note that there is also an exclusive system which isn't labeled, but runs on [`CoreStage::Update`]
+/// System sets  used by `bevy_ecss` systems
 #[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum EcssSet {
     /// Prepares internal state before running apply systems.
+    /// This system runs on [`CoreSet::PreUpdate`].
     Prepare,
     /// All [`Property`] implementation `systems` are run on this system set.
-    /// Those stages runs on [`CoreStage::Update`]
+    /// Those stages runs on [`CoreSet::PreUpdate`] after [`EcssSet::Prepare`].
     Apply,
     /// Clears the internal state used by [`Property`] implementation `systems` set.
-    /// This system runs on [`CoreStage::PostUpdate`]
+    /// This system runs on [`CoreSet::PostUpdate`].
     Cleanup,
 }
 
@@ -129,7 +129,7 @@ impl Plugin for EcssPlugin {
             app.configure_set(
                 EcssHotReload
                     .after(AssetSet::AssetEvents)
-                    .before(CoreSet::Last)
+                    .before(CoreSet::Last),
             )
             .add_system(system::hot_reload_style_sheets.in_base_set(EcssHotReload));
         }
@@ -188,7 +188,8 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<BackgroundColorProperty>();
 }
 
-/// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector) function on [`App`](bevy::prelude::App) to add a new component selector.
+/// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector)
+/// function on [`App`](bevy::prelude::App) to add a new component selector.
 ///
 /// You can register any component you want and name it as you like.
 /// It's advised to use `lower-case` and `kebab-case` to match CSS coding style.
@@ -238,7 +239,8 @@ impl RegisterComponentSelector for bevy::prelude::App {
     }
 }
 
-/// Utility trait which adds the [`register_property`](RegisterProperty::register_property) function on [`App`](bevy::prelude::App) to add a [`Property`] parser.
+/// Utility trait which adds the [`register_property`](RegisterProperty::register_property) function
+/// on [`App`](bevy::prelude::App) to add a [`Property`] parser.
 ///
 /// You need to register only custom properties which implements [`Property`] trait.
 pub trait RegisterProperty {

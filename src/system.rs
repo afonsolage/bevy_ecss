@@ -1,8 +1,8 @@
 use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::{
-        debug, error, info, trace, AssetEvent, Assets, Changed, Children, Component, Deref,
-        DerefMut, Entity, EventReader, Mut, Name, Query, Res, ResMut, Resource, With, World,
+        debug, error, trace, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut,
+        Entity, EventReader, Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
     ui::Node,
     utils::HashMap,
