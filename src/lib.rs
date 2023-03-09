@@ -77,7 +77,8 @@ struct EcssHotReload;
 /// System labels used by `bevy_ecss` systems
 /// Note that there is also an exclusive system which isn't labeled, but runs on [`CoreStage::Update`]
 #[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum EcssSystem {
+pub enum EcssSet {
+    /// Prepares internal state before running apply systems.
     Prepare,
     /// All [`Property`] implementation `systems` are run on this system set.
     /// Those stages runs on [`CoreStage::Update`]
@@ -105,18 +106,18 @@ impl Plugin for EcssPlugin {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
             .add_asset::<StyleSheetAsset>()
-            .configure_set(EcssSystem::Prepare.in_base_set(CoreSet::PreUpdate))
+            .configure_set(EcssSet::Prepare.in_base_set(CoreSet::PreUpdate))
             .configure_set(
-                EcssSystem::Apply
+                EcssSet::Apply
                     .in_base_set(CoreSet::PreUpdate)
-                    .after(EcssSystem::Prepare),
+                    .after(EcssSet::Prepare),
             )
-            .configure_set(EcssSystem::Cleanup.in_base_set(CoreSet::PostUpdate))
+            .configure_set(EcssSet::Cleanup.in_base_set(CoreSet::PostUpdate))
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system(system::prepare.in_set(EcssSystem::Prepare))
-            .add_system(system::clear_state.in_set(EcssSystem::Cleanup));
+            .add_system(system::prepare.in_set(EcssSet::Prepare))
+            .add_system(system::clear_state.in_set(EcssSet::Cleanup));
 
         let prepared_state = PrepareParams::new(&mut app.world);
         app.insert_resource(prepared_state);
@@ -251,7 +252,7 @@ impl RegisterProperty for bevy::prelude::App {
     where
         T: Property + 'static,
     {
-        self.add_system(T::apply_system.in_set(EcssSystem::Apply));
+        self.add_system(T::apply_system.in_set(EcssSet::Apply));
 
         self
     }
