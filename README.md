@@ -132,9 +132,7 @@ _Before reading properties description, we'll use this notation to describe acce
 |                  |
 |  `text-content`  |                                                                     `"Some text value"`                                                                      | Applies the property on [`value`](https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.value) for all [`sections`](https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html) of matched components.           |
 |                  |
-| `vertical-align` |                                                                `top` \| `center` \| `bottom`                                                                 | Applies the property on [`alignment.vertical`](https://docs.rs/bevy/latest/bevy/text/struct.Text.html#structfield.alignment) of all matched components                                                                                  |
-|                  |
-|   `text-align`   |                                                                `left` \| `center` \| `right`                                                                 | Applies the property on [`alignment.horizontal`](https://docs.rs/bevy/latest/bevy/text/struct.Text.html#structfield.horizontal) of all matched components                                                                               |
+|   `text-align`   |                                                                `left` \| `center` \| `right`                                                                 | Applies the property on [`alignment`](https://docs.rs/bevy/latest/bevy/text/struct.Text.html#structfield.alignment) of all matched components.                                                                                          |
 |                  |
 
 ### <center>Components properties</center>
@@ -246,6 +244,7 @@ Done! Whenever an `alpha` property is found on any `css` file, the `AlphaPropert
 | :---: | :-------: |
 |  0.8  |    0.1    |
 |  0.9  |    0.2    |
+|  0.10 |    0.3    |
 
 
 ## Contributing

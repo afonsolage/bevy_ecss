@@ -10,8 +10,12 @@ mod system;
 use std::{error::Error, fmt::Display};
 
 use bevy::{
+    asset::AssetSet,
     ecs::system::SystemState,
-    prelude::{AddAsset, Button, Component, CoreStage, Entity, Plugin, Query, SystemLabel, With},
+    prelude::{
+        AddAsset, Button, Component, CoreSet, Entity, IntoSystemConfig, IntoSystemSetConfig,
+        Plugin, Query, SystemSet, With,
+    },
     text::Text,
     ui::{BackgroundColor, Interaction, Node, Style, UiImage},
 };
@@ -66,16 +70,21 @@ impl Display for EcssError {
         }
     }
 }
+#[derive(SystemSet, Debug, Clone, Hash, Eq, PartialEq)]
+#[system_set(base)]
+struct EcssHotReload;
 
-/// System labels used by `bevy_ecss` systems
-/// Note that there is also an exclusive system which isn't labeled, but runs on [`CoreStage::Update`]
-#[derive(SystemLabel)]
-pub enum EcssSystem {
-    /// All [`Property`] implementation `systems` are run on this system.
-    /// Those stages runs on [`CoreStage::Update`]
+/// System sets  used by `bevy_ecss` systems
+#[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum EcssSet {
+    /// Prepares internal state before running apply systems.
+    /// This system runs on [`CoreSet::PreUpdate`].
+    Prepare,
+    /// All [`Property`] implementation `systems` are run on this system set.
+    /// Those stages runs on [`CoreSet::PreUpdate`] after [`EcssSet::Prepare`].
     Apply,
-    /// Clears the internal state used by [`Property`] implementation `systems`.
-    /// This system runs on [`CoreStage::PostUpdate`]
+    /// Clears the internal state used by [`Property`] implementation `systems` set.
+    /// This system runs on [`CoreSet::PostUpdate`].
     Cleanup,
 }
 
@@ -97,11 +106,18 @@ impl Plugin for EcssPlugin {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
             .add_asset::<StyleSheetAsset>()
+            .configure_set(EcssSet::Prepare.in_base_set(CoreSet::PreUpdate))
+            .configure_set(
+                EcssSet::Apply
+                    .in_base_set(CoreSet::PreUpdate)
+                    .after(EcssSet::Prepare),
+            )
+            .configure_set(EcssSet::Cleanup.in_base_set(CoreSet::PostUpdate))
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system(system::prepare)
-            .add_system_to_stage(CoreStage::PostUpdate, system::clear_state);
+            .add_system(system::prepare.in_set(EcssSet::Prepare))
+            .add_system(system::clear_state.in_set(EcssSet::Cleanup));
 
         let prepared_state = PrepareParams::new(&mut app.world);
         app.insert_resource(prepared_state);
@@ -110,7 +126,12 @@ impl Plugin for EcssPlugin {
         register_properties(app);
 
         if self.hot_reload {
-            app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
+            app.configure_set(
+                EcssHotReload
+                    .after(AssetSet::AssetEvents)
+                    .before(CoreSet::Last),
+            )
+            .add_system(system::hot_reload_style_sheets.in_base_set(EcssHotReload));
         }
     }
 }
@@ -161,14 +182,14 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<FontColorProperty>();
     app.register_property::<FontProperty>();
     app.register_property::<FontSizeProperty>();
-    app.register_property::<VerticalAlignProperty>();
-    app.register_property::<HorizontalAlignProperty>();
+    app.register_property::<TextAlignProperty>();
     app.register_property::<TextContentProperty>();
 
     app.register_property::<BackgroundColorProperty>();
 }
 
-/// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector) function on [`App`](bevy::prelude::App) to add a new component selector.
+/// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector)
+/// function on [`App`](bevy::prelude::App) to add a new component selector.
 ///
 /// You can register any component you want and name it as you like.
 /// It's advised to use `lower-case` and `kebab-case` to match CSS coding style.
@@ -218,7 +239,8 @@ impl RegisterComponentSelector for bevy::prelude::App {
     }
 }
 
-/// Utility trait which adds the [`register_property`](RegisterProperty::register_property) function on [`App`](bevy::prelude::App) to add a [`Property`] parser.
+/// Utility trait which adds the [`register_property`](RegisterProperty::register_property) function
+/// on [`App`](bevy::prelude::App) to add a [`Property`] parser.
 ///
 /// You need to register only custom properties which implements [`Property`] trait.
 pub trait RegisterProperty {
@@ -232,7 +254,7 @@ impl RegisterProperty for bevy::prelude::App {
     where
         T: Property + 'static,
     {
-        self.add_system(T::apply_system);
+        self.add_system(T::apply_system.in_set(EcssSet::Apply));
 
         self
     }

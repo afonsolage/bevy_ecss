@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
+use bevy_editor_pls::prelude::*;
 
 fn main() {
     App::new()
@@ -8,6 +9,7 @@ fn main() {
             watch_for_changes: true,
             ..Default::default()
         }))
+        .add_plugin(EditorPlugin)
         .add_plugin(EcssPlugin::with_hot_reload())
         .add_startup_system(setup)
         .run();
@@ -25,7 +27,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 justify_content: JustifyContent::SpaceBetween,
                 ..default()
             },
-            background_color: Color::NONE.into(),
+            background_color: Color::RED.into(),
             ..default()
         })
         .insert(Name::new("ui-root"))

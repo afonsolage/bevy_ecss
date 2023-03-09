@@ -348,49 +348,13 @@ mod text {
         }
     }
 
-    /// Applies the `vertical-align` property on [`TextAlignment::vertical`](`TextAlignment`) property of matched [`Text`] components.
+    /// Applies the `text-align` property on [`Text::horizontal`](`TextAlignment`) components.
     #[derive(Default)]
-    pub(crate) struct VerticalAlignProperty;
+    pub(crate) struct TextAlignProperty;
 
-    impl Property for VerticalAlignProperty {
-        // Using Option since Cache must impl Default, which VerticalAlign doesn't
-        type Cache = Option<VerticalAlign>;
-        type Components = &'static mut Text;
-        type Filters = With<Node>;
-
-        fn name() -> &'static str {
-            "vertical-align"
-        }
-
-        fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
-            if let Some(ident) = values.identifier() {
-                match ident {
-                    "top" => return Ok(Some(VerticalAlign::Top)),
-                    "center" => return Ok(Some(VerticalAlign::Center)),
-                    "bottom" => return Ok(Some(VerticalAlign::Bottom)),
-                    _ => (),
-                }
-            }
-            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
-        }
-
-        fn apply<'w>(
-            cache: &Self::Cache,
-            mut components: QueryItem<Self::Components>,
-            _asset_server: &AssetServer,
-            _commands: &mut Commands,
-        ) {
-            components.alignment.vertical = cache.expect("Should always have a inner value");
-        }
-    }
-
-    /// Applies the `text-align` property on [`TextAlignment::horizontal`](`TextAlignment`) property of matched [`Text`] components.
-    #[derive(Default)]
-    pub(crate) struct HorizontalAlignProperty;
-
-    impl Property for HorizontalAlignProperty {
-        // Using Option since Cache must impl Default, which HorizontalAlign doesn't
-        type Cache = Option<HorizontalAlign>;
+    impl Property for TextAlignProperty {
+        // Using Option since Cache must impl Default, which  doesn't
+        type Cache = Option<TextAlignment>;
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
@@ -401,9 +365,9 @@ mod text {
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
             if let Some(ident) = values.identifier() {
                 match ident {
-                    "left" => return Ok(Some(HorizontalAlign::Left)),
-                    "center" => return Ok(Some(HorizontalAlign::Center)),
-                    "right" => return Ok(Some(HorizontalAlign::Right)),
+                    "left" => return Ok(Some(TextAlignment::Left)),
+                    "center" => return Ok(Some(TextAlignment::Center)),
+                    "right" => return Ok(Some(TextAlignment::Right)),
                     _ => (),
                 }
             }
@@ -416,7 +380,7 @@ mod text {
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
-            components.alignment.horizontal = cache.expect("Should always have a inner value");
+            components.alignment = cache.expect("Should always have a inner value");
         }
     }
 
