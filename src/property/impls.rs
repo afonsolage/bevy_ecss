@@ -435,10 +435,8 @@ impl Property for BackgroundColorProperty {
 
     fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
         if let Some(color) = values.color() {
-            debug!("Parsed color: #{color:?}");
             Ok(color)
         } else {
-            debug!("Wrong color!");
             Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
         }
     }
@@ -449,7 +447,6 @@ impl Property for BackgroundColorProperty {
         _asset_server: &AssetServer,
         commands: &mut Commands,
     ) {
-        debug!("Setting bg color!");
         commands.entity(components).insert(BackgroundColor(*cache));
     }
 }
