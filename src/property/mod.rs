@@ -316,6 +316,11 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     ) {
         for (handle, selected) in apply_sheets.iter() {
             if let Some(rules) = assets.get(handle) {
+                trace!(
+                    "Running apply system {} on rule {}",
+                    Self::name(),
+                    rules.path()
+                );
                 for (selector, entities) in selected.iter() {
                     if let CacheState::Ok(cached) = local.get_or_parse(rules, selector) {
                         trace!(

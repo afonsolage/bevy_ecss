@@ -2,8 +2,9 @@ use std::hash::{Hash, Hasher};
 
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
+    prelude::debug,
     reflect::TypeUuid,
-    utils::{AHasher, HashMap}, prelude::debug,
+    utils::{AHasher, HashMap},
 };
 use smallvec::SmallVec;
 

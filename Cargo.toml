@@ -11,7 +11,7 @@ readme = "README.md"
 repository = "https://github.com/afonsolage/bevy_ecss"
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = false, features = [
+bevy = { version = "0.10", default-features = false, features = [
     "bevy_ui",
     "bevy_asset",
     "bevy_text",
@@ -22,13 +22,14 @@ cssparser = "0.29"
 smallvec = { version = "1.10", features = ["serde", "union", "const_generics"] }
 
 [dev-dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
+bevy = { version = "0.10", features = [
     "bevy_ui",
     "bevy_asset",
     "bevy_text",
     "bevy_render",
     "filesystem_watcher",
 ] }
+bevy_editor_pls = "0.3"
 
 [[example]]
 name = "simple_ui"

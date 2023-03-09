@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
+use bevy_editor_pls::prelude::*;
 
 fn main() {
     App::new()
@@ -8,6 +9,7 @@ fn main() {
             watch_for_changes: true,
             ..Default::default()
         }))
+        .add_plugin(EditorPlugin)
         .add_plugin(EcssPlugin::with_hot_reload())
         .add_startup_system(setup)
         .run();
