@@ -173,8 +173,8 @@ impl<'i> AtRuleParser<'i> for PropertyParser {
     type Error = EcssError;
 }
 
-fn parse_values<'i, 'tt>(
-    parser: &mut Parser<'i, 'tt>,
+fn parse_values<'i>(
+    parser: &mut Parser<'i, '_>,
 ) -> Result<SmallVec<[Token<'i>; 8]>, ParseError<'i, EcssError>> {
     let mut values = SmallVec::new();
 

@@ -3,7 +3,7 @@ use std::hash::{Hash, Hasher};
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
     reflect::TypeUuid,
-    utils::{AHasher, HashMap},
+    utils::{AHasher, HashMap}, prelude::debug,
 };
 use smallvec::SmallVec;
 
@@ -90,6 +90,7 @@ impl AssetLoader for StyleSheetLoader {
             let stylesheet =
                 StyleSheetAsset::parse(load_context.path().to_str().unwrap_or_default(), content);
             load_context.set_default_asset(LoadedAsset::new(stylesheet));
+            debug!("Loaded!");
             Ok(())
         })
     }

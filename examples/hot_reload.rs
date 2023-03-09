@@ -25,7 +25,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 justify_content: JustifyContent::SpaceBetween,
                 ..default()
             },
-            background_color: Color::NONE.into(),
+            background_color: Color::RED.into(),
             ..default()
         })
         .insert(Name::new("ui-root"))

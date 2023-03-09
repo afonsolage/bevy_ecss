@@ -11,9 +11,9 @@ use std::{error::Error, fmt::Display};
 
 use bevy::{
     ecs::system::SystemState,
-    prelude::{AddAsset, Button, Component, CoreStage, Entity, Plugin, Query, SystemLabel, With},
+    prelude::{AddAsset, Button, Component, Entity, Plugin, Query, With, SystemSet, IntoSystemConfig, CoreSet},
     text::Text,
-    ui::{BackgroundColor, Interaction, Node, Style, UiImage},
+    ui::{BackgroundColor, Interaction, Node, Style, UiImage}, asset::AssetSet,
 };
 
 use property::StyleSheetState;
@@ -69,12 +69,12 @@ impl Display for EcssError {
 
 /// System labels used by `bevy_ecss` systems
 /// Note that there is also an exclusive system which isn't labeled, but runs on [`CoreStage::Update`]
-#[derive(SystemLabel)]
+#[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum EcssSystem {
-    /// All [`Property`] implementation `systems` are run on this system.
+    /// All [`Property`] implementation `systems` are run on this system set.
     /// Those stages runs on [`CoreStage::Update`]
     Apply,
-    /// Clears the internal state used by [`Property`] implementation `systems`.
+        /// Clears the internal state used by [`Property`] implementation `systems` set.
     /// This system runs on [`CoreStage::PostUpdate`]
     Cleanup,
 }
@@ -101,7 +101,7 @@ impl Plugin for EcssPlugin {
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
             .add_system(system::prepare)
-            .add_system_to_stage(CoreStage::PostUpdate, system::clear_state);
+            .add_system(system::clear_state.in_base_set(CoreSet::PostUpdate));
 
         let prepared_state = PrepareParams::new(&mut app.world);
         app.insert_resource(prepared_state);
@@ -110,7 +110,7 @@ impl Plugin for EcssPlugin {
         register_properties(app);
 
         if self.hot_reload {
-            app.add_system_to_stage(CoreStage::PreUpdate, system::hot_reload_style_sheets);
+            app.add_system(system::hot_reload_style_sheets.in_base_set(CoreSet::Last));
         }
     }
 }
@@ -161,8 +161,7 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<FontColorProperty>();
     app.register_property::<FontProperty>();
     app.register_property::<FontSizeProperty>();
-    app.register_property::<VerticalAlignProperty>();
-    app.register_property::<HorizontalAlignProperty>();
+    app.register_property::<TextAlignProperty>();
     app.register_property::<TextContentProperty>();
 
     app.register_property::<BackgroundColorProperty>();
