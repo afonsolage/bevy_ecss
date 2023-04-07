@@ -85,7 +85,7 @@ _Before reading properties description, we'll use this notation to describe acce
 |       `00.00px`        | Any dimensional value, like `11px` or `0.99px`                                                                                                                                                                                         |
 |        `00.00`         | Any number value, like `0` or `14.2`                                                                                                                                                                                                   |
 | `<ident>` \| `<ident>` | Only one of the identifiers are allowed, without quotes, like `none` or `hidden`                                                                                                                                                       |
-|  <`area-short-hand`>   | Allows the [`short hand area constructor`](https://developer.mozilla.org/en-US/docs/Web/CSS/margin#syntax) by using either dimensions or percentage, like `10px` or `5% 10px 3%`. No global values, or `auto` keyword is supported yet |
+|  <`area-short-hand`>   | Allows the [`short hand area constructor`](https://developer.mozilla.org/en-US/docs/Web/CSS/margin#syntax) by using either dimensions or percentage, like `10px` or `5% 10px 3% auto`. No global values are supported yet |
 
 
 ### <center>[`Style`](https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html) properties</center>
