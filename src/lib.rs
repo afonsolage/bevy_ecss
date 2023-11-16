@@ -10,11 +10,11 @@ mod system;
 use std::{error::Error, fmt::Display};
 
 use bevy::{
-    asset::AssetSet,
+    asset::AssetEvents,
     ecs::system::SystemState,
     prelude::{
-        AddAsset, Button, Component, CoreSet, Entity, IntoSystemConfig, IntoSystemSetConfig,
-        Plugin, Query, SystemSet, With,
+        AddAsset, Button, Component, Entity, IntoSystemConfigs, IntoSystemSetConfigs, Plugin,
+        PostUpdate, PreUpdate, Query, SystemSet, With,
     },
     text::Text,
     ui::{BackgroundColor, Interaction, Node, Style, UiImage},
@@ -71,7 +71,6 @@ impl Display for EcssError {
     }
 }
 #[derive(SystemSet, Debug, Clone, Hash, Eq, PartialEq)]
-#[system_set(base)]
 struct EcssHotReload;
 
 /// System sets  used by `bevy_ecss` systems
@@ -106,18 +105,13 @@ impl Plugin for EcssPlugin {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
             .add_asset::<StyleSheetAsset>()
-            .configure_set(EcssSet::Prepare.in_base_set(CoreSet::PreUpdate))
-            .configure_set(
-                EcssSet::Apply
-                    .in_base_set(CoreSet::PreUpdate)
-                    .after(EcssSet::Prepare),
-            )
-            .configure_set(EcssSet::Cleanup.in_base_set(CoreSet::PostUpdate))
+            .configure_sets(PreUpdate, (EcssSet::Prepare, EcssSet::Apply).chain())
+            .configure_set(PostUpdate, EcssSet::Cleanup)
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
-            .add_system(system::prepare.in_set(EcssSet::Prepare))
-            .add_system(system::clear_state.in_set(EcssSet::Cleanup));
+            .add_systems(PreUpdate, system::prepare.in_set(EcssSet::Prepare))
+            .add_systems(PostUpdate, system::clear_state.in_set(EcssSet::Cleanup));
 
         let prepared_state = PrepareParams::new(&mut app.world);
         app.insert_resource(prepared_state);
@@ -126,12 +120,10 @@ impl Plugin for EcssPlugin {
         register_properties(app);
 
         if self.hot_reload {
-            app.configure_set(
-                EcssHotReload
-                    .after(AssetSet::AssetEvents)
-                    .before(CoreSet::Last),
-            )
-            .add_system(system::hot_reload_style_sheets.in_base_set(EcssHotReload));
+            app.configure_set(AssetEvents, EcssHotReload).add_systems(
+                AssetEvents,
+                system::hot_reload_style_sheets.in_set(EcssHotReload),
+            );
         }
     }
 }
@@ -158,7 +150,8 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<AlignSelfProperty>();
     app.register_property::<AlignContentProperty>();
     app.register_property::<JustifyContentProperty>();
-    app.register_property::<OverflowProperty>();
+    app.register_property::<OverflowAxisXProperty>();
+    app.register_property::<OverflowAxisYProperty>();
 
     app.register_property::<LeftProperty>();
     app.register_property::<RightProperty>();
@@ -254,7 +247,7 @@ impl RegisterProperty for bevy::prelude::App {
     where
         T: Property + 'static,
     {
-        self.add_system(T::apply_system.in_set(EcssSet::Apply));
+        self.add_systems(PreUpdate, T::apply_system.in_set(EcssSet::Apply));
 
         self
     }
