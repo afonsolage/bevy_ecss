@@ -245,6 +245,7 @@ Done! Whenever an `alpha` property is found on any `css` file, the `AlphaPropert
 |  0.8  |    0.1    |
 |  0.9  |    0.2    |
 |  0.10 |    0.3    |
+|  0.11 |    0.4    |
 
 
 ## Contributing
