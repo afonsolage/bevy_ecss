@@ -55,8 +55,7 @@ impl Class {
 ///
 /// ```
 ///
-#[derive(Component, Debug, Reflect, Clone, Default)]
-#[reflect(Component)]
+#[derive(Component, Debug, Default, Reflect)]
 pub struct StyleSheet {
     sheet: Handle<StyleSheetAsset>,
 }

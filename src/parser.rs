@@ -21,7 +21,6 @@ impl StyleSheetParser {
         let mut parser = Parser::new(&mut input);
 
         RuleListParser::new_for_stylesheet(&mut parser, StyleSheetParser)
-            .into_iter()
             .filter_map(|result| match result {
                 Ok(rule) => Some(rule),
                 Err((err, rule)) => {
@@ -304,7 +303,7 @@ mod tests {
 
         expected
             .into_iter()
-            .zip(node.into_iter())
+            .zip(node)
             .for_each(|(expected, element)| {
                 assert_eq!(expected, **element);
             });
@@ -334,7 +333,7 @@ mod tests {
 
         expected
             .into_iter()
-            .zip(node.into_iter())
+            .zip(node)
             .for_each(|(expected, element)| {
                 assert_eq!(expected, **element);
             });
@@ -368,7 +367,7 @@ mod tests {
 
         expected
             .into_iter()
-            .zip(tree.into_iter())
+            .zip(tree)
             .for_each(|(node_expected, node)| {
                 node_expected
                     .into_iter()

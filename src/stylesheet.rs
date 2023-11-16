@@ -2,14 +2,14 @@ use std::hash::{Hash, Hasher};
 
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
-    reflect::TypeUuid,
+    reflect::{TypePath, TypeUuid},
     utils::{AHasher, HashMap},
 };
 use smallvec::SmallVec;
 
 use crate::{parser::StyleSheetParser, property::PropertyValues, selector::Selector};
 
-#[derive(Debug, TypeUuid)]
+#[derive(Debug, TypeUuid, TypePath)]
 #[uuid = "14b98dd6-5425-4692-a561-5e6ae9180554"]
 /// A cascading style sheet (`css`) asset file.
 ///

@@ -94,17 +94,17 @@ impl Eq for Selector {}
 
 impl PartialOrd for Selector {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self.hash.partial_cmp(&other.hash) {
-            Some(core::cmp::Ordering::Equal) => {}
-            ord => return ord,
-        }
-        self.elements.partial_cmp(&other.elements)
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Selector {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.hash.cmp(&other.hash)
+        match self.hash.cmp(&other.hash) {
+            core::cmp::Ordering::Equal => {}
+            ord => return ord,
+        }
+        self.elements.cmp(&other.elements)
     }
 }
 

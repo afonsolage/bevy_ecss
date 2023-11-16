@@ -125,7 +125,7 @@ fn select_entities(
     let mut filter = children.map(|children| {
         // Include root, since style sheet may be applied on root too.
         std::iter::once(root)
-            .chain(get_children_recursively(children, &css_query.children).into_iter())
+            .chain(get_children_recursively(children, &css_query.children))
             .collect()
     });
 
