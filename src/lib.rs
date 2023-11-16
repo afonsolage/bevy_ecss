@@ -77,13 +77,13 @@ struct EcssHotReload;
 #[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum EcssSet {
     /// Prepares internal state before running apply systems.
-    /// This system runs on [`CoreSet::PreUpdate`].
+    /// This system runs on [`PreUpdate`] schedule.
     Prepare,
     /// All [`Property`] implementation `systems` are run on this system set.
-    /// Those stages runs on [`CoreSet::PreUpdate`] after [`EcssSet::Prepare`].
+    /// Those stages runs on [`PreUpdate`] schedule after [`EcssSet::Prepare`].
     Apply,
     /// Clears the internal state used by [`Property`] implementation `systems` set.
-    /// This system runs on [`CoreSet::PostUpdate`].
+    /// This system runs on [`PostUpdate`] schedule.
     Cleanup,
 }
 
