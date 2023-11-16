@@ -1,4 +1,14 @@
-use bevy::{prelude::*, ui::FocusPolicy};
+use std::time::Duration;
+
+use bevy::{
+    asset::ChangeWatcher,
+    prelude::*,
+    render::{
+        settings::{Backends, WgpuSettings},
+        RenderPlugin,
+    },
+    ui::FocusPolicy,
+};
 use bevy_ecss::prelude::{
     Class, EcssPlugin, RegisterComponentSelector, StyleSheet, StyleSheetAsset,
 };
@@ -10,13 +20,23 @@ struct Title;
 fn main() {
     App::new()
         // Whenever an StyleSheet is loaded, it'll be applied automatically
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            watch_for_changes: true,
-            ..Default::default()
-        }))
-        .add_plugin(EcssPlugin::with_hot_reload())
-        .add_startup_system(setup)
-        .add_system(change_theme)
+        .add_plugins(
+            DefaultPlugins
+                .set(AssetPlugin {
+                    watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
+                    ..Default::default()
+                })
+                .set(RenderPlugin {
+                    wgpu_settings: WgpuSettings {
+                        backends: Some(Backends::VULKAN),
+                        ..default()
+                    },
+                    ..Default::default()
+                }),
+        )
+        .add_plugins(EcssPlugin::with_hot_reload())
+        .add_systems(Startup, setup)
+        .add_systems(Update, change_theme)
         .register_component_selector::<Title>("title")
         .run();
 }
@@ -34,7 +54,7 @@ fn change_theme(
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
 ) {
     for interaction in &interaction_query {
-        if let Interaction::Clicked = *interaction {
+        if let Interaction::Pressed = *interaction {
             if let Ok(mut sheet) = styles_query.get_mut(themes.root) {
                 if sheet.handle() == &themes.dark {
                     sheet.set(themes.light.clone());
@@ -57,7 +77,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let root = commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
                 justify_content: JustifyContent::SpaceBetween,
                 ..default()
             },
@@ -72,7 +93,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent
                 .spawn(NodeBundle {
                     style: Style {
-                        size: Size::new(Val::Px(200.0), Val::Percent(100.0)),
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
                         border: UiRect::all(Val::Px(2.0)),
                         ..default()
                     },
@@ -85,7 +107,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     parent
                         .spawn(NodeBundle {
                             style: Style {
-                                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(100.0),
                                 align_items: AlignItems::FlexEnd,
                                 ..default()
                             },
@@ -119,7 +142,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     style: Style {
                         flex_direction: FlexDirection::ColumnReverse,
                         justify_content: JustifyContent::Center,
-                        size: Size::new(Val::Px(200.0), Val::Percent(100.0)),
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
                         ..default()
                     },
                     background_color: Color::rgb(0.15, 0.15, 0.15).into(),
@@ -139,7 +163,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 },
                             )
                             .with_style(Style {
-                                size: Size::new(Val::Undefined, Val::Px(25.)),
+                                width: Val::Auto,
+                                height: Val::Px(25.),
                                 margin: UiRect {
                                     left: Val::Auto,
                                     right: Val::Auto,
@@ -156,8 +181,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             style: Style {
                                 flex_direction: FlexDirection::ColumnReverse,
                                 align_self: AlignSelf::Center,
-                                size: Size::new(Val::Percent(100.0), Val::Percent(50.0)),
-                                overflow: Overflow::Hidden,
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(50.0),
+                                overflow: Overflow::clip(),
                                 ..default()
                             },
                             background_color: Color::rgb(0.10, 0.10, 0.10).into(),
@@ -171,7 +197,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                     style: Style {
                                         flex_direction: FlexDirection::ColumnReverse,
                                         flex_grow: 1.0,
-                                        max_size: Size::new(Val::Undefined, Val::Undefined),
                                         ..default()
                                     },
                                     background_color: Color::NONE.into(),
@@ -194,7 +219,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                                 )
                                                 .with_style(Style {
                                                     flex_shrink: 0.,
-                                                    size: Size::new(Val::Undefined, Val::Px(20.)),
+                                                    height: Val::Px(20.0),
                                                     margin: UiRect {
                                                         left: Val::Auto,
                                                         right: Val::Auto,
@@ -214,7 +239,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent
                 .spawn(NodeBundle {
                     style: Style {
-                        size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
                         position_type: PositionType::Absolute,
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::Center,
@@ -229,7 +255,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     parent
                         .spawn(NodeBundle {
                             style: Style {
-                                size: Size::new(Val::Px(100.0), Val::Px(100.0)),
+                                width: Val::Px(100.0),
+                                height: Val::Px(100.0),
                                 ..default()
                             },
                             background_color: Color::rgb(1.0, 0.0, 0.0).into(),
@@ -240,13 +267,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             parent
                                 .spawn(NodeBundle {
                                     style: Style {
-                                        size: Size::new(Val::Px(100.0), Val::Px(100.0)),
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
                                         position_type: PositionType::Absolute,
-                                        position: UiRect {
-                                            left: Val::Px(20.0),
-                                            bottom: Val::Px(20.0),
-                                            ..default()
-                                        },
+                                        left: Val::Px(20.0),
+                                        bottom: Val::Px(20.0),
                                         ..default()
                                     },
                                     background_color: Color::rgb(1.0, 0.3, 0.3).into(),
@@ -256,13 +281,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             parent
                                 .spawn(NodeBundle {
                                     style: Style {
-                                        size: Size::new(Val::Px(100.0), Val::Px(100.0)),
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
                                         position_type: PositionType::Absolute,
-                                        position: UiRect {
-                                            left: Val::Px(40.0),
-                                            bottom: Val::Px(40.0),
-                                            ..default()
-                                        },
+                                        left: Val::Px(40.0),
+                                        bottom: Val::Px(40.0),
                                         ..default()
                                     },
                                     background_color: Color::rgb(1.0, 0.5, 0.5).into(),
@@ -273,13 +296,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             parent
                                 .spawn(NodeBundle {
                                     style: Style {
-                                        size: Size::new(Val::Px(100.0), Val::Px(100.0)),
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
                                         position_type: PositionType::Absolute,
-                                        position: UiRect {
-                                            left: Val::Px(60.0),
-                                            bottom: Val::Px(60.0),
-                                            ..default()
-                                        },
+                                        left: Val::Px(60.0),
+                                        bottom: Val::Px(60.0),
                                         ..default()
                                     },
                                     background_color: Color::rgb(1.0, 0.7, 0.7).into(),
@@ -290,13 +311,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             parent
                                 .spawn(NodeBundle {
                                     style: Style {
-                                        size: Size::new(Val::Px(100.0), Val::Px(100.0)),
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
                                         position_type: PositionType::Absolute,
-                                        position: UiRect {
-                                            left: Val::Px(80.0),
-                                            bottom: Val::Px(80.0),
-                                            ..default()
-                                        },
+                                        left: Val::Px(80.0),
+                                        bottom: Val::Px(80.0),
                                         ..default()
                                     },
                                     background_color: Color::rgba(1.0, 0.9, 0.9, 0.4).into(),
@@ -310,7 +329,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent
                 .spawn(NodeBundle {
                     style: Style {
-                        size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
                         position_type: PositionType::Absolute,
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::FlexEnd,
@@ -326,7 +346,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     parent
                         .spawn(ImageBundle {
                             style: Style {
-                                size: Size::new(Val::Px(500.0), Val::Auto),
+                                width: Val::Px(500.0),
                                 ..default()
                             },
                             image: asset_server.load("branding/bevy_logo_dark_big.png").into(),
@@ -338,13 +358,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent
                 .spawn(NodeBundle {
                     style: Style {
-                        size: Size::new(Val::Px(200.0), Val::Px(200.0)),
+                        width: Val::Px(200.0),
+                        height: Val::Px(200.0),
                         position_type: PositionType::Absolute,
-                        position: UiRect {
-                            left: Val::Px(210.0),
-                            bottom: Val::Px(10.0),
-                            ..default()
-                        },
+                        left: Val::Px(210.0),
+                        bottom: Val::Px(10.0),
                         border: UiRect::all(Val::Px(20.0)),
                         ..default()
                     },
@@ -356,7 +374,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     parent
                         .spawn(NodeBundle {
                             style: Style {
-                                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                                width: Val::Px(100.0),
+                                height: Val::Px(100.0),
                                 ..default()
                             },
                             focus_policy: FocusPolicy::Pass,
@@ -368,7 +387,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             parent
                                 .spawn(ButtonBundle {
                                     style: Style {
-                                        size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
                                         ..default()
                                     },
                                     ..default()
