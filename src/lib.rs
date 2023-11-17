@@ -13,7 +13,7 @@ use bevy::{
     asset::AssetEvents,
     ecs::system::SystemState,
     prelude::{
-        AddAsset, Button, Component, Entity, IntoSystemConfigs, IntoSystemSetConfigs, Plugin,
+        AssetApp, Button, Component, Entity, IntoSystemConfigs, IntoSystemSetConfigs, Plugin,
         PostUpdate, PreUpdate, Query, SystemSet, With,
     },
     text::Text,
@@ -104,9 +104,9 @@ impl Plugin for EcssPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
-            .add_asset::<StyleSheetAsset>()
+            .init_asset::<StyleSheetAsset>()
             .configure_sets(PreUpdate, (EcssSet::Prepare, EcssSet::Apply).chain())
-            .configure_set(PostUpdate, EcssSet::Cleanup)
+            .configure_sets(PostUpdate, EcssSet::Cleanup)
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
@@ -120,7 +120,7 @@ impl Plugin for EcssPlugin {
         register_properties(app);
 
         if self.hot_reload {
-            app.configure_set(AssetEvents, EcssHotReload).add_systems(
+            app.configure_sets(AssetEvents, EcssHotReload).add_systems(
                 AssetEvents,
                 system::hot_reload_style_sheets.in_set(EcssHotReload),
             );
@@ -198,7 +198,7 @@ fn register_properties(app: &mut bevy::prelude::App) {
 /// #
 /// # fn some_main() {
 /// #    let mut app = App::new();
-/// #    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin::default());
+/// #    app.add_plugins(DefaultPlugins).add_plugins(EcssPlugin::default());
 /// // You may use it as selector now, like
 /// // fancy-pants {
 /// //      background-color: pink;

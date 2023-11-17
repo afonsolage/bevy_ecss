@@ -1,14 +1,8 @@
-use std::time::Duration;
-
-use bevy::{asset::ChangeWatcher, prelude::*};
+use bevy::prelude::*;
 use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(100)),
-            ..Default::default()
-        }))
         .add_plugins(EcssPlugin::default())
         .add_systems(Startup, setup)
         .run();

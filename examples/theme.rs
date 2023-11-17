@@ -1,7 +1,4 @@
-use std::time::Duration;
-
 use bevy::{
-    asset::ChangeWatcher,
     prelude::*,
     render::{
         settings::{Backends, WgpuSettings},
@@ -19,20 +16,14 @@ struct Title;
 
 fn main() {
     App::new()
-        // Whenever an StyleSheet is loaded, it'll be applied automatically
         .add_plugins(
-            DefaultPlugins
-                .set(AssetPlugin {
-                    watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
-                    ..Default::default()
-                })
-                .set(RenderPlugin {
-                    wgpu_settings: WgpuSettings {
-                        backends: Some(Backends::VULKAN),
-                        ..default()
-                    },
-                    ..Default::default()
-                }),
+            DefaultPlugins.set(RenderPlugin {
+                render_creation: WgpuSettings {
+                    backends: Some(Backends::VULKAN),
+                    ..default()
+                }
+                .into(),
+            }),
         )
         .add_plugins(EcssPlugin::with_hot_reload())
         .add_systems(Startup, setup)

@@ -1,15 +1,17 @@
 use std::hash::{Hash, Hasher};
 
 use bevy::{
-    asset::{AssetLoader, LoadedAsset},
+    asset::{io::Reader, AssetLoader, AsyncReadExt},
+    prelude::Asset,
     reflect::{TypePath, TypeUuid},
     utils::{AHasher, HashMap},
 };
 use smallvec::SmallVec;
+use thiserror::Error;
 
 use crate::{parser::StyleSheetParser, property::PropertyValues, selector::Selector};
 
-#[derive(Debug, TypeUuid, TypePath)]
+#[derive(Debug, TypeUuid, TypePath, Asset)]
 #[uuid = "14b98dd6-5425-4692-a561-5e6ae9180554"]
 /// A cascading style sheet (`css`) asset file.
 ///
@@ -79,18 +81,32 @@ pub struct StyleRule {
 #[derive(Default)]
 pub(crate) struct StyleSheetLoader;
 
+#[derive(Debug, Error)]
+pub enum StyleSheetLoaderError {
+    #[error("File not found: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("Invalid file format: {0}")]
+    UTF8(#[from] std::str::Utf8Error),
+}
+
 impl AssetLoader for StyleSheetLoader {
+    type Asset = StyleSheetAsset;
+    type Settings = ();
+    type Error = StyleSheetLoaderError;
+
     fn load<'a>(
         &'a self,
-        bytes: &'a [u8],
+        reader: &'a mut Reader,
+        _settings: &'a Self::Settings,
         load_context: &'a mut bevy::asset::LoadContext,
-    ) -> bevy::utils::BoxedFuture<'a, Result<(), bevy::asset::Error>> {
+    ) -> bevy::utils::BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
-            let content = std::str::from_utf8(bytes)?;
+            let mut bytes = Vec::new();
+            reader.read_to_end(&mut bytes).await?;
+            let content = std::str::from_utf8(&bytes)?;
             let stylesheet =
                 StyleSheetAsset::parse(load_context.path().to_str().unwrap_or_default(), content);
-            load_context.set_default_asset(LoadedAsset::new(stylesheet));
-            Ok(())
+            Ok(stylesheet)
         })
     }
 

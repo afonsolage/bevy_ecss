@@ -9,13 +9,15 @@ use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(RenderPlugin {
-            wgpu_settings: WgpuSettings {
-                backends: Some(Backends::VULKAN),
-                ..default()
-            },
-            ..Default::default()
-        }))
+        .add_plugins(
+            DefaultPlugins.set(RenderPlugin {
+                render_creation: WgpuSettings {
+                    backends: Some(Backends::VULKAN),
+                    ..default()
+                }
+                .into(),
+            }),
+        )
         .add_plugins(EcssPlugin::default())
         .add_systems(Startup, setup)
         .run();
