@@ -179,6 +179,8 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<TextContentProperty>();
 
     app.register_property::<BackgroundColorProperty>();
+    app.register_property::<BorderColorProperty>();
+    app.register_property::<ImageProperty>();
 }
 
 /// Utility trait which adds the [`register_component_selector`](RegisterComponentSelector::register_component_selector)
