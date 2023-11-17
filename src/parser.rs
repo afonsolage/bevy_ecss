@@ -1,4 +1,4 @@
-use bevy::prelude::error;
+use bevy::log::prelude::error;
 use cssparser::{
     AtRuleParser, DeclarationListParser, DeclarationParser, ParseError, Parser, ParserInput,
     QualifiedRuleParser, RuleListParser, ToCss, Token,

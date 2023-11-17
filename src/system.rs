@@ -1,8 +1,9 @@
 use bevy::{
     ecs::system::{SystemParam, SystemState},
+    log::{debug, error, trace},
     prelude::{
-        debug, error, trace, AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut,
-        Entity, EventReader, Mut, Name, Query, Res, ResMut, Resource, With, World,
+        AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity, EventReader,
+        Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
     ui::Node,
     utils::HashMap,
@@ -81,7 +82,7 @@ pub(crate) fn prepare_state(
     let mut state = StyleSheetState::default();
 
     for (entity, children, sheet_handle) in &params.nodes {
-        if let Some(sheet) = params.assets.get(sheet_handle.handle()) {
+        if let Some(sheet) = params.assets.get(sheet_handle.handle().id()) {
             debug!("Applying style {}", sheet.path());
 
             for rule in sheet.iter() {
@@ -245,11 +246,11 @@ pub(crate) fn hot_reload_style_sheets(
     mut assets_events: EventReader<AssetEvent<StyleSheetAsset>>,
     mut q_sheets: Query<&mut StyleSheet>,
 ) {
-    for evt in assets_events.iter() {
-        if let AssetEvent::Modified { handle } = evt {
+    for evt in assets_events.read() {
+        if let AssetEvent::Modified { id } = evt {
             q_sheets
                 .iter_mut()
-                .filter(|sheet| sheet.handle() == handle)
+                .filter(|sheet| sheet.handle().id() == *id)
                 .for_each(|mut sheet| {
                     debug!("Refreshing sheet {:?}", sheet);
                     sheet.refresh();

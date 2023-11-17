@@ -173,7 +173,7 @@ struct FancyColor;
 
 fn some_main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins).add_plugin(EcssPlugin::default());
+    app.add_plugins(DefaultPlugins).add_plugins(EcssPlugin::default());
     // You may use it as selector now, like
     // fancy-pants {
     //      background-color: pink;
@@ -247,6 +247,7 @@ Done! Whenever an `alpha` property is found on any `css` file, the `AlphaPropert
 |  0.9  |    0.2    |
 |  0.10 |    0.3    |
 |  0.11 |    0.4    |
+|  0.12 |    0.5    |
 
 
 ## Contributing
