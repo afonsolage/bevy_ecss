@@ -30,12 +30,10 @@ bevy = { version = "0.12", features = [
     "bevy_render",
     "file_watcher",
 ] }
+bevy_editor_pls = "0.6"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 bevy = "0.12"
-
-[dev-dependencies]
-bevy_editor_pls = "0.6"
 
 [[example]]
 name = "simple_ui"

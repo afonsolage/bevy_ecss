@@ -1,22 +1,24 @@
 use bevy::prelude::*;
 use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
-use bevy_editor_pls::prelude::*;
 
 fn main() {
-    App::new()
-        // Whenever an StyleSheet is loaded, it'll be applied automatically
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                fit_canvas_to_parent: true,
-                canvas: Some("#bevy".to_string()),
-                ..default()
-            }),
+    let mut app = App::new();
+    // Whenever an StyleSheet is loaded, it'll be applied automatically
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            fit_canvas_to_parent: true,
+            canvas: Some("#bevy".to_string()),
             ..default()
-        }))
-        .add_plugins(EditorPlugin::default())
-        .add_plugins(EcssPlugin::with_hot_reload())
-        .add_systems(Startup, setup)
-        .run();
+        }),
+        ..default()
+    }))
+    .add_plugins(EcssPlugin::with_hot_reload())
+    .add_systems(Startup, setup);
+
+    #[cfg(not(target_arch = "wasm32"))]
+    app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
+
+    app.run();
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
