@@ -2,9 +2,7 @@ name: Github Pages Docs
 
 on:
   push:
-    branches:
-      - main
-      - wasmSamples
+    branches: [main]
 
 jobs:
   deploy:
