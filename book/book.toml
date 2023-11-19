@@ -1,0 +1,19 @@
+[book]
+authors = ["Afonso Lage","Mev Lyshkin"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Bevy ECSS"
+
+[output.html]
+git-repository-url = "https://github.com/afonsolage/bevy_ecss"
+git-repository-icon = "fa-code-fork"
+edit-url-template = "https://github.com/afonsolage/bevy_ecss/edit/master/book/{path}"
+site-url = "/book/"
+
+[output.html.playground]
+editable = false         # allows editing the source code
+copyable = true          # include the copy button for copying code snippets
+copy-js = true           # includes the JavaScript for the code editor
+line-numbers = true      # displays line numbers for editable code
+runnable = false         # displays a run button for rust code

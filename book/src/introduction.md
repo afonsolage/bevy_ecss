@@ -1,17 +1,10 @@
-# [![Bevy](assets/branding/bevy_ecss.png)](https://bevyengine.org)
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/afonsolage/bevy_ecss#license)
-[![Realease Doc](https://docs.rs/bevy_ecss/badge.svg)](https://docs.rs/bevy_ecss)
-[![Rust](https://github.com/afonsolage/bevy_ecss/workflows/CI/badge.svg)](https://github.com/afonsolage/bevy_ecss/actions)
-[![Crate](https://img.shields.io/crates/v/bevy_ecss.svg)](https://crates.io/crates/bevy_ecss)
-[![Bevy tracking](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://github.com/bevyengine/bevy/blob/main/docs/plugins_guidelines.md#main-branch-tracking)
+# Introduction
 
-# Bevy ECSS
-
-## What is Bevy ECSS?
+<img class="right" src="https://github.com/afonsolage/bevy_ecss/raw/main/assets/branding/bevy_ecss.png" alt="The Bevy ECSS logo">
 
 Bevy ECSS is a crate which allows the usage of a subset of [`CSS`](https://developer.mozilla.org/en-US/docs/Web/CSS) to interact with [`bevy_ecs`](https://crates.io/crates/bevy_ecs). It's mainly aimed to apply styling on [`bevy_ui`](https://crates.io/crates/bevy) but it can be used by any component by implementing custom properties.
 
-### Why the name?
+## Why the name?
 
 Just because Bevy ECS + CSS is a perfect fit!
 
@@ -29,6 +22,7 @@ fn setup_awesome_ui(root: Entity, mut commands: Commands, asset_server: Res<Asse
         .insert(StyleSheet::new(asset_server.load("sheets/awesome.css")));
 }
 ```
+
 
 That's it, now your UI will indeed look _awesome_!
 
