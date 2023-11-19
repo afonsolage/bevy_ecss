@@ -10,3 +10,6 @@
 
 - [Custom Component Selectors](./custom_component.md)
 - [Custom Property](./custom_property.md)
+
+# Examples
+- [Theme](./theme_example.md)
