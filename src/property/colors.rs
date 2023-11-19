@@ -2,20 +2,14 @@ use bevy::prelude::Color;
 
 fn to_bevy_color(css_color: Option<cssparser::Color>) -> Option<Color> {
     // TODO: Implement other colors type
-    if let Some(cssparser::Color::Rgba(cssparser::RGBA {
+    if let Some(cssparser::Color::Rgba(cssparser::RgbaLegacy {
         red,
         green,
         blue,
         alpha,
     })) = css_color
     {
-        let alpha = (alpha.unwrap_or_default() * 255.0) as u8;
-        Some(Color::rgba_u8(
-            red.unwrap_or_default(),
-            green.unwrap_or_default(),
-            blue.unwrap_or_default(),
-            alpha,
-        ))
+        Some(Color::rgba_u8(red, green, blue, (alpha * 255.0) as u8))
     } else {
         None
     }
