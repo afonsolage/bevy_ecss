@@ -10,6 +10,7 @@ git-repository-url = "https://github.com/afonsolage/bevy_ecss"
 git-repository-icon = "fa-code-fork"
 edit-url-template = "https://github.com/afonsolage/bevy_ecss/edit/master/book/{path}"
 site-url = "/book/"
+no-section-label = true
 
 [output.html.playground]
 editable = false         # allows editing the source code
