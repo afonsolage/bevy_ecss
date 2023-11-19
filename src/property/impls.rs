@@ -455,3 +455,65 @@ impl Property for BackgroundColorProperty {
         commands.entity(components).insert(BackgroundColor(*cache));
     }
 }
+
+/// Applies the `border-color` property on [`BorderColor`] component of matched entities.
+#[derive(Default)]
+pub struct BorderColorProperty;
+
+impl Property for BorderColorProperty {
+    type Cache = Color;
+    type Components = Entity;
+    type Filters = With<BorderColor>;
+
+    fn name() -> &'static str {
+        "border-color"
+    }
+
+    fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+        if let Some(color) = values.color() {
+            Ok(color)
+        } else {
+            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+        }
+    }
+
+    fn apply<'w>(
+        cache: &Self::Cache,
+        components: QueryItem<Self::Components>,
+        _asset_server: &AssetServer,
+        commands: &mut Commands,
+    ) {
+        commands.entity(components).insert(BorderColor(*cache));
+    }
+}
+
+/// Applies the `image-path` property on [`bevy::ui::UiImage`] texture property of all sections on matched [`bevy::ui::UiImage`] components.
+#[derive(Default)]
+pub struct ImageProperty;
+
+impl Property for ImageProperty {
+    type Cache = String;
+    type Components = &'static mut UiImage;
+    type Filters = With<Node>;
+
+    fn name() -> &'static str {
+        "image-path"
+    }
+
+    fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
+        if let Some(path) = values.string() {
+            Ok(path)
+        } else {
+            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+        }
+    }
+
+    fn apply<'w>(
+        cache: &Self::Cache,
+        mut components: QueryItem<Self::Components>,
+        asset_server: &AssetServer,
+        _commands: &mut Commands,
+    ) {
+        components.texture = asset_server.load(cache);
+    }
+}
