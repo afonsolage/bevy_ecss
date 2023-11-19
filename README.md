@@ -15,6 +15,11 @@ Bevy ECSS is a crate which allows the usage of a subset of [`CSS`](https://devel
 
 Just because Bevy ECS + CSS is a perfect fit!
 
+### Docs site
+
+Reference guide and more available here:
+[docs](https://afonsolage.github.io/bevy_ecss/)
+
 ## Usage
 
 To use Bevy ECSS just add a `StyleSheet` with a loaded `css` file to any entity and all style sheet rules will be applied to the entity and _all_ its [`descendants`](https://stackoverflow.com/questions/1182189/css-child-vs-descendant-selectors) (children of children of children and so on).
