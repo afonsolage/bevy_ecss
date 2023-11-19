@@ -17,7 +17,7 @@ bevy = { version = "0.12", default-features = false, features = [
     "bevy_text",
     "bevy_render",
 ] }
-cssparser = "0.30"
+cssparser = "0.31"
 smallvec = { version = "1.11", features = ["serde", "union", "const_generics"] }
 thiserror = "1.0.50"
 
