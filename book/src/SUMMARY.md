@@ -1,4 +1,5 @@
 [Introduction](./introduction.md)
+[Changelog](./changelog.md)
 
 # Reference Guide
 
@@ -14,5 +15,4 @@
 # Examples
 - [Simple](./example_simple.md)
 - [Custom property](./example_alpha.md)
-- [Hot reload](./example_editor.md)
 - [Theme](./example_theme.md)

@@ -7,6 +7,12 @@
     init();
 </script>
 
+## CSS
+
+```css
+{{#include ../../assets/sheets/alpha.css}}
+```
+
 ## Code
 
 ```rust

@@ -7,6 +7,20 @@
     init();
 </script>
 
+## CSS
+
+### Dark theme
+
+```css
+{{#include ../../assets/sheets/dark_theme.css}}
+```
+
+### Light theme
+
+```css
+{{#include ../../assets/sheets/light_theme.css}}
+```
+
 ## Code
 
 ```rust

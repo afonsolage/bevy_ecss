@@ -36,10 +36,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(StyleSheet::new(asset_server.load("sheets/alpha.css")))
         .with_children(|parent| {
             // bevy logo (image)
-            parent.spawn(ImageBundle {
-                image: asset_server.load("branding/bevy_logo_dark_big.png").into(),
-                ..default()
-            });
+            parent.spawn(ImageBundle::default());
         });
 }
 
