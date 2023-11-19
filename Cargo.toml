@@ -1,6 +1,6 @@
 [package]
 name = "bevy_ecss"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 categories = ["game-development", "gui", "web-programming"]
 description = "Allows using a subset of CSS to interact with Bevy ECS"
@@ -17,7 +17,8 @@ bevy = { version = "0.12", default-features = false, features = [
     "bevy_text",
     "bevy_render",
 ] }
-cssparser = "0.29"
+cssparser = "0.33"
+cssparser-color = "0.1"
 smallvec = { version = "1.11", features = ["serde", "union", "const_generics"] }
 thiserror = "1.0.50"
 

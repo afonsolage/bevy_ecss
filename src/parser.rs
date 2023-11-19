@@ -1,7 +1,7 @@
 use bevy::log::prelude::error;
 use cssparser::{
-    AtRuleParser, DeclarationListParser, DeclarationParser, ParseError, Parser, ParserInput,
-    QualifiedRuleParser, RuleListParser, ToCss, Token,
+    AtRuleParser, DeclarationParser, ParseError, Parser, ParserInput, QualifiedRuleParser,
+    RuleBodyItemParser, RuleBodyParser, ToCss, Token,
 };
 use smallvec::{smallvec, SmallVec};
 
@@ -20,7 +20,7 @@ impl StyleSheetParser {
         let mut input = ParserInput::new(content);
         let mut parser = Parser::new(&mut input);
 
-        RuleListParser::new_for_stylesheet(&mut parser, StyleSheetParser)
+        cssparser::StyleSheetParser::new(&mut parser, &mut StyleSheetParser)
             .filter_map(|result| match result {
                 Ok(rule) => Some(rule),
                 Err((err, rule)) => {
@@ -123,7 +123,7 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
             properties: Default::default(),
         };
 
-        for property in DeclarationListParser::new(input, PropertyParser) {
+        for property in RuleBodyParser::new(input, &mut PropertyParser) {
             match property {
                 Ok((name, property)) => {
                     rule.properties.insert(name, property);
@@ -143,6 +143,16 @@ impl<'i> AtRuleParser<'i> for StyleSheetParser {
 }
 
 struct PropertyParser;
+
+impl<'i> RuleBodyItemParser<'i, (String, PropertyValues), EcssError> for PropertyParser {
+    fn parse_declarations(&self) -> bool {
+        true
+    }
+
+    fn parse_qualified(&self) -> bool {
+        false
+    }
+}
 
 impl<'i> DeclarationParser<'i> for PropertyParser {
     type Declaration = (String, PropertyValues);
@@ -169,6 +179,12 @@ impl<'i> DeclarationParser<'i> for PropertyParser {
 impl<'i> AtRuleParser<'i> for PropertyParser {
     type Prelude = ();
     type AtRule = (String, PropertyValues);
+    type Error = EcssError;
+}
+
+impl<'i> QualifiedRuleParser<'i> for PropertyParser {
+    type Prelude = ();
+    type QualifiedRule = (String, PropertyValues);
     type Error = EcssError;
 }
 
