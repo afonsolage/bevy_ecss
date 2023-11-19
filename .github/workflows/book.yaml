@@ -1,0 +1,29 @@
+name: Github Pages Docs
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+
+      - name: mdbook build
+        working-directory: ./book
+        run: mdbook build
+      - name: Push
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          SQUASH_HISTORY: true
+          REPO: self
+          BRANCH: gh-pages # The branch name where you want to push the assets
+          FOLDER: book/book # The directory where your assets are generated
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub will automatically add this - you don't need to bother getting a token
+          MESSAGE: "Build: ({sha}) {msg}" # The commit message
