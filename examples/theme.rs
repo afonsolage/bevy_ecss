@@ -1,7 +1,4 @@
-use bevy::{
-    prelude::*,
-    ui::FocusPolicy,
-};
+use bevy::{prelude::*, ui::FocusPolicy};
 use bevy_ecss::prelude::{
     Class, EcssPlugin, RegisterComponentSelector, StyleSheet, StyleSheetAsset,
 };
@@ -14,15 +11,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                resolution: (600., 600.).into(), 
-                // Tells wasm to resize the window according to the available canvas
-                fit_canvas_to_parent: false,
-                // Tells wasm not to override default event handling, like F5, Ctrl+R etc.
-                prevent_default_event_handling: true,
-                // This will spawn an invisible window
-                // The window will be made visible in the make_visible() system after 3 frames.
-                // This is useful when you want to avoid the white window that shows up before the GPU is ready to render the app.
-                visible: false,
+                fit_canvas_to_parent: true,
+                canvas: Some("#bevy".to_string()),
                 ..default()
             }),
             ..default()

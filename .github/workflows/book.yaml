@@ -2,7 +2,9 @@ name: Github Pages Docs
 
 on:
   push:
-    branches: [main,wasmSamples]
+    branches:
+      - main
+      - wasmSamples
 
 jobs:
   deploy:
@@ -28,7 +30,12 @@ jobs:
         with:
           crate: wasm-bindgen-cli
       - name: Build
-        run: cargo build --release --target wasm32-unknown-unknown --example=theme && wasm-bindgen --out-dir ./book/src/ --target web .\target\wasm32-unknown-unknown\release\examples\theme.wasm
+        run: |
+          cargo build --release --target wasm32-unknown-unknown --examples
+          wasm-bindgen --out-dir ./book/src/ --target web .\target\wasm32-unknown-unknown\release\examples\simple_ui.wasm
+          wasm-bindgen --out-dir ./book/src/ --target web .\target\wasm32-unknown-unknown\release\examples\theme.wasm
+          wasm-bindgen --out-dir ./book/src/ --target web .\target\wasm32-unknown-unknown\release\examples\alpha.wasm
+          wasm-bindgen --out-dir ./book/src/ --target web .\target\wasm32-unknown-unknown\release\examples\hot_reload.wasm
       - name: Copy
         run: cp -R assets book/src
       - name: Setup mdBook

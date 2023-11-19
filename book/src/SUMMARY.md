@@ -12,4 +12,7 @@
 - [Custom Property](./custom_property.md)
 
 # Examples
-- [Theme](./theme_example.md)
+- [Simple](./example_simple.md)
+- [Custom property](./example_alpha.md)
+- [Hot reload](./example_editor.md)
+- [Theme](./example_theme.md)

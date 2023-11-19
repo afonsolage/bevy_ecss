@@ -1,23 +1,16 @@
-use bevy::{
-    prelude::*,
-    render::{
-        settings::{Backends, WgpuSettings},
-        RenderPlugin,
-    },
-};
+use bevy::prelude::*;
 use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
 
 fn main() {
     App::new()
-        .add_plugins(
-            DefaultPlugins.set(RenderPlugin {
-                render_creation: WgpuSettings {
-                    backends: Some(Backends::VULKAN),
-                    ..default()
-                }
-                .into(),
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                fit_canvas_to_parent: true,
+                canvas: Some("#bevy".to_string()),
+                ..default()
             }),
-        )
+            ..default()
+        }))
         .add_plugins(EcssPlugin::default())
         .add_systems(Startup, setup)
         .run();

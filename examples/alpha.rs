@@ -3,9 +3,16 @@ use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues};
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins)
-        .add_plugins(EcssPlugin::default())
-        .add_systems(Startup, setup);
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            fit_canvas_to_parent: true,
+            canvas: Some("#bevy".to_string()),
+            ..default()
+        }),
+        ..default()
+    }))
+    .add_plugins(EcssPlugin::default())
+    .add_systems(Startup, setup);
 
     app.register_property::<AlphaProperty>();
 
