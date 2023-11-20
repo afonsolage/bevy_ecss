@@ -1,3 +1,6 @@
-background-color {
-    alpha: 0.4;
+ui-image {
+    alpha: 0.3;
+    image-path: "branding/bevy_logo_dark_big.png";
+    width: 100%;
+    height: auto;
 }

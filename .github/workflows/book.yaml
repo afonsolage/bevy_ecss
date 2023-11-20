@@ -11,7 +11,30 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v4
-
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ github.ref || github.run_id }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm bindgen
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: wasm-bindgen-cli
+      - name: Build
+        run: |
+          cargo build --release --target wasm32-unknown-unknown --examples
+          wasm-bindgen --out-dir ./book/src/ --target web ./target/wasm32-unknown-unknown/release/examples/simple_ui.wasm
+          wasm-bindgen --out-dir ./book/src/ --target web ./target/wasm32-unknown-unknown/release/examples/theme.wasm
+          wasm-bindgen --out-dir ./book/src/ --target web ./target/wasm32-unknown-unknown/release/examples/alpha.wasm
+      - name: Copy
+        run: cp -R assets book/src
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v1
 

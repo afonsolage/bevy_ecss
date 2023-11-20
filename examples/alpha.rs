@@ -3,9 +3,16 @@ use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues};
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins)
-        .add_plugins(EcssPlugin::default())
-        .add_systems(Startup, setup);
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            fit_canvas_to_parent: true,
+            canvas: Some("#bevy".to_string()),
+            ..default()
+        }),
+        ..default()
+    }))
+    .add_plugins(EcssPlugin::default())
+    .add_systems(Startup, setup);
 
     app.register_property::<AlphaProperty>();
 
@@ -29,10 +36,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(StyleSheet::new(asset_server.load("sheets/alpha.css")))
         .with_children(|parent| {
             // bevy logo (image)
-            parent.spawn(ImageBundle {
-                image: asset_server.load("branding/bevy_logo_dark_big.png").into(),
-                ..default()
-            });
+            parent.spawn(ImageBundle::default());
         });
 }
 

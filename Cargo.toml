@@ -22,7 +22,7 @@ cssparser-color = "0.1"
 smallvec = { version = "1.11", features = ["serde", "union", "const_generics"] }
 thiserror = "1.0.50"
 
-[dev-dependencies]
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 bevy = { version = "0.12", features = [
     "bevy_ui",
     "bevy_asset",
@@ -31,6 +31,9 @@ bevy = { version = "0.12", features = [
     "file_watcher",
 ] }
 bevy_editor_pls = "0.6"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+bevy = "0.12"
 
 [[example]]
 name = "simple_ui"

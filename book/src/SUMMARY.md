@@ -1,4 +1,5 @@
 [Introduction](./introduction.md)
+[Changelog](./changelog.md)
 
 # Reference Guide
 
@@ -10,3 +11,8 @@
 
 - [Custom Component Selectors](./custom_component.md)
 - [Custom Property](./custom_property.md)
+
+# Examples
+- [Simple](./example_simple.md)
+- [Custom property](./example_alpha.md)
+- [Theme](./example_theme.md)
