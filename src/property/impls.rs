@@ -3,6 +3,7 @@ use bevy::{ecs::query::QueryItem, prelude::*};
 use crate::EcssError;
 
 use super::{Property, PropertyValues};
+use super::PropertyId;
 
 pub(crate) use style::*;
 pub(crate) use text::*;
@@ -27,7 +28,7 @@ mod style {
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
-                fn id() -> lightningcss::properties::PropertyId<'static> {
+                fn id() -> PropertyId<'static> {
                     $name.into()
                 }
 
@@ -72,7 +73,7 @@ mod style {
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
-                fn id() -> lightningcss::properties::PropertyId<'static> {
+                fn id() -> PropertyId<'static> {
                     $name.into()
                 }
 
@@ -142,7 +143,7 @@ mod style {
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
-                fn id() -> lightningcss::properties::PropertyId<'static> {
+                fn id() -> PropertyId<'static> {
                     $name.into()
                 }
 
@@ -260,7 +261,7 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn id() -> lightningcss::properties::PropertyId<'static> {
+        fn id() -> PropertyId<'static> {
             "color".into()
         }
 
@@ -294,7 +295,7 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn id() -> lightningcss::properties::PropertyId<'static> {
+        fn id() -> PropertyId<'static> {
             "font".into()
         }
 
@@ -328,7 +329,7 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn id() -> lightningcss::properties::PropertyId<'static> {
+        fn id() -> PropertyId<'static> {
             "font-size".into()
         }
 
@@ -363,7 +364,7 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn id() -> lightningcss::properties::PropertyId<'static> {
+        fn id() -> PropertyId<'static> {
             "text-align".into()
         }
 
@@ -398,7 +399,7 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn id() -> lightningcss::properties::PropertyId<'static> {
+        fn id() -> PropertyId<'static> {
             "text-content".into()
         }
 
@@ -434,7 +435,7 @@ impl Property for BackgroundColorProperty {
     type Components = Entity;
     type Filters = With<BackgroundColor>;
 
-    fn id() -> lightningcss::properties::PropertyId<'static> {
+    fn id() -> PropertyId<'static> {
         "background-color".into()
     }
 
@@ -465,7 +466,7 @@ impl Property for BorderColorProperty {
     type Components = Entity;
     type Filters = With<BorderColor>;
 
-    fn id() -> lightningcss::properties::PropertyId<'static> {
+    fn id() -> PropertyId<'static> {
         "border-color".into()
     }
 
@@ -496,7 +497,7 @@ impl Property for ImageProperty {
     type Components = &'static mut UiImage;
     type Filters = With<Node>;
 
-    fn id() -> lightningcss::properties::PropertyId<'static> {
+    fn id() -> PropertyId<'static> {
         "image-path".into()
     }
 

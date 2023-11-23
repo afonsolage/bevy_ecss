@@ -1,5 +1,5 @@
 use bevy::{ecs::query::QueryItem, prelude::*};
-use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues};
+use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues, PropertyId};
 
 fn main() {
     let mut app = App::new();
@@ -53,7 +53,7 @@ impl Property for AlphaProperty {
     // It's not recommended to use only With<> and Without<>.
     type Filters = ();
 
-    fn id() -> lightningcss::properties::PropertyId<'static> {
+    fn id() -> PropertyId<'static> {
         // The name of property. prefer kebab-case for consistency.
         "alpha".into()
     }

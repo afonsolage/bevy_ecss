@@ -26,7 +26,7 @@ use stylesheet::StyleSheetLoader;
 use system::{ComponentFilterRegistry, PrepareParams};
 
 pub use component::{Class, StyleSheet};
-pub use property::{Property, PropertyToken, PropertyValues};
+pub use property::{Property, PropertyToken, PropertyValues, PropertyId};
 pub use selector::{Selector, SelectorElement};
 pub use stylesheet::{StyleRule, StyleSheetAsset};
 

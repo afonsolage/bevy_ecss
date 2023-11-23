@@ -19,6 +19,8 @@ use crate::{selector::Selector, EcssError, StyleSheetAsset};
 mod colors;
 pub(crate) mod impls;
 
+pub use lightningcss::properties::PropertyId;
+
 /// A property value token which was parsed from a CSS rule.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum PropertyToken {
@@ -286,7 +288,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     /// Indicates which property name should matched for. Must match the same property name as on `css` file.
     ///
     /// For compliance, use always `lower-case` and `kebab-case` names.
-    fn id() -> lightningcss::properties::PropertyId<'static>;
+    fn id() -> PropertyId<'static>;
 
     /// Parses the [`PropertyValues`] into the [`Cache`](Property::Cache) value to be reused across multiple entities.
     ///
