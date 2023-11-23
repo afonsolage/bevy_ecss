@@ -53,9 +53,9 @@ impl Property for AlphaProperty {
     // It's not recommended to use only With<> and Without<>.
     type Filters = ();
 
-    fn name() -> &'static str {
+    fn id() -> lightningcss::properties::PropertyId<'static> {
         // The name of property. prefer kebab-case for consistency.
-        "alpha"
+        "alpha".into()
     }
 
     fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
@@ -63,7 +63,7 @@ impl Property for AlphaProperty {
         if let Some(value) = values.f32() {
             Ok(value)
         } else {
-            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
         }
     }
 

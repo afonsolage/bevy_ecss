@@ -27,15 +27,15 @@ mod style {
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
-                fn name() -> &'static str {
-                    $name
+                fn id() -> lightningcss::properties::PropertyId<'static> {
+                    $name.into()
                 }
 
                 fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
                     if let Some(val) = values.rect() {
                         Ok(val)
                     } else {
-                        Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+                        Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
                     }
                 }
 
@@ -72,15 +72,15 @@ mod style {
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
-                fn name() -> &'static str {
-                    $name
+                fn id() -> lightningcss::properties::PropertyId<'static> {
+                    $name.into()
                 }
 
                 fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
                     if let Some(val) = values.$parse_func() {
                         Ok(val)
                     } else {
-                        Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+                        Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
                     }
                 }
 
@@ -142,8 +142,8 @@ mod style {
                 type Components = &'static mut Style;
                 type Filters = With<Node>;
 
-                fn name() -> &'static str {
-                    $name
+                fn id() -> lightningcss::properties::PropertyId<'static> {
+                    $name.into()
                 }
 
                 fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
@@ -157,7 +157,7 @@ mod style {
                         }
                     }
 
-                    Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+                    Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
                 }
 
                 fn apply<'w>(
@@ -260,15 +260,15 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn name() -> &'static str {
-            "color"
+        fn id() -> lightningcss::properties::PropertyId<'static> {
+            "color".into()
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
             if let Some(color) = values.color() {
                 Ok(color)
             } else {
-                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+                Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
             }
         }
 
@@ -294,15 +294,15 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn name() -> &'static str {
-            "font"
+        fn id() -> lightningcss::properties::PropertyId<'static> {
+            "font".into()
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
             if let Some(path) = values.string() {
                 Ok(path)
             } else {
-                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+                Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
             }
         }
 
@@ -328,15 +328,15 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn name() -> &'static str {
-            "font-size"
+        fn id() -> lightningcss::properties::PropertyId<'static> {
+            "font-size".into()
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
             if let Some(size) = values.f32() {
                 Ok(size)
             } else {
-                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+                Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
             }
         }
 
@@ -363,8 +363,8 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn name() -> &'static str {
-            "text-align"
+        fn id() -> lightningcss::properties::PropertyId<'static> {
+            "text-align".into()
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
@@ -376,7 +376,7 @@ mod text {
                     _ => (),
                 }
             }
-            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
         }
 
         fn apply<'w>(
@@ -398,15 +398,15 @@ mod text {
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
-        fn name() -> &'static str {
-            "text-content"
+        fn id() -> lightningcss::properties::PropertyId<'static> {
+            "text-content".into()
         }
 
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
             if let Some(content) = values.string() {
                 Ok(content)
             } else {
-                Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+                Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
             }
         }
 
@@ -434,15 +434,15 @@ impl Property for BackgroundColorProperty {
     type Components = Entity;
     type Filters = With<BackgroundColor>;
 
-    fn name() -> &'static str {
-        "background-color"
+    fn id() -> lightningcss::properties::PropertyId<'static> {
+        "background-color".into()
     }
 
     fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
         if let Some(color) = values.color() {
             Ok(color)
         } else {
-            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
         }
     }
 
@@ -465,15 +465,15 @@ impl Property for BorderColorProperty {
     type Components = Entity;
     type Filters = With<BorderColor>;
 
-    fn name() -> &'static str {
-        "border-color"
+    fn id() -> lightningcss::properties::PropertyId<'static> {
+        "border-color".into()
     }
 
     fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
         if let Some(color) = values.color() {
             Ok(color)
         } else {
-            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
         }
     }
 
@@ -496,15 +496,15 @@ impl Property for ImageProperty {
     type Components = &'static mut UiImage;
     type Filters = With<Node>;
 
-    fn name() -> &'static str {
-        "image-path"
+    fn id() -> lightningcss::properties::PropertyId<'static> {
+        "image-path".into()
     }
 
     fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
         if let Some(path) = values.string() {
             Ok(path)
         } else {
-            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+            Err(EcssError::InvalidPropertyValue(Self::id().name().to_string()))
         }
     }
 

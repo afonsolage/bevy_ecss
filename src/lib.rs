@@ -241,13 +241,13 @@ impl RegisterComponentSelector for bevy::prelude::App {
 pub trait RegisterProperty {
     fn register_property<T>(&mut self) -> &mut Self
     where
-        T: Property + 'static;
+        T: Property;
 }
 
 impl RegisterProperty for bevy::prelude::App {
     fn register_property<T>(&mut self) -> &mut Self
     where
-        T: Property + 'static,
+        T: Property,
     {
         self.add_systems(PreUpdate, T::apply_system.in_set(EcssSet::Apply));
 

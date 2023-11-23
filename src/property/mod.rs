@@ -225,11 +225,11 @@ impl<T: Property> PropertyMeta<T> {
             cached_properties.get(selector).unwrap()
         } else {
             let new_cache = rules
-                .get_properties(selector, T::name())
+                .get_properties(selector, T::id().name())
                 .map(|values| match T::parse(values) {
                     Ok(cache) => CacheState::Ok(cache),
                     Err(err) => {
-                        error!("Failed to parse property {}. Error: {}", T::name(), err);
+                        error!("Failed to parse property {}. Error: {}", T::id().name(), err);
                         // TODO: Clear cache state when the asset is reloaded, since values may be changed.
                         CacheState::Error
                     }
@@ -286,7 +286,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     /// Indicates which property name should matched for. Must match the same property name as on `css` file.
     ///
     /// For compliance, use always `lower-case` and `kebab-case` names.
-    fn name() -> &'static str;
+    fn id() -> lightningcss::properties::PropertyId<'static>;
 
     /// Parses the [`PropertyValues`] into the [`Cache`](Property::Cache) value to be reused across multiple entities.
     ///
@@ -323,7 +323,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
                     if let CacheState::Ok(cached) = local.get_or_parse(rules, selector) {
                         trace!(
                             r#"Applying property "{}" from sheet "{}" ({})"#,
-                            Self::name(),
+                            Self::id().name(),
                             rules.path(),
                             selector
                         );
@@ -338,3 +338,4 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         }
     }
 }
+

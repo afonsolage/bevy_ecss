@@ -19,6 +19,7 @@ bevy = { version = "0.12", default-features = false, features = [
 ] }
 cssparser = "0.33"
 cssparser-color = "0.1"
+lightningcss = { version = "1.0.0-alpha.51", default-features = false, features = ["grid"] }
 smallvec = { version = "1.11", features = ["serde", "union", "const_generics"] }
 thiserror = "1.0.50"
 
