@@ -171,6 +171,9 @@ fn select_entities_node(
                 SelectorElement::Component(component) => {
                     get_entities_with_component(component.as_str(), world, registry, filter)
                 }
+                SelectorElement::PseudoClass(_pseudo_class) => {
+                    todo!()
+                }
                 // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
                 SelectorElement::Child => unreachable!(),
             })

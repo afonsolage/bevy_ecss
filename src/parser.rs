@@ -60,6 +60,12 @@ fn format_error(error: ParseError<EcssError>) -> String {
     )
 }
 
+enum NextElementWithPrefix {
+    None,
+    Class,
+    PseudoClass,
+}
+
 impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
     type Prelude = Selector;
     type QualifiedRule = StyleRule;
@@ -71,18 +77,24 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
         let mut elements = smallvec![];
 
-        let mut next_is_class = false;
+        let mut next_element_with_prefix = NextElementWithPrefix::None;
 
         while let Ok(token) = input.next_including_whitespace() {
             use cssparser::Token::*;
             match token {
                 Ident(v) => {
-                    if next_is_class {
-                        next_is_class = false;
-                        elements.push(SelectorElement::Class(v.to_string()));
-                    } else {
-                        elements.push(SelectorElement::Component(v.to_string()));
+                    match next_element_with_prefix {
+                        NextElementWithPrefix::None => {
+                            elements.push(SelectorElement::Component(v.to_string()))
+                        }
+                        NextElementWithPrefix::Class => {
+                            elements.push(SelectorElement::Class(v.to_string()))
+                        }
+                        NextElementWithPrefix::PseudoClass => {
+                            elements.push(SelectorElement::PseudoClass(v.to_string()))
+                        }
                     }
+                    next_element_with_prefix = NextElementWithPrefix::None;
                 }
                 IDHash(v) => {
                     if v.is_empty() {
@@ -92,7 +104,8 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
                     }
                 }
                 WhiteSpace(_) => elements.push(SelectorElement::Child),
-                Delim(c) if *c == '.' => next_is_class = true,
+                Delim(c) if *c == '.' => next_element_with_prefix = NextElementWithPrefix::Class,
+                Colon => next_element_with_prefix = NextElementWithPrefix::PseudoClass,
                 _ => {
                     let token = token.to_css_string();
                     return Err(input.new_custom_error(EcssError::UnexpectedToken(token)));
@@ -329,15 +342,20 @@ mod tests {
 
     #[test]
     fn parse_single_composed_selector_no_property() {
-        let rules = StyleSheetParser::parse("a.b#c.d {}");
+        let rules = StyleSheetParser::parse("a.b#c.d:hover {}");
         assert_eq!(rules.len(), 1, "Should have a single rule");
 
         let rule = &rules[0];
         let tree = rule.selector.get_parent_tree();
-        assert_eq!(tree.len(), 1, "Should have a single selector node");
+        assert_eq!(
+            tree.len(),
+            1,
+            "Should have a single selector node: {:?}",
+            tree,
+        );
 
         let node = &tree[0];
-        assert_eq!(node.len(), 4, "Should have a 4 selectors");
+        assert_eq!(node.len(), 5, "Should have a 5 selectors");
 
         use SelectorElement::*;
         let expected: SmallVec<[SelectorElement; 8]> = smallvec![
@@ -345,6 +363,7 @@ mod tests {
             Class("b".to_string()),
             Name("c".to_string()),
             Class("d".to_string()),
+            PseudoClass("hover".to_string()),
         ];
 
         expected
@@ -359,12 +378,12 @@ mod tests {
 
     #[test]
     fn parse_multiple_composed_selector_no_property() {
-        let rules = StyleSheetParser::parse("a.b #c .d e#f .g.h i j.k#l {}");
+        let rules = StyleSheetParser::parse("a.b #c .d e#f .g.h i j.k#l :m {}");
         assert_eq!(rules.len(), 1, "Should have a single rule");
 
         let rule = &rules[0];
         let tree = rule.selector.get_parent_tree();
-        assert_eq!(tree.len(), 7, "Should have a single selector node");
+        assert_eq!(tree.len(), 8, "Should have 8 selectors");
 
         use SelectorElement::*;
         let expected: SmallVec<[SmallVec<[SelectorElement; 8]>; 8]> = smallvec![
@@ -379,6 +398,7 @@ mod tests {
                 Class("k".to_string()),
                 Name("l".to_string())
             ],
+            smallvec![PseudoClass("m".to_string())],
         ];
 
         expected
@@ -394,6 +414,51 @@ mod tests {
             });
 
         assert!(rule.properties.is_empty(), "Should have no properties");
+    }
+
+    #[test]
+    fn parse_pseudo_class() {
+        let rules = StyleSheetParser::parse("a:pseudo {b: c}");
+        assert_eq!(rules.len(), 1, "Should have a single rule");
+
+        let rule = &rules[0];
+        let tree = rule.selector.get_parent_tree();
+        assert_eq!(tree.len(), 1, "Should have a single selector");
+
+        use SelectorElement::*;
+        let expected: SmallVec<[SmallVec<[SelectorElement; 8]>; 8]> = smallvec![smallvec![
+            Component("a".to_string()),
+            PseudoClass("pseudo".to_string())
+        ],];
+
+        expected
+            .into_iter()
+            .zip(tree)
+            .for_each(|(node_expected, node)| {
+                node_expected
+                    .into_iter()
+                    .zip(node)
+                    .for_each(|(expected, element)| {
+                        assert_eq!(expected, *element);
+                    });
+            });
+
+        let properties = &rules[0].properties;
+
+        assert_eq!(properties.len(), 1, "Should have a single property");
+        assert!(
+            properties.contains_key(&"b".to_string()),
+            "Should have a property named \"b\""
+        );
+
+        let values = properties.get(&"b".to_string()).unwrap();
+
+        assert_eq!(values.len(), 1, "Should have a single property value");
+
+        match &values[0] {
+            PropertyToken::Identifier(ident) => assert_eq!(ident, "c"),
+            _ => panic!("Should have a property value of type identifier token"),
+        }
     }
 
     #[test]

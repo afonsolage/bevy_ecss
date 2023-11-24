@@ -17,6 +17,8 @@ pub enum SelectorElement {
     Class(String),
     /// Indicates a parent-child relation between previous elements and next elements, like `window .border`
     Child,
+    /// A keyword added to a selector that specifies a special state of the selected element(s), like `button:hover`
+    PseudoClass(String),
 }
 
 /// A selector parsed from a `css` rule. Each selector has a internal hash used to differentiate between many rules in the same sheet.
@@ -77,6 +79,10 @@ impl std::fmt::Display for Selector {
                     result.push_str(c);
                 }
                 SelectorElement::Child => result.push(' '),
+                SelectorElement::PseudoClass(c) => {
+                    result.push(':');
+                    result.push_str(c);
+                }
             }
         }
 
