@@ -60,9 +60,12 @@ fn format_error(error: ParseError<EcssError>) -> String {
     )
 }
 
+/// Helper enum to indicate if the next element to be processed if an element with prefix.
 enum NextElementWithPrefix {
     None,
+    // Prefixed by a `.` delimiter
     Class,
+    // prefixed by a `:`
     PseudoClass,
 }
 
@@ -91,7 +94,7 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
                             elements.push(SelectorElement::Class(v.to_string()))
                         }
                         NextElementWithPrefix::PseudoClass => {
-                            elements.push(SelectorElement::PseudoClass(v.to_string()))
+                            elements.push(SelectorElement::PseudoClass(v.into()))
                         }
                     }
                     next_element_with_prefix = NextElementWithPrefix::None;
@@ -215,7 +218,7 @@ fn parse_values<'i>(
 
 #[cfg(test)]
 mod tests {
-    use crate::property::PropertyToken;
+    use crate::{property::PropertyToken, selector::PseudoClassElement};
 
     use super::*;
 
@@ -363,7 +366,7 @@ mod tests {
             Class("b".to_string()),
             Name("c".to_string()),
             Class("d".to_string()),
-            PseudoClass("hover".to_string()),
+            PseudoClass(PseudoClassElement::Hover),
         ];
 
         expected
@@ -378,7 +381,7 @@ mod tests {
 
     #[test]
     fn parse_multiple_composed_selector_no_property() {
-        let rules = StyleSheetParser::parse("a.b #c .d e#f .g.h i j.k#l :m {}");
+        let rules = StyleSheetParser::parse("a.b #c .d e#f .g.h i j.k#l :hover {}");
         assert_eq!(rules.len(), 1, "Should have a single rule");
 
         let rule = &rules[0];
@@ -398,7 +401,7 @@ mod tests {
                 Class("k".to_string()),
                 Name("l".to_string())
             ],
-            smallvec![PseudoClass("m".to_string())],
+            smallvec![PseudoClass(PseudoClassElement::Hover)],
         ];
 
         expected
@@ -428,7 +431,7 @@ mod tests {
         use SelectorElement::*;
         let expected: SmallVec<[SmallVec<[SelectorElement; 8]>; 8]> = smallvec![smallvec![
             Component("a".to_string()),
-            PseudoClass("pseudo".to_string())
+            PseudoClass(PseudoClassElement::Unsupported)
         ],];
 
         expected
