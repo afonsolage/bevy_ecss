@@ -209,9 +209,27 @@ fn get_entities_with_pseudo_class(
     entities: SmallVec<[Entity; 8]>,
 ) -> SmallVec<[Entity; 8]> {
     match pseudo_class {
-        PseudoClassElement::Hover => todo!(),
+        PseudoClassElement::Hover => get_entities_with_pseudo_class_hover(world, entities),
         PseudoClassElement::Unsupported => entities,
     }
+}
+
+fn get_entities_with_pseudo_class_hover(
+    world: &World,
+    entities: SmallVec<[Entity; 8]>,
+) -> SmallVec<[Entity; 8]> {
+    entities
+        .into_iter()
+        .filter(|e| {
+            world
+                .entity(*e)
+                .get::<Interaction>()
+                .is_some_and(|interaction| {
+                    println!("Found: {:?}", interaction);
+                    matches!(interaction, Interaction::Hovered)
+                })
+        })
+        .collect()
 }
 
 /// Filters entities which have the components specified on selector, like "a" or "button".

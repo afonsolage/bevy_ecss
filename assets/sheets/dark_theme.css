@@ -68,3 +68,8 @@ button text {
     color: azure;
     text-content: "Lightness!";
 }
+
+:hover {
+    color: red;
+    text-content: "Switch to Darkness?";
+}
