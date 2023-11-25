@@ -5,7 +5,7 @@ use bevy::{
         AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity, EventReader,
         Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
-    ui::Node,
+    ui::{Interaction, Node},
     utils::HashMap,
 };
 use smallvec::SmallVec;
@@ -13,7 +13,7 @@ use smallvec::SmallVec;
 use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
     property::StyleSheetState,
-    selector::{Selector, SelectorElement},
+    selector::{PseudoClassElement, Selector, SelectorElement},
     StyleSheetAsset,
 };
 
@@ -171,8 +171,8 @@ fn select_entities_node(
                 SelectorElement::Component(component) => {
                     get_entities_with_component(component.as_str(), world, registry, filter)
                 }
-                SelectorElement::PseudoClass(_pseudo_class) => {
-                    todo!()
+                SelectorElement::PseudoClass(pseudo_class) => {
+                    get_entities_with_pseudo_class(world, *pseudo_class, filter)
                 }
                 // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
                 SelectorElement::Child => unreachable!(),
@@ -201,6 +201,18 @@ where
             }
         })
         .collect()
+}
+
+/// Utility function to filter any entities by using a component with implements [`MatchSelectorElement`]
+fn get_entities_with_pseudo_class(
+    world: &World,
+    pseudo_class: PseudoClassElement,
+    filter: Option<SmallVec<[Entity; 8]>>,
+) -> SmallVec<[Entity; 8]> {
+    match pseudo_class {
+        PseudoClassElement::Hover => todo!(),
+        PseudoClassElement::Unsupported => filter.unwrap_or_default(),
+    }
 }
 
 /// Filters entities which have the components specified on selector, like "a" or "button".
