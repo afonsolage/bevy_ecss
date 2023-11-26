@@ -12,7 +12,7 @@ use smallvec::SmallVec;
 
 use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
-    property::StyleSheetState,
+    property::{SelectedEntities, StyleSheetState, TrackedEntities},
     selector::{PseudoClassElement, Selector, SelectorElement},
     StyleSheetAsset,
 };
@@ -62,7 +62,7 @@ pub(crate) fn prepare(world: &mut World) {
             let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
 
-            if !state.is_empty() {
+            if !state.stylesheet_map.is_empty() {
                 let mut state_res = world
                     .get_resource_mut::<StyleSheetState>()
                     .expect("Should be added by plugin");
@@ -84,13 +84,19 @@ pub(crate) fn prepare_state(
     for (entity, children, sheet_handle) in &params.nodes {
         let id = sheet_handle.handle().id();
         if let Some(sheet) = params.assets.get(id) {
-            let map = state.entry(id).or_default();
-
+            let (tracked_entities, selected_entities) = state.entry(id).or_default();
             debug!("Applying style {}", sheet.path());
 
             for rule in sheet.iter() {
-                let entities =
-                    select_entities(entity, children, &rule.selector, world, &params, registry);
+                let entities = select_entities(
+                    entity,
+                    children,
+                    &rule.selector,
+                    world,
+                    &params,
+                    registry,
+                    tracked_entities,
+                );
 
                 trace!(
                     "Applying rule ({}) on {} entities",
@@ -98,10 +104,10 @@ pub(crate) fn prepare_state(
                     entities.len()
                 );
 
-                map.push((rule.selector.clone(), entities));
+                selected_entities.push((rule.selector.clone(), entities));
             }
 
-            map.sort_by(|(a, _), (b, _)| a.weight.cmp(&b.weight));
+            selected_entities.sort_by(|(a, _), (b, _)| a.weight.cmp(&b.weight));
         }
     }
 
@@ -118,6 +124,7 @@ fn select_entities(
     world: &World,
     css_query: &CssQueryParam,
     registry: &mut ComponentFilterRegistry,
+    tracked_entities: &mut TrackedEntities,
 ) -> SmallVec<[Entity; 8]> {
     let mut parent_tree = selector.get_parent_tree();
 
@@ -140,7 +147,14 @@ fn select_entities(
         // This is has little to no impact on performance, since this system doesn't runs often.
         let node = parent_tree.remove(0);
 
-        let entities = select_entities_node(node, world, css_query, registry, entity_tree.clone());
+        let entities = select_entities_node(
+            node,
+            world,
+            css_query,
+            registry,
+            entity_tree.clone(),
+            tracked_entities,
+        );
 
         if parent_tree.is_empty() {
             break entities;
@@ -162,9 +176,10 @@ fn select_entities_node(
     css_query: &CssQueryParam,
     registry: &mut ComponentFilterRegistry,
     entities: SmallVec<[Entity; 8]>,
+    tracked_entities: &mut TrackedEntities,
 ) -> SmallVec<[Entity; 8]> {
     node.into_iter().fold(entities, |entities, element| {
-        match element {
+        let matched_entities = match element {
             SelectorElement::Name(name) => {
                 get_entities_with(name.as_str(), &css_query.names, entities)
             }
@@ -179,7 +194,14 @@ fn select_entities_node(
             }
             // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
             SelectorElement::Child => unreachable!(),
-        }
+        };
+
+        tracked_entities
+            .entry(element.clone())
+            .or_default()
+            .extend(matched_entities.iter().copied());
+
+        matched_entities
     })
 }
 
@@ -291,8 +313,23 @@ pub(crate) fn hot_reload_style_sheets(
 
 /// Clear temporary state
 pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
-    if sheet_rule.len() > 0 {
+    if !sheet_rule.has_selected_entities() {
         debug!("Finished applying style sheet.");
-        sheet_rule.clear();
+        sheet_rule.clear_selected_entities();
+    }
+}
+
+pub(crate) fn watch_tracked_entities(
+    state: Res<StyleSheetState>,
+    mut q_sheets: Query<&mut StyleSheet>,
+) {
+    for (asset_id, (tracked_entities, _)) in state.iter() {
+        for (element, entities) in tracked_entities.iter() {
+            if entities.is_empty() {
+                continue;
+            }
+
+            // TODO: Get a query based on element...
+        }
     }
 }
