@@ -29,6 +29,17 @@ pub enum PseudoClassElement {
     Unsupported,
 }
 
+impl PseudoClassElement {
+    /// Computes a weight value for the pseudo-element.
+    /// This is based on [Specifity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
+    fn weight(&self) -> u32 {
+        match self {
+            PseudoClassElement::Hover => 10,
+            PseudoClassElement::Unsupported => 0,
+        }
+    }
+}
+
 impl std::fmt::Display for PseudoClassElement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -52,6 +63,7 @@ impl<'a> From<&'a CowRcStr<'a>> for PseudoClassElement {
 pub struct Selector {
     hash: u64,
     elements: SmallVec<[SelectorElement; 8]>,
+    pub(crate) weight: u32,
 }
 
 impl Selector {
@@ -65,8 +77,13 @@ impl Selector {
         });
 
         let hash = hasher.finish();
+        let weight = Self::weight(&elements);
 
-        Self { elements, hash }
+        Self {
+            elements,
+            hash,
+            weight,
+        }
     }
 
     /// Builds a selector tree for this selector.
@@ -86,6 +103,22 @@ impl Selector {
         tree.push(current_level);
 
         tree
+    }
+
+    /// Computes a weight value for this selector, to be used on precedence order when applying styles.
+    ///
+    /// This is based on [Specifity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
+    fn weight(elements: &SmallVec<[SelectorElement; 8]>) -> u32 {
+        elements.iter().fold(0, |acc, element| {
+            let element_weight = match element {
+                SelectorElement::Name(_) => 100,
+                SelectorElement::Component(_) => 1,
+                SelectorElement::Class(_) => 10,
+                SelectorElement::Child => 0,
+                SelectorElement::PseudoClass(pseudo_class) => pseudo_class.weight(),
+            };
+            acc + element_weight
+        })
     }
 }
 

@@ -20,12 +20,13 @@
 .big-text {
     font-size: 15;
     width: 100%;
-    color: #923192
+    color: #623192
 }
 
 #right-list text {
-    font-size: 16;
+    font-size: 19;
     vertical-align: bottom;
+    color: red;
 }
 
 .container .blue-bg {
