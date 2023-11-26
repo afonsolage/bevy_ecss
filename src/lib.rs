@@ -76,6 +76,7 @@ struct EcssHotReload;
 /// System sets  used by `bevy_ecss` systems
 #[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum EcssSet {
+    ChangeDetection,
     /// Prepares internal state before running apply systems.
     /// This system runs on [`PreUpdate`] schedule.
     Prepare,
@@ -105,12 +106,16 @@ impl Plugin for EcssPlugin {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
             .init_asset::<StyleSheetAsset>()
-            .configure_sets(PreUpdate, (EcssSet::Prepare, EcssSet::Apply).chain())
+            .configure_sets(
+                PreUpdate,
+                (EcssSet::ChangeDetection, EcssSet::Prepare, EcssSet::Apply).chain(),
+            )
             .configure_sets(PostUpdate, EcssSet::Cleanup)
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
             .add_systems(PreUpdate, system::prepare.in_set(EcssSet::Prepare))
+            .add_systems(PreUpdate, system::watch_tracked_entities)
             .add_systems(PostUpdate, system::clear_state.in_set(EcssSet::Cleanup));
 
         let prepared_state = PrepareParams::new(&mut app.world);

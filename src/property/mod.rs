@@ -243,7 +243,7 @@ impl<T: Property> PropertyMeta<T> {
 }
 
 #[derive(Debug, Clone, Default, Deref, DerefMut)]
-pub(crate) struct TrackedEntities(HashMap<SelectorElement, SmallVec<[Entity; 8]>>);
+pub struct TrackedEntities(HashMap<SelectorElement, SmallVec<[Entity; 8]>>);
 
 /// Maps which entities was selected by a [`Selector`]
 #[derive(Debug, Clone, Default, Deref, DerefMut)]
@@ -330,8 +330,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         asset_server: Res<AssetServer>,
         mut commands: Commands,
     ) {
-        let stylesheet_map = &apply_sheets.stylesheet_map;
-        for (asset_id, selected) in stylesheet_map.iter() {
+        for (asset_id, (_, selected)) in apply_sheets.iter() {
             if let Some(rules) = assets.get(*asset_id) {
                 for (selector, entities) in selected.iter() {
                     if let CacheState::Ok(cached) = local.get_or_parse(rules, selector) {

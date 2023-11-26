@@ -1,5 +1,8 @@
 use bevy::{
-    ecs::system::{SystemParam, SystemState},
+    ecs::{
+        component::ComponentTicks,
+        system::{SystemParam, SystemState},
+    },
     log::{debug, error, trace},
     prelude::{
         AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity, EventReader,
@@ -12,22 +15,27 @@ use smallvec::SmallVec;
 
 use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
-    property::{SelectedEntities, StyleSheetState, TrackedEntities},
+    property::{StyleSheetState, TrackedEntities},
     selector::{PseudoClassElement, Selector, SelectorElement},
     StyleSheetAsset,
 };
 
 pub(crate) trait ComponentFilter {
     fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]>;
+    fn get_component_changed_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks>;
 }
 
 impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity, With<T>>> {
     fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]> {
         self.get(world).iter().collect()
     }
+
+    fn get_component_changed_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks> {
+        world.entity(entity).get_change_ticks::<T>()
+    }
 }
 
-#[derive(Default, Resource)]
+#[derive(Default, Resource, Deref, DerefMut)]
 pub(crate) struct ComponentFilterRegistry(
     pub HashMap<&'static str, Box<dyn ComponentFilter + Send + Sync>>,
 );
@@ -62,7 +70,7 @@ pub(crate) fn prepare(world: &mut World) {
             let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
 
-            if !state.stylesheet_map.is_empty() {
+            if state.has_selected_entities() {
                 let mut state_res = world
                     .get_resource_mut::<StyleSheetState>()
                     .expect("Should be added by plugin");
@@ -319,17 +327,83 @@ pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
     }
 }
 
-pub(crate) fn watch_tracked_entities(
-    state: Res<StyleSheetState>,
-    mut q_sheets: Query<&mut StyleSheet>,
-) {
-    for (asset_id, (tracked_entities, _)) in state.iter() {
-        for (element, entities) in tracked_entities.iter() {
-            if entities.is_empty() {
-                continue;
-            }
+pub(crate) fn watch_tracked_entities(world: &mut World) {
+    world.resource_scope(|world, state: Mut<StyleSheetState>| {
+        let mut query_state: SystemState<Query<&mut StyleSheet>> = SystemState::new(world);
 
-            // TODO: Get a query based on element...
+        for (asset_id, (tracked_entities, _)) in state.iter() {
+            for (element, entities) in tracked_entities.iter() {
+                if entities.is_empty() {
+                    continue;
+                }
+
+                let changed = match element {
+                    SelectorElement::Name(_) => any_changed::<Name>(world, entities),
+                    SelectorElement::Component(c) => any_component_changed(world, entities, c),
+                    SelectorElement::Class(_) => any_changed::<Class>(world, entities),
+                    SelectorElement::PseudoClass(pseudo_class) => {
+                        any_pseudo_class_changed(world, entities, *pseudo_class)
+                    }
+                    _ => unreachable!(),
+                };
+
+                if changed {
+                    let mut query = query_state.get_mut(world);
+                    for mut stylesheet in query.iter_mut() {
+                        if stylesheet.handle().id() == *asset_id {
+                            stylesheet.refresh();
+                        }
+                    }
+                    break;
+                }
+            }
         }
+    });
+}
+
+fn any_changed<T: Component>(world: &World, entities: &SmallVec<[Entity; 8]>) -> bool {
+    let tick = world.last_change_tick();
+    for e in entities {
+        if let Some(changed_tick) = world.entity(*e).get_change_ticks::<T>() {
+            if changed_tick.is_changed(changed_tick.last_changed_tick(), tick) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn any_component_changed(
+    world: &World,
+    entities: &SmallVec<[Entity; 8]>,
+    component_name: &str,
+) -> bool {
+    let Some(registry) = world.get_resource::<ComponentFilterRegistry>() else {
+        return false;
+    };
+    let Some(boxed_state) = registry.get(component_name) else {
+        return false;
+    };
+
+    let tick = world.last_change_tick();
+
+    for e in entities {
+        if let Some(changed_tick) = boxed_state.get_component_changed_ticks(world, *e) {
+            if changed_tick.is_changed(changed_tick.last_changed_tick(), tick) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn any_pseudo_class_changed(
+    world: &World,
+    entities: &SmallVec<[Entity; 8]>,
+    pseudo_class: PseudoClassElement,
+) -> bool {
+    match pseudo_class {
+        PseudoClassElement::Hover => any_changed::<Interaction>(world, entities),
+        PseudoClassElement::Unsupported => false,
     }
 }
