@@ -23,7 +23,7 @@ pub enum SelectorElement {
 
 /// Represents a pseudo-class as per (mdn docs)[https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes]
 /// Not all pseudo-classes are supported, in which case, an `Unsupported` variant will be used.
-#[derive(Debug, Clone, Copy, PartialEq, cssparsertialOrd, Eq, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub enum PseudoClassElement {
     Hover,
     Unsupported,

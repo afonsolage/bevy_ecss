@@ -6,11 +6,12 @@ Here you can find a list of all currently supported selectors and properties:
 
 ### <ins>Selectors</ins>
 
-|    Type     | Details                                                                                                       | Example              |
-| :---------: | :------------------------------------------------------------------------------------------------------------ | :------------------- |
-|   _Name_    | Selects by using `bevy` built-int [`Name`](https://docs.rs/bevy/latest/bevy/core/struct.Name.html) component. | `#inventory { ... }` |
-|   _Class_   | Selects by using `Class` component, which is provided by Bevy ECSS.                                           | `.enabled { ... }`   |
-| _Component_ | Selects by using any component, but it has to be registered before usage. You can find more details bellow.   | `button { ... }`     |
+|    Type       | Details                                                                                                       | Example              |
+| :-----------: | :------------------------------------------------------------------------------------------------------------ | :------------------- |
+|   _Name_      | Selects by using `bevy` built-int [`Name`](https://docs.rs/bevy/latest/bevy/core/struct.Name.html) component. | `#inventory { ... }` |
+|   _Class_     | Selects by using `Class` component, which is provided by Bevy ECSS.                                           | `.enabled { ... }`   |
+| _Component_   | Selects by using any component, but it has to be registered before usage. You can find more details bellow.   | `button { ... }`     |
+| _PseudoClass_ | Selects by using pseudo-classes. A list of supported pseudo-classes are listed at the end of the page.        | `:hover { ... }`     |
 
 You may combine any of the above selector types to create a complex selector, if you like so. For instance, `window.enabled.pop-up` select all `window`s, which are `enabled` and are of `pop-up` type. The same rules of [`CSS Class selectors`](https://developer.mozilla.org/en-US/docs/Web/CSS/Class_selectors) applies here. 
 
@@ -35,3 +36,9 @@ So it's possible to combine complex composed selectors with descendant combinato
 ```
 
 This rule will match all components which has a `Class` with the value of `border` and are descendant of any entity which has a `button` component _and_ a `Class` component with the value of `enabled` and also are descendant of any entity which has a `Name` component with value `main-menu`.
+
+### Supported pseudo-classes
+
+|       Pseudo-Class    |                                   Description                                               |
+|:---------------------:|:------------------------------------------------------------------------------------------- |
+|       `:hover`        |  Matches any entity which has `Interaction` component with `Interaction::Hovered` variant.  |
