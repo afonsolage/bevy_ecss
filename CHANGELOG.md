@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for `:hover` pseudo-class.
 - Added support for [Pseudo-classes](https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes).
 
-## [0.5.0]
+## [0.5.1]
 
 ### Added
 
