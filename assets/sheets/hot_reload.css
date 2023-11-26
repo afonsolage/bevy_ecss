@@ -17,13 +17,13 @@
     height: 50%;
 }
 
-text.big-text {
+.big-text {
     font-size: 15;
     width: 100%;
     color: #623192
 }
 
-text {
+#right-list text {
     font-size: 19;
     vertical-align: bottom;
     color: red;
