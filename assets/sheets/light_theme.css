@@ -66,5 +66,9 @@ button text {
     left: 10px;
     font-size: 20;
     color: #3b3f3f;
-    text-content: "Darkness!!!!";
+    text-content: "Lightness!!!!";
+}
+
+button:hover text {
+    text-content: "Switch to Darkness?";
 }

@@ -8,20 +8,25 @@ use bevy_ecss::prelude::{
 struct Title;
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                fit_canvas_to_parent: true,
-                canvas: Some("#bevy".to_string()),
-                ..default()
-            }),
+    let mut app = App::new();
+
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            fit_canvas_to_parent: true,
+            canvas: Some("#bevy".to_string()),
             ..default()
-        }))
-        .add_plugins(EcssPlugin::with_hot_reload())
-        .add_systems(Startup, setup)
-        .add_systems(Update, change_theme)
-        .register_component_selector::<Title>("title")
-        .run();
+        }),
+        ..default()
+    }))
+    .add_plugins(EcssPlugin::with_hot_reload())
+    .add_systems(Startup, setup)
+    .add_systems(Update, change_theme)
+    .register_component_selector::<Title>("title");
+
+    #[cfg(not(target_arch = "wasm32"))]
+    app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
+
+    app.run();
 }
 
 #[derive(Resource)]

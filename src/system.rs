@@ -202,7 +202,7 @@ where
         .collect()
 }
 
-/// Utility function to filter any entities by using a component with implements [`MatchSelectorElement`]
+/// Utility function to filter any entities matching a [`PseudoClassElement`]
 fn get_entities_with_pseudo_class(
     world: &World,
     pseudo_class: PseudoClassElement,
@@ -214,6 +214,9 @@ fn get_entities_with_pseudo_class(
     }
 }
 
+/// Utility function to filter any entities matching a [`PseudoClassElement::Hover`] variant
+///
+/// This function looks for [`Interaction`] component with [`Interaction::Hovered`] variant.
 fn get_entities_with_pseudo_class_hover(
     world: &World,
     entities: SmallVec<[Entity; 8]>,
@@ -224,10 +227,7 @@ fn get_entities_with_pseudo_class_hover(
             world
                 .entity(*e)
                 .get::<Interaction>()
-                .is_some_and(|interaction| {
-                    println!("Found: {:?}", interaction);
-                    matches!(interaction, Interaction::Hovered)
-                })
+                .is_some_and(|interaction| matches!(interaction, Interaction::Hovered))
         })
         .collect()
 }
