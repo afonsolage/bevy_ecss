@@ -17,6 +17,34 @@ pub enum SelectorElement {
     Class(String),
     /// Indicates a parent-child relation between previous elements and next elements, like `window .border`
     Child,
+    /// A keyword added to a selector that specifies a special state of the selected element(s), like `button:hover`
+    PseudoClass(PseudoClassElement),
+}
+
+/// Represents a pseudo-class as per (mdn docs)[https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes]
+/// Not all pseudo-classes are supported, in which case, an `Unsupported` variant will be used.
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash)]
+pub enum PseudoClassElement {
+    Hover,
+    Unsupported,
+}
+
+impl std::fmt::Display for PseudoClassElement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PseudoClassElement::Hover => write!(f, "hover"),
+            PseudoClassElement::Unsupported => write!(f, "unsupported"),
+        }
+    }
+}
+
+impl<'a> From<&'a CowRcStr<'a>> for PseudoClassElement {
+    fn from(value: &'a CowRcStr<'a>) -> Self {
+        match value.as_ref() {
+            "hover" => PseudoClassElement::Hover,
+            _ => PseudoClassElement::Unsupported,
+        }
+    }
 }
 
 /// A selector parsed from a `css` rule. Each selector has a internal hash used to differentiate between many rules in the same sheet.
@@ -77,6 +105,10 @@ impl std::fmt::Display for Selector {
                     result.push_str(c);
                 }
                 SelectorElement::Child => result.push(' '),
+                SelectorElement::PseudoClass(c) => {
+                    result.push(':');
+                    result.push_str(&c.to_string());
+                }
             }
         }
 

@@ -5,7 +5,7 @@ use bevy::{
         AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity, EventReader,
         Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
-    ui::Node,
+    ui::{Interaction, Node},
     utils::HashMap,
 };
 use smallvec::SmallVec;
@@ -13,7 +13,7 @@ use smallvec::SmallVec;
 use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
     property::StyleSheetState,
-    selector::{Selector, SelectorElement},
+    selector::{PseudoClassElement, Selector, SelectorElement},
     StyleSheetAsset,
 };
 
@@ -111,7 +111,7 @@ pub(crate) fn prepare_state(
 /// If no [`Children`] is supplied, then the selector is applied only on root entity.
 fn select_entities(
     root: Entity,
-    children: Option<&Children>,
+    maybe_children: Option<&Children>,
     selector: &Selector,
     world: &World,
     css_query: &CssQueryParam,
@@ -123,29 +123,31 @@ fn select_entities(
         return SmallVec::new();
     }
 
-    let mut filter = children.map(|children| {
-        // Include root, since style sheet may be applied on root too.
-        std::iter::once(root)
-            .chain(get_children_recursively(children, &css_query.children))
-            .collect()
-    });
+    // Build an entity tree with all entities that may be selected.
+    // This tree is composed of the entity root and all descendants entities.
+    let mut entity_tree = std::iter::once(root)
+        .chain(
+            maybe_children
+                .map(|children| get_children_recursively(children, &css_query.children))
+                .unwrap_or_default(),
+        )
+        .collect::<SmallVec<_>>();
 
     loop {
         // TODO: Rework this to use a index to avoid recreating parent_tree every time the systems runs.
         // This is has little to no impact on performance, since this system doesn't runs often.
         let node = parent_tree.remove(0);
 
-        let entities = select_entities_node(node, world, css_query, registry, filter.clone());
+        let entities = select_entities_node(node, world, css_query, registry, entity_tree.clone());
 
         if parent_tree.is_empty() {
             break entities;
         } else {
-            let children = entities
+            entity_tree = entities
                 .into_iter()
                 .filter_map(|e| css_query.children.get(e).ok())
                 .flat_map(|children| get_children_recursively(children, &css_query.children))
                 .collect();
-            filter = Some(children);
         }
     }
 }
@@ -157,45 +159,75 @@ fn select_entities_node(
     world: &World,
     css_query: &CssQueryParam,
     registry: &mut ComponentFilterRegistry,
-    filter: Option<SmallVec<[Entity; 8]>>,
+    entities: SmallVec<[Entity; 8]>,
 ) -> SmallVec<[Entity; 8]> {
-    node.into_iter()
-        .fold(filter, |filter, element| {
-            Some(match element {
-                SelectorElement::Name(name) => {
-                    get_entities_with(name.as_str(), &css_query.names, filter)
-                }
-                SelectorElement::Class(class) => {
-                    get_entities_with(class.as_str(), &css_query.classes, filter)
-                }
-                SelectorElement::Component(component) => {
-                    get_entities_with_component(component.as_str(), world, registry, filter)
-                }
-                // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
-                SelectorElement::Child => unreachable!(),
-            })
-        })
-        .unwrap_or_default()
+    node.into_iter().fold(entities, |entities, element| {
+        match element {
+            SelectorElement::Name(name) => {
+                get_entities_with(name.as_str(), &css_query.names, entities)
+            }
+            SelectorElement::Class(class) => {
+                get_entities_with(class.as_str(), &css_query.classes, entities)
+            }
+            SelectorElement::Component(component) => {
+                get_entities_with_component(component.as_str(), world, registry, entities)
+            }
+            SelectorElement::PseudoClass(pseudo_class) => {
+                get_entities_with_pseudo_class(world, *pseudo_class, entities)
+            }
+            // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
+            SelectorElement::Child => unreachable!(),
+        }
+    })
 }
 
 /// Utility function to filter any entities by using a component with implements [`MatchSelectorElement`]
 fn get_entities_with<T>(
     name: &str,
     query: &Query<(Entity, &'static T)>,
-    filter: Option<SmallVec<[Entity; 8]>>,
+    entities: SmallVec<[Entity; 8]>,
 ) -> SmallVec<[Entity; 8]>
 where
     T: Component + MatchSelectorElement,
 {
     query
         .iter()
-        .filter_map(|(e, rhs)| if rhs.matches(name) { Some(e) } else { None })
-        .filter(|e| {
-            if let Some(filter) = &filter {
-                filter.contains(e)
+        .filter_map(|(e, rhs)| {
+            if entities.contains(&e) && rhs.matches(name) {
+                Some(e)
             } else {
-                true
+                None
             }
+        })
+        .collect()
+}
+
+/// Utility function to filter any entities matching a [`PseudoClassElement`]
+fn get_entities_with_pseudo_class(
+    world: &World,
+    pseudo_class: PseudoClassElement,
+    entities: SmallVec<[Entity; 8]>,
+) -> SmallVec<[Entity; 8]> {
+    match pseudo_class {
+        PseudoClassElement::Hover => get_entities_with_pseudo_class_hover(world, entities),
+        PseudoClassElement::Unsupported => entities,
+    }
+}
+
+/// Utility function to filter any entities matching a [`PseudoClassElement::Hover`] variant
+///
+/// This function looks for [`Interaction`] component with [`Interaction::Hovered`] variant.
+fn get_entities_with_pseudo_class_hover(
+    world: &World,
+    entities: SmallVec<[Entity; 8]>,
+) -> SmallVec<[Entity; 8]> {
+    entities
+        .into_iter()
+        .filter(|e| {
+            world
+                .entity(*e)
+                .get::<Interaction>()
+                .is_some_and(|interaction| matches!(interaction, Interaction::Hovered))
         })
         .collect()
 }
@@ -207,18 +239,14 @@ fn get_entities_with_component(
     name: &str,
     world: &World,
     components: &mut ComponentFilterRegistry,
-    filter: Option<SmallVec<[Entity; 8]>>,
+    entities: SmallVec<[Entity; 8]>,
 ) -> SmallVec<[Entity; 8]> {
     if let Some(query) = components.0.get_mut(name) {
-        if let Some(filter) = filter {
-            query
-                .filter(world)
-                .into_iter()
-                .filter(|e| filter.contains(e))
-                .collect()
-        } else {
-            query.filter(world)
-        }
+        query
+            .filter(world)
+            .into_iter()
+            .filter(|e| entities.contains(e))
+            .collect()
     } else {
         error!("Unregistered component selector {}", name);
         SmallVec::new()
