@@ -4,8 +4,8 @@ use bevy::{
     ecs::query::{QueryItem, ReadOnlyWorldQuery, WorldQuery},
     log::{error, trace},
     prelude::{
-        AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle, Local, Query, Res,
-        Resource,
+        AssetId, AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Handle, Local,
+        Query, Res, Resource,
     },
     ui::{UiRect, Val},
     utils::HashMap,
@@ -248,7 +248,7 @@ pub struct SelectedEntities(SmallVec<[(Selector, SmallVec<[Entity; 8]>); 8]>);
 
 /// Maps sheets for each [`StyleSheetAsset`].
 #[derive(Debug, Clone, Default, Deref, DerefMut, Resource)]
-pub struct StyleSheetState(HashMap<Handle<StyleSheetAsset>, SelectedEntities>);
+pub struct StyleSheetState(HashMap<AssetId<StyleSheetAsset>, SelectedEntities>);
 
 /// Determines how a property should interact and modify the [ecs world](`bevy::prelude::World`).
 ///
@@ -317,8 +317,8 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         asset_server: Res<AssetServer>,
         mut commands: Commands,
     ) {
-        for (handle, selected) in apply_sheets.iter() {
-            if let Some(rules) = assets.get(handle) {
+        for (asset_id, selected) in apply_sheets.iter() {
+            if let Some(rules) = assets.get(*asset_id) {
                 for (selector, entities) in selected.iter() {
                     if let CacheState::Ok(cached) = local.get_or_parse(rules, selector) {
                         trace!(

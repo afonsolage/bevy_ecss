@@ -82,8 +82,9 @@ pub(crate) fn prepare_state(
     let mut state = StyleSheetState::default();
 
     for (entity, children, sheet_handle) in &params.nodes {
-        if let Some(sheet) = params.assets.get(sheet_handle.handle().id()) {
-            let map = state.entry(sheet_handle.handle().clone()).or_default();
+        let id = sheet_handle.handle().id();
+        if let Some(sheet) = params.assets.get(id) {
+            let map = state.entry(id).or_default();
 
             debug!("Applying style {}", sheet.path());
 
