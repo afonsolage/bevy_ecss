@@ -115,7 +115,10 @@ impl Plugin for EcssPlugin {
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
             .add_systems(PreUpdate, system::prepare.in_set(EcssSet::Prepare))
-            .add_systems(PreUpdate, system::watch_tracked_entities)
+            .add_systems(
+                PreUpdate,
+                system::watch_tracked_entities.in_set(EcssSet::ChangeDetection),
+            )
             .add_systems(PostUpdate, system::clear_state.in_set(EcssSet::Cleanup));
 
         let prepared_state = PrepareParams::new(&mut app.world);

@@ -254,7 +254,7 @@ pub struct SelectedEntities(SmallVec<[(Selector, SmallVec<[Entity; 8]>); 8]>);
 pub struct StyleSheetState(HashMap<AssetId<StyleSheetAsset>, (TrackedEntities, SelectedEntities)>);
 
 impl StyleSheetState {
-    pub(crate) fn has_selected_entities(&self) -> bool {
+    pub(crate) fn has_any_selected_entities(&self) -> bool {
         self.values().any(|(_, v)| !v.is_empty())
     }
 

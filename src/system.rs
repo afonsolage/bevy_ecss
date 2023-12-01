@@ -5,8 +5,8 @@ use bevy::{
     },
     log::{debug, error, trace},
     prelude::{
-        AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity, EventReader,
-        Mut, Name, Query, Res, ResMut, Resource, With, World,
+        AssetEvent, AssetId, Assets, Changed, Children, Component, Deref, DerefMut, Entity,
+        EventReader, Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
     ui::{Interaction, Node},
     utils::HashMap,
@@ -70,7 +70,7 @@ pub(crate) fn prepare(world: &mut World) {
             let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
 
-            if state.has_selected_entities() {
+            if state.has_any_selected_entities() {
                 let mut state_res = world
                     .get_resource_mut::<StyleSheetState>()
                     .expect("Should be added by plugin");
@@ -321,49 +321,67 @@ pub(crate) fn hot_reload_style_sheets(
 
 /// Clear temporary state
 pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
-    if !sheet_rule.has_selected_entities() {
+    if sheet_rule.has_any_selected_entities() {
         debug!("Finished applying style sheet.");
         sheet_rule.clear_selected_entities();
     }
 }
 
 pub(crate) fn watch_tracked_entities(world: &mut World) {
-    world.resource_scope(|world, state: Mut<StyleSheetState>| {
+    let Some(state) = world.get_resource::<StyleSheetState>() else {
+        return;
+    };
+
+    let changed_assets = check_for_changed_assets(state, world);
+
+    if !changed_assets.is_empty() {
         let mut query_state: SystemState<Query<&mut StyleSheet>> = SystemState::new(world);
-
-        for (asset_id, (tracked_entities, _)) in state.iter() {
-            for (element, entities) in tracked_entities.iter() {
-                if entities.is_empty() {
-                    continue;
-                }
-
-                let changed = match element {
-                    SelectorElement::Name(_) => any_changed::<Name>(world, entities),
-                    SelectorElement::Component(c) => any_component_changed(world, entities, c),
-                    SelectorElement::Class(_) => any_changed::<Class>(world, entities),
-                    SelectorElement::PseudoClass(pseudo_class) => {
-                        any_pseudo_class_changed(world, entities, *pseudo_class)
-                    }
-                    _ => unreachable!(),
-                };
-
-                if changed {
-                    println!("Changed! {:?}", element);
-                    let mut query = query_state.get_mut(world);
-                    for mut stylesheet in query.iter_mut() {
-                        if stylesheet.handle().id() == *asset_id {
-                            stylesheet.refresh();
-                        }
-                    }
-                    break;
+        for asset_id in changed_assets {
+            let mut query = query_state.get_mut(world);
+            for mut stylesheet in query.iter_mut() {
+                if stylesheet.handle().id() == asset_id {
+                    // this MF
+                    stylesheet.refresh();
                 }
             }
         }
-    });
+    }
 }
 
-fn any_changed<T: Component>(world: &mut World, entities: &SmallVec<[Entity; 8]>) -> bool {
-    let this_run = world.change_tick();
+fn check_for_changed_assets(
+    state: &StyleSheetState,
+    world: &World,
+) -> Vec<AssetId<StyleSheetAsset>> {
+    let mut changed_assets = vec![];
+    for (asset_id, (tracked_entities, _)) in state.iter() {
+        for (element, entities) in tracked_entities.iter() {
+            if entities.is_empty() {
+                continue;
+            }
+
+            let changed = match element {
+                SelectorElement::Name(_) => any_changed::<Name>(world, entities),
+                SelectorElement::Component(c) => any_component_changed(world, entities, c),
+                SelectorElement::Class(_) => any_changed::<Class>(world, entities),
+                SelectorElement::PseudoClass(pseudo_class) => {
+                    any_pseudo_class_changed(world, entities, *pseudo_class)
+                }
+                _ => unreachable!(),
+            };
+
+            if changed {
+                println!("Changed! {:?}", element);
+                changed_assets.push(*asset_id);
+                break;
+            }
+        }
+    }
+
+    changed_assets
+}
+
+fn any_changed<T: Component>(world: &World, entities: &SmallVec<[Entity; 8]>) -> bool {
+    let this_run = world.read_change_tick();
     let last_run = world.last_change_tick();
     for e in entities {
         if let Some(ticks) = world.entity(*e).get_change_ticks::<T>() {
@@ -376,11 +394,11 @@ fn any_changed<T: Component>(world: &mut World, entities: &SmallVec<[Entity; 8]>
 }
 
 fn any_component_changed(
-    world: &mut World,
+    world: &World,
     entities: &SmallVec<[Entity; 8]>,
     component_name: &str,
 ) -> bool {
-    let this_run = world.change_tick();
+    let this_run = world.read_change_tick();
     let last_run = world.last_change_tick();
 
     let Some(registry) = world.get_resource::<ComponentFilterRegistry>() else {
@@ -409,7 +427,7 @@ fn any_component_changed(
 }
 
 fn any_pseudo_class_changed(
-    world: &mut World,
+    world: &World,
     entities: &SmallVec<[Entity; 8]>,
     pseudo_class: PseudoClassElement,
 ) -> bool {

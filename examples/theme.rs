@@ -23,8 +23,8 @@ fn main() {
     .add_systems(Update, (change_theme, test_change_text))
     .register_component_selector::<Title>("title");
 
-    // #[cfg(not(target_arch = "wasm32"))]
-    // app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
+    #[cfg(not(target_arch = "wasm32"))]
+    app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
 
     app.run();
 }
