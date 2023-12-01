@@ -22,7 +22,7 @@ use crate::{
 
 pub(crate) trait ComponentFilter {
     fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]>;
-    fn get_component_changed_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks>;
+    fn get_change_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks>;
 }
 
 impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity, With<T>>> {
@@ -30,7 +30,7 @@ impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity,
         self.get(world).iter().collect()
     }
 
-    fn get_component_changed_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks> {
+    fn get_change_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks> {
         world.entity(entity).get_change_ticks::<T>()
     }
 }
@@ -348,6 +348,7 @@ pub(crate) fn watch_tracked_entities(world: &mut World) {
                 };
 
                 if changed {
+                    println!("Changed! {:?}", element);
                     let mut query = query_state.get_mut(world);
                     for mut stylesheet in query.iter_mut() {
                         if stylesheet.handle().id() == *asset_id {
@@ -361,11 +362,12 @@ pub(crate) fn watch_tracked_entities(world: &mut World) {
     });
 }
 
-fn any_changed<T: Component>(world: &World, entities: &SmallVec<[Entity; 8]>) -> bool {
-    let tick = world.last_change_tick();
+fn any_changed<T: Component>(world: &mut World, entities: &SmallVec<[Entity; 8]>) -> bool {
+    let this_run = world.change_tick();
+    let last_run = world.last_change_tick();
     for e in entities {
-        if let Some(changed_tick) = world.entity(*e).get_change_ticks::<T>() {
-            if changed_tick.is_changed(changed_tick.last_changed_tick(), tick) {
+        if let Some(ticks) = world.entity(*e).get_change_ticks::<T>() {
+            if ticks.is_changed(last_run, this_run) {
                 return true;
             }
         }
@@ -374,10 +376,13 @@ fn any_changed<T: Component>(world: &World, entities: &SmallVec<[Entity; 8]>) ->
 }
 
 fn any_component_changed(
-    world: &World,
+    world: &mut World,
     entities: &SmallVec<[Entity; 8]>,
     component_name: &str,
 ) -> bool {
+    let this_run = world.change_tick();
+    let last_run = world.last_change_tick();
+
     let Some(registry) = world.get_resource::<ComponentFilterRegistry>() else {
         return false;
     };
@@ -385,20 +390,26 @@ fn any_component_changed(
         return false;
     };
 
-    let tick = world.last_change_tick();
-
+    let mut changed = false;
     for e in entities {
-        if let Some(changed_tick) = boxed_state.get_component_changed_ticks(world, *e) {
-            if changed_tick.is_changed(changed_tick.last_changed_tick(), tick) {
-                return true;
+        if let Some(ticks) = boxed_state.get_change_ticks(world, *e) {
+            if ticks.is_changed(last_run, this_run) {
+                let Some(name) = world.entity(*e).get::<Name>() else {
+                    println!("Unknown changed... ({})", component_name);
+                    changed = true;
+                    continue;
+                };
+                println!("Changed: {:?} ({})", name, component_name);
+                // return true;
+                changed = true;
             }
         }
     }
-    false
+    changed
 }
 
 fn any_pseudo_class_changed(
-    world: &World,
+    world: &mut World,
     entities: &SmallVec<[Entity; 8]>,
     pseudo_class: PseudoClassElement,
 ) -> bool {

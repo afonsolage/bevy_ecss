@@ -229,10 +229,7 @@ impl RegisterComponentSelector for bevy::prelude::App {
         let boxed_state = Box::new(system_state);
 
         self.world
-            .get_resource_or_insert_with::<ComponentFilterRegistry>(|| {
-                ComponentFilterRegistry(Default::default())
-            })
-            .0
+            .get_resource_or_insert_with::<ComponentFilterRegistry>(bevy::utils::default)
             .insert(name, boxed_state);
 
         self

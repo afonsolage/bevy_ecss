@@ -20,11 +20,11 @@ fn main() {
     }))
     .add_plugins(EcssPlugin::with_hot_reload())
     .add_systems(Startup, setup)
-    .add_systems(Update, change_theme)
+    .add_systems(Update, (change_theme, test_change_text))
     .register_component_selector::<Title>("title");
 
-    #[cfg(not(target_arch = "wasm32"))]
-    app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
+    // #[cfg(not(target_arch = "wasm32"))]
+    // app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
 
     app.run();
 }
@@ -39,15 +39,26 @@ struct Themes {
 fn change_theme(
     themes: Res<Themes>,
     mut styles_query: Query<&mut StyleSheet>,
+    items_query: Query<(Entity, &Class), With<Node>>,
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
+    mut commands: Commands,
 ) {
     for interaction in &interaction_query {
         if let Interaction::Pressed = *interaction {
             if let Ok(mut sheet) = styles_query.get_mut(themes.root) {
                 if sheet.handle() == &themes.dark {
-                    sheet.set(themes.light.clone());
+                    // sheet.set(themes.light.clone());
+                    for (e, class) in items_query.iter() {
+                        if class.eq("big-text") {
+                            commands.entity(e).insert(Class::new("big-text-red"));
+                            println!("Updated to red!");
+                        } else if class.eq("big-text-red") {
+                            commands.entity(e).insert(Class::new("big-text"));
+                            println!("Updated to non-red!");
+                        }
+                    }
                 } else {
-                    sheet.set(themes.dark.clone());
+                    // sheet.set(themes.dark.clone());
                 }
             }
         }
@@ -397,4 +408,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .id();
 
     commands.insert_resource(Themes { root, dark, light })
+}
+
+fn test_change_text(q_text: Query<(Entity, Option<&Name>), Changed<Text>>) {
+    for (e, maybe_name) in &q_text {
+        if let Some(name) = maybe_name {
+            println!("text changed: {:?} ({:?})", name, e);
+        } else {
+            println!("text changed: ({:?})", e);
+        }
+    }
 }
