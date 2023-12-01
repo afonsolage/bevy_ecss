@@ -312,7 +312,7 @@ pub(crate) fn hot_reload_style_sheets(
                 .iter_mut()
                 .filter(|sheet| sheet.handle().id() == *id)
                 .for_each(|mut sheet| {
-                    debug!("Refreshing sheet {:?}", sheet);
+                    debug!("Refreshing sheet {:?} due to asset reload", sheet);
                     sheet.refresh();
                 });
         }
@@ -328,6 +328,11 @@ pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
 }
 
 pub(crate) fn watch_tracked_entities(world: &mut World) {
+    if world.is_resource_changed::<StyleSheetState>() {
+        trace!("StyleSheetState resource changed! Skipping watch tracked entities");
+        return;
+    }
+
     let Some(state) = world.get_resource::<StyleSheetState>() else {
         return;
     };
@@ -340,7 +345,7 @@ pub(crate) fn watch_tracked_entities(world: &mut World) {
             let mut query = query_state.get_mut(world);
             for mut stylesheet in query.iter_mut() {
                 if stylesheet.handle().id() == asset_id {
-                    // this MF
+                    debug!("Refreshing sheet {:?} due to changed entities", stylesheet);
                     stylesheet.refresh();
                 }
             }
@@ -370,7 +375,7 @@ fn check_for_changed_assets(
             };
 
             if changed {
-                println!("Changed! {:?}", element);
+                trace!("Changed! {:?}", element);
                 changed_assets.push(*asset_id);
                 break;
             }
@@ -408,22 +413,14 @@ fn any_component_changed(
         return false;
     };
 
-    let mut changed = false;
     for e in entities {
         if let Some(ticks) = boxed_state.get_change_ticks(world, *e) {
             if ticks.is_changed(last_run, this_run) {
-                let Some(name) = world.entity(*e).get::<Name>() else {
-                    println!("Unknown changed... ({})", component_name);
-                    changed = true;
-                    continue;
-                };
-                println!("Changed: {:?} ({})", name, component_name);
-                // return true;
-                changed = true;
+                return true;
             }
         }
     }
-    changed
+    false
 }
 
 fn any_pseudo_class_changed(

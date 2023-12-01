@@ -410,12 +410,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(Themes { root, dark, light })
 }
 
-fn test_change_text(q_text: Query<(Entity, Option<&Name>), Changed<Text>>) {
-    for (e, maybe_name) in &q_text {
-        if let Some(name) = maybe_name {
-            println!("text changed: {:?} ({:?})", name, e);
-        } else {
-            println!("text changed: ({:?})", e);
+fn test_change_text(q_text: Query<(Entity, &Interaction, Option<&Name>), Changed<Interaction>>) {
+    for (e, interaction, maybe_name) in &q_text {
+        if interaction == &Interaction::Hovered {
+            println!(
+                "Hovering ({:?}){:?}",
+                e,
+                maybe_name.unwrap_or(&Name::new(""))
+            );
         }
     }
 }
