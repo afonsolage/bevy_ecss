@@ -39,6 +39,10 @@
     color: red;
 }
 
+text {
+    color: blue;
+}
+
 #mid-blue-border {
     background-color: #0a0a24;
 }

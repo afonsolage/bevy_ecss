@@ -39,26 +39,15 @@ struct Themes {
 fn change_theme(
     themes: Res<Themes>,
     mut styles_query: Query<&mut StyleSheet>,
-    items_query: Query<(Entity, &Class), With<Node>>,
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
-    mut commands: Commands,
 ) {
     for interaction in &interaction_query {
         if let Interaction::Pressed = *interaction {
             if let Ok(mut sheet) = styles_query.get_mut(themes.root) {
                 if sheet.handle() == &themes.dark {
-                    // sheet.set(themes.light.clone());
-                    for (e, class) in items_query.iter() {
-                        if class.eq("big-text") {
-                            commands.entity(e).insert(Class::new("big-text-red"));
-                            println!("Updated to red!");
-                        } else if class.eq("big-text-red") {
-                            commands.entity(e).insert(Class::new("big-text"));
-                            println!("Updated to non-red!");
-                        }
-                    }
+                    sheet.set(themes.light.clone());
                 } else {
-                    // sheet.set(themes.dark.clone());
+                    sheet.set(themes.dark.clone());
                 }
             }
         }

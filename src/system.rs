@@ -446,10 +446,7 @@ fn any_pseudo_class_changed(
     pseudo_class: PseudoClassElement,
 ) -> bool {
     match pseudo_class {
-        PseudoClassElement::Hover => {
-            trace!("Checking for changes on hovered: {:?}", entities.len());
-            any_changed::<Interaction>(world, entities)
-        }
+        PseudoClassElement::Hover => any_changed::<Interaction>(world, entities),
         PseudoClassElement::Unsupported => false,
     }
 }
