@@ -76,6 +76,8 @@ struct EcssHotReload;
 /// System sets  used by `bevy_ecss` systems
 #[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum EcssSet {
+    /// Checks if any entity affected by some style sheet was changed.
+    /// Triggers [`StyleSheet::refresh`] if it does.
     ChangeDetection,
     /// Prepares internal state before running apply systems.
     /// This system runs on [`PreUpdate`] schedule.
@@ -108,7 +110,7 @@ impl Plugin for EcssPlugin {
             .init_asset::<StyleSheetAsset>()
             .configure_sets(
                 PreUpdate,
-                (EcssSet::ChangeDetection, EcssSet::Prepare, EcssSet::Apply).chain(),
+                (EcssSet::Prepare, EcssSet::ChangeDetection, EcssSet::Apply).chain(),
             )
             .configure_sets(PostUpdate, EcssSet::Cleanup)
             .init_resource::<StyleSheetState>()
