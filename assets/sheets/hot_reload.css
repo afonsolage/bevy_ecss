@@ -23,12 +23,17 @@
     color: #623192
 }
 
-#right-list text {
-    font-size: 19;
-    vertical-align: bottom;
+.big-text-red {
+    font-size: 15;
+    width: 100%;
     color: red;
 }
 
+#right-list text {
+    font-size: 19;
+    vertical-align: bottom;
+}
+
 .container .blue-bg {
-    background-color: #ff00FF10;
+    background-color: #0f00FF10;
 } 

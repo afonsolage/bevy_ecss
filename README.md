@@ -17,7 +17,7 @@ Just because Bevy ECS + CSS is a perfect fit!
 
 ### Docs site
 
-Reference guide and more available here:
+Reference guide, examples and more available here:
 [docs](https://afonsolage.github.io/bevy_ecss/)
 
 ## Usage
@@ -45,7 +45,7 @@ That's it, now your UI will indeed look _awesome_!
 |  0.10 |    0.3    |
 |  0.11 |    0.4    |
 |  0.12 |    0.5    |
-
+|  0.12 |    0.6    |
 
 ## Contributing
 

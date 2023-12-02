@@ -76,6 +76,9 @@ struct EcssHotReload;
 /// System sets  used by `bevy_ecss` systems
 #[derive(SystemSet, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum EcssSet {
+    /// Checks if any entity affected by some style sheet was changed.
+    /// Triggers [`StyleSheet::refresh`] if it does.
+    ChangeDetection,
     /// Prepares internal state before running apply systems.
     /// This system runs on [`PreUpdate`] schedule.
     Prepare,
@@ -105,12 +108,19 @@ impl Plugin for EcssPlugin {
         app.register_type::<Class>()
             .register_type::<StyleSheet>()
             .init_asset::<StyleSheetAsset>()
-            .configure_sets(PreUpdate, (EcssSet::Prepare, EcssSet::Apply).chain())
+            .configure_sets(
+                PreUpdate,
+                (EcssSet::Prepare, EcssSet::ChangeDetection, EcssSet::Apply).chain(),
+            )
             .configure_sets(PostUpdate, EcssSet::Cleanup)
             .init_resource::<StyleSheetState>()
             .init_resource::<ComponentFilterRegistry>()
             .init_asset_loader::<StyleSheetLoader>()
             .add_systems(PreUpdate, system::prepare.in_set(EcssSet::Prepare))
+            .add_systems(
+                PreUpdate,
+                system::watch_tracked_entities.in_set(EcssSet::ChangeDetection),
+            )
             .add_systems(PostUpdate, system::clear_state.in_set(EcssSet::Cleanup));
 
         let prepared_state = PrepareParams::new(&mut app.world);
@@ -224,10 +234,7 @@ impl RegisterComponentSelector for bevy::prelude::App {
         let boxed_state = Box::new(system_state);
 
         self.world
-            .get_resource_or_insert_with::<ComponentFilterRegistry>(|| {
-                ComponentFilterRegistry(Default::default())
-            })
-            .0
+            .get_resource_or_insert_with::<ComponentFilterRegistry>(bevy::utils::default)
             .insert(name, boxed_state);
 
         self

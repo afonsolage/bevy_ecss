@@ -1,9 +1,12 @@
 use bevy::{
-    ecs::system::{SystemParam, SystemState},
+    ecs::{
+        component::ComponentTicks,
+        system::{SystemParam, SystemState},
+    },
     log::{debug, error, trace},
     prelude::{
-        AssetEvent, Assets, Changed, Children, Component, Deref, DerefMut, Entity, EventReader,
-        Mut, Name, Query, Res, ResMut, Resource, With, World,
+        AssetEvent, AssetId, Assets, Changed, Children, Component, Deref, DerefMut, Entity,
+        EventReader, Mut, Name, Query, Res, ResMut, Resource, With, World,
     },
     ui::{Interaction, Node},
     utils::HashMap,
@@ -12,26 +15,38 @@ use smallvec::SmallVec;
 
 use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
-    property::StyleSheetState,
+    property::{StyleSheetState, TrackedEntities},
     selector::{PseudoClassElement, Selector, SelectorElement},
     StyleSheetAsset,
 };
 
+/// Utility trait which helps to deal with dynamic components
+/// Each trait is implemented for a [`SystemState<T>`] with a single `[Component]`
 pub(crate) trait ComponentFilter {
+    /// Query the world and returns only the which has the component.
     fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]>;
+
+    /// Return the change ticks of the component on the given entity.
+    fn get_change_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks>;
 }
 
 impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity, With<T>>> {
     fn filter(&mut self, world: &World) -> SmallVec<[Entity; 8]> {
         self.get(world).iter().collect()
     }
+
+    fn get_change_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks> {
+        world.entity(entity).get_change_ticks::<T>()
+    }
 }
 
-#[derive(Default, Resource)]
+/// Holds the registered [`ComponentFilter`] using the component name as key.
+#[derive(Default, Resource, Deref, DerefMut)]
 pub(crate) struct ComponentFilterRegistry(
     pub HashMap<&'static str, Box<dyn ComponentFilter + Send + Sync>>,
 );
 
+/// An utility [`SystemParam`] query which is used in [`prepare`] system.
 #[derive(SystemParam)]
 pub(crate) struct CssQueryParam<'w, 's> {
     assets: Res<'w, Assets<StyleSheetAsset>>,
@@ -46,6 +61,7 @@ pub(crate) struct CssQueryParam<'w, 's> {
     children: Query<'w, 's, &'static Children, With<Node>>,
 }
 
+/// Holds an previous prepared [`CssQueryParam`];
 #[derive(Deref, DerefMut, Resource)]
 pub(crate) struct PrepareParams(SystemState<CssQueryParam<'static, 'static>>);
 
@@ -62,7 +78,7 @@ pub(crate) fn prepare(world: &mut World) {
             let css_query = params.get(world);
             let state = prepare_state(world, css_query, &mut registry);
 
-            if !state.is_empty() {
+            if state.has_any_selected_entities() {
                 let mut state_res = world
                     .get_resource_mut::<StyleSheetState>()
                     .expect("Should be added by plugin");
@@ -76,20 +92,27 @@ pub(crate) fn prepare(world: &mut World) {
 /// Prepare state to be used by [`Property`](crate::Property) systems
 pub(crate) fn prepare_state(
     world: &World,
-    params: CssQueryParam,
+    css_query: CssQueryParam,
     registry: &mut ComponentFilterRegistry,
 ) -> StyleSheetState {
     let mut state = StyleSheetState::default();
 
-    for (entity, children, sheet_handle) in &params.nodes {
-        if let Some(sheet) = params.assets.get(sheet_handle.handle().id()) {
-            let map = state.entry(sheet_handle.handle().clone()).or_default();
-
+    for (root, maybe_children, sheet_handle) in &css_query.nodes {
+        let id = sheet_handle.handle().id();
+        if let Some(sheet) = css_query.assets.get(id) {
+            let (tracked_entities, selected_entities) = state.entry(id).or_default();
             debug!("Applying style {}", sheet.path());
 
             for rule in sheet.iter() {
-                let entities =
-                    select_entities(entity, children, &rule.selector, world, &params, registry);
+                let entities = select_entities(
+                    root,
+                    maybe_children,
+                    &rule.selector,
+                    world,
+                    &css_query,
+                    registry,
+                    tracked_entities,
+                );
 
                 trace!(
                     "Applying rule ({}) on {} entities",
@@ -97,10 +120,10 @@ pub(crate) fn prepare_state(
                     entities.len()
                 );
 
-                map.push((rule.selector.clone(), entities));
+                selected_entities.push((rule.selector.clone(), entities));
             }
 
-            map.sort_by(|(a, _), (b, _)| a.weight.cmp(&b.weight));
+            selected_entities.sort_by(|(a, _), (b, _)| a.weight.cmp(&b.weight));
         }
     }
 
@@ -117,6 +140,7 @@ fn select_entities(
     world: &World,
     css_query: &CssQueryParam,
     registry: &mut ComponentFilterRegistry,
+    tracked_entities: &mut TrackedEntities,
 ) -> SmallVec<[Entity; 8]> {
     let mut parent_tree = selector.get_parent_tree();
 
@@ -139,7 +163,14 @@ fn select_entities(
         // This is has little to no impact on performance, since this system doesn't runs often.
         let node = parent_tree.remove(0);
 
-        let entities = select_entities_node(node, world, css_query, registry, entity_tree.clone());
+        let entities = select_entities_node(
+            node,
+            world,
+            css_query,
+            registry,
+            entity_tree.clone(),
+            tracked_entities,
+        );
 
         if parent_tree.is_empty() {
             break entities;
@@ -153,6 +184,12 @@ fn select_entities(
     }
 }
 
+#[derive(Debug, Default, Clone, Deref, DerefMut)]
+struct FilteredEntities(SmallVec<[Entity; 8]>);
+
+#[derive(Debug, Default, Clone, Deref, DerefMut)]
+struct MatchedEntities(SmallVec<[Entity; 8]>);
+
 /// Filter entities matching the given selectors.
 /// This function is called once per node on tree returned by [`get_parent_tree`](Selector::get_parent_tree)
 fn select_entities_node(
@@ -161,9 +198,10 @@ fn select_entities_node(
     css_query: &CssQueryParam,
     registry: &mut ComponentFilterRegistry,
     entities: SmallVec<[Entity; 8]>,
+    tracked_entities: &mut TrackedEntities,
 ) -> SmallVec<[Entity; 8]> {
     node.into_iter().fold(entities, |entities, element| {
-        match element {
+        let (filtered, matched) = match element {
             SelectorElement::Name(name) => {
                 get_entities_with(name.as_str(), &css_query.names, entities)
             }
@@ -174,24 +212,36 @@ fn select_entities_node(
                 get_entities_with_component(component.as_str(), world, registry, entities)
             }
             SelectorElement::PseudoClass(pseudo_class) => {
-                get_entities_with_pseudo_class(world, *pseudo_class, entities)
+                get_entities_with_pseudo_class(world, *pseudo_class, entities.clone())
             }
             // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
             SelectorElement::Child => unreachable!(),
+        };
+
+        if !matched.is_empty() {
+            trace!("Tracking element {:?}: {}", element, matched.len());
+
+            tracked_entities
+                .entry(element.clone())
+                .or_default()
+                .extend(matched.0);
         }
+
+        filtered.0
     })
 }
 
 /// Utility function to filter any entities by using a component with implements [`MatchSelectorElement`]
+/// Returns new filtered list of entities and a list of entities matched by the query.
 fn get_entities_with<T>(
     name: &str,
     query: &Query<(Entity, &'static T)>,
     entities: SmallVec<[Entity; 8]>,
-) -> SmallVec<[Entity; 8]>
+) -> (FilteredEntities, MatchedEntities)
 where
     T: Component + MatchSelectorElement,
 {
-    query
+    let entities = query
         .iter()
         .filter_map(|(e, rhs)| {
             if entities.contains(&e) && rhs.matches(name) {
@@ -200,37 +250,46 @@ where
                 None
             }
         })
-        .collect()
+        .collect::<SmallVec<_>>();
+
+    (
+        FilteredEntities(entities.clone()),
+        MatchedEntities(entities),
+    )
 }
 
 /// Utility function to filter any entities matching a [`PseudoClassElement`]
+/// Returns new filtered list of entities and a list of entities matched by the query.
 fn get_entities_with_pseudo_class(
     world: &World,
     pseudo_class: PseudoClassElement,
     entities: SmallVec<[Entity; 8]>,
-) -> SmallVec<[Entity; 8]> {
+) -> (FilteredEntities, MatchedEntities) {
     match pseudo_class {
         PseudoClassElement::Hover => get_entities_with_pseudo_class_hover(world, entities),
-        PseudoClassElement::Unsupported => entities,
+        PseudoClassElement::Unsupported => (FilteredEntities(entities), Default::default()),
     }
 }
 
 /// Utility function to filter any entities matching a [`PseudoClassElement::Hover`] variant
-///
 /// This function looks for [`Interaction`] component with [`Interaction::Hovered`] variant.
+/// Returns a list with entities which are hovered and a list of entities which where matched.
 fn get_entities_with_pseudo_class_hover(
     world: &World,
     entities: SmallVec<[Entity; 8]>,
-) -> SmallVec<[Entity; 8]> {
-    entities
-        .into_iter()
-        .filter(|e| {
+) -> (FilteredEntities, MatchedEntities) {
+    let filtered = entities
+        .iter()
+        .copied()
+        .filter(|&e| {
             world
-                .entity(*e)
+                .entity(e)
                 .get::<Interaction>()
                 .is_some_and(|interaction| matches!(interaction, Interaction::Hovered))
         })
-        .collect()
+        .collect::<SmallVec<_>>();
+
+    (FilteredEntities(filtered), MatchedEntities(entities))
 }
 
 /// Filters entities which have the components specified on selector, like "a" or "button".
@@ -241,19 +300,25 @@ fn get_entities_with_component(
     world: &World,
     components: &mut ComponentFilterRegistry,
     entities: SmallVec<[Entity; 8]>,
-) -> SmallVec<[Entity; 8]> {
+) -> (FilteredEntities, MatchedEntities) {
     if let Some(query) = components.0.get_mut(name) {
-        query
+        let filtered = query
             .filter(world)
             .into_iter()
             .filter(|e| entities.contains(e))
-            .collect()
+            .collect::<SmallVec<_>>();
+
+        (
+            FilteredEntities(filtered.clone()),
+            MatchedEntities(filtered),
+        )
     } else {
         error!("Unregistered component selector {}", name);
-        SmallVec::new()
+        Default::default()
     }
 }
 
+/// Traverse the children hierarchy three and returns all entities.
 fn get_children_recursively(
     children: &Children,
     q_childs: &Query<&Children, With<Node>>,
@@ -281,17 +346,135 @@ pub(crate) fn hot_reload_style_sheets(
                 .iter_mut()
                 .filter(|sheet| sheet.handle().id() == *id)
                 .for_each(|mut sheet| {
-                    debug!("Refreshing sheet {:?}", sheet);
+                    debug!("Refreshing sheet {:?} due to asset reload", sheet);
                     sheet.refresh();
                 });
         }
     }
 }
 
-/// Clear temporary state
+/// Clear selected entities, but keep tracked ones.
 pub(crate) fn clear_state(mut sheet_rule: ResMut<StyleSheetState>) {
-    if sheet_rule.len() > 0 {
+    if sheet_rule.has_any_selected_entities() {
         debug!("Finished applying style sheet.");
-        sheet_rule.clear();
+        sheet_rule.clear_selected_entities();
+    }
+}
+
+/// Watch for changes on entities which is children of a Entith with [`StyleSheet`].
+/// This system uses a cached list of entities which was matched by some [`SelectorElement`]
+/// when applying some [`StyleSheetAsset`].
+///
+/// Whenever a single child has a single component changed, the entire style sheet is applied again.
+pub(crate) fn watch_tracked_entities(world: &mut World) {
+    if world.is_resource_changed::<StyleSheetState>() {
+        trace!("StyleSheetState resource changed! Skipping watch tracked entities");
+        return;
+    }
+
+    let Some(state) = world.get_resource::<StyleSheetState>() else {
+        return;
+    };
+
+    let changed_assets = check_for_changed_assets(state, world);
+
+    // This is done separated to isolate where we need &mut World.
+    if !changed_assets.is_empty() {
+        let mut query_state: SystemState<Query<&mut StyleSheet>> = SystemState::new(world);
+        for asset_id in changed_assets {
+            let mut query = query_state.get_mut(world);
+            for mut stylesheet in query.iter_mut() {
+                if stylesheet.handle().id() == asset_id {
+                    debug!("Refreshing sheet {:?} due to changed entities", stylesheet);
+                    stylesheet.refresh();
+                }
+            }
+        }
+    }
+}
+
+/// Check if any entity has a component which is styled by any asset, was changed.
+/// If it does, return the [`AssetId<T>`] so it can be refreshed.
+fn check_for_changed_assets(
+    state: &StyleSheetState,
+    world: &World,
+) -> Vec<AssetId<StyleSheetAsset>> {
+    let mut changed_assets = vec![];
+    for (&asset_id, (tracked_entities, _)) in state.iter() {
+        for (element, entities) in tracked_entities.iter() {
+            if entities.is_empty() {
+                continue;
+            }
+
+            let changed = match element {
+                SelectorElement::Name(_) => any_component::<Name>(world, entities),
+                SelectorElement::Component(c) => any_component_changed_by_name(world, entities, c),
+                SelectorElement::Class(_) => any_component::<Class>(world, entities),
+                SelectorElement::PseudoClass(pseudo_class) => {
+                    any_component_changed_by_pseudo_class(world, entities, *pseudo_class)
+                }
+                _ => unreachable!(),
+            };
+
+            if changed {
+                trace!("Changed! {:?}", element);
+                changed_assets.push(asset_id);
+                break;
+            }
+        }
+    }
+
+    changed_assets
+}
+
+/// Checks if any entity on the given list has it's component changed.
+fn any_component<T: Component>(world: &World, entities: &SmallVec<[Entity; 8]>) -> bool {
+    let this_run = world.read_change_tick();
+    let last_run = world.last_change_tick();
+    for e in entities {
+        if let Some(ticks) = world.entity(*e).get_change_ticks::<T>() {
+            if ticks.is_changed(last_run, this_run) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Checks if any entity on the given list has it's component changed.
+fn any_component_changed_by_name(
+    world: &World,
+    entities: &SmallVec<[Entity; 8]>,
+    component_name: &str,
+) -> bool {
+    let this_run = world.read_change_tick();
+    let last_run = world.last_change_tick();
+
+    let Some(registry) = world.get_resource::<ComponentFilterRegistry>() else {
+        return false;
+    };
+    let Some(boxed_state) = registry.get(component_name) else {
+        return false;
+    };
+
+    for e in entities {
+        if let Some(ticks) = boxed_state.get_change_ticks(world, *e) {
+            if ticks.is_changed(last_run, this_run) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Checks if any entity on the given list has it's component changed.
+fn any_component_changed_by_pseudo_class(
+    world: &World,
+    entities: &SmallVec<[Entity; 8]>,
+    pseudo_class: PseudoClassElement,
+) -> bool {
+    match pseudo_class {
+        PseudoClassElement::Hover => any_component::<Interaction>(world, entities),
+        PseudoClassElement::Unsupported => false,
     }
 }

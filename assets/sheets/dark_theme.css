@@ -33,6 +33,16 @@
     color: #7c7c7c
 }
 
+.big-text-red {
+    font-size: 15;
+    width: 100%;
+    color: red;
+}
+
+text {
+    color: blue;
+}
+
 #mid-blue-border {
     background-color: #0a0a24;
 }

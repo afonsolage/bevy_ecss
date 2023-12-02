@@ -144,7 +144,9 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
                 Ok((name, property)) => {
                     rule.properties.insert(name, property);
                 }
-                Err((err, a)) => println!("Failed: {:?} ({})", err, a),
+                Err((err, a)) => {
+                    error!("Failed to parse property : {:?} ({})", err, a)
+                }
             }
         }
 
