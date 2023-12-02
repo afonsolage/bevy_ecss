@@ -34,6 +34,7 @@ jobs:
           wasm-bindgen --out-dir ./book/src/ --target web ./target/wasm32-unknown-unknown/release/examples/simple_ui.wasm
           wasm-bindgen --out-dir ./book/src/ --target web ./target/wasm32-unknown-unknown/release/examples/theme.wasm
           wasm-bindgen --out-dir ./book/src/ --target web ./target/wasm32-unknown-unknown/release/examples/alpha.wasm
+          wasm-bindgen --out-dir ./book/src/ --target web ./target/wasm32-unknown-unknown/release/examples/interactive.wasm
       - name: Copy
         run: cp -R assets book/src
       - name: Setup mdBook
