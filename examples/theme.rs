@@ -20,7 +20,7 @@ fn main() {
     }))
     .add_plugins(EcssPlugin::with_hot_reload())
     .add_systems(Startup, setup)
-    .add_systems(Update, (change_theme, test_change_text))
+    .add_systems(Update, change_theme)
     .register_component_selector::<Title>("title");
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -397,16 +397,4 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .id();
 
     commands.insert_resource(Themes { root, dark, light })
-}
-
-fn test_change_text(q_text: Query<(Entity, &Interaction, Option<&Name>), Changed<Interaction>>) {
-    for (e, interaction, maybe_name) in &q_text {
-        if interaction == &Interaction::Hovered {
-            println!(
-                "Hovering ({:?}){:?}",
-                e,
-                maybe_name.unwrap_or(&Name::new(""))
-            );
-        }
-    }
 }
