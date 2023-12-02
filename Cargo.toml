@@ -54,3 +54,7 @@ path = "examples/theme.rs"
 [[example]]
 name = "alpha"
 path = "examples/alpha.rs"
+
+[[example]]
+name = "interactive"
+path = "examples/interactive.rs"
