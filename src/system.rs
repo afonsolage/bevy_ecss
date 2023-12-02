@@ -187,27 +187,44 @@ fn select_entities_node(
     tracked_entities: &mut TrackedEntities,
 ) -> SmallVec<[Entity; 8]> {
     node.into_iter().fold(entities, |entities, element| {
-        let matched_entities = match element {
-            SelectorElement::Name(name) => {
-                get_entities_with(name.as_str(), &css_query.names, entities)
-            }
-            SelectorElement::Class(class) => {
-                get_entities_with(class.as_str(), &css_query.classes, entities)
-            }
-            SelectorElement::Component(component) => {
-                get_entities_with_component(component.as_str(), world, registry, entities)
-            }
-            SelectorElement::PseudoClass(pseudo_class) => {
-                get_entities_with_pseudo_class(world, *pseudo_class, entities)
-            }
+        let (matched_entities, new_tracked_entities) = match element {
+            SelectorElement::Name(name) => (
+                get_entities_with(name.as_str(), &css_query.names, entities),
+                None,
+            ),
+            SelectorElement::Class(class) => (
+                get_entities_with(class.as_str(), &css_query.classes, entities),
+                None,
+            ),
+            SelectorElement::Component(component) => (
+                get_entities_with_component(component.as_str(), world, registry, entities),
+                None,
+            ),
+            SelectorElement::PseudoClass(pseudo_class) => (
+                get_entities_with_pseudo_class(world, *pseudo_class, entities.clone()),
+                Some(entities),
+            ),
             // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
             SelectorElement::Child => unreachable!(),
         };
 
-        tracked_entities
-            .entry(element.clone())
-            .or_default()
-            .extend(matched_entities.iter().copied());
+        if new_tracked_entities.is_some() || !matched_entities.is_empty() {
+            let add_track_entities = match new_tracked_entities {
+                Some(e) => e,
+                None => matched_entities.clone(),
+            };
+
+            trace!(
+                "Tracking element {:?}: {}",
+                element,
+                add_track_entities.len()
+            );
+
+            tracked_entities
+                .entry(element.clone())
+                .or_default()
+                .extend(add_track_entities);
+        }
 
         matched_entities
     })
@@ -429,7 +446,10 @@ fn any_pseudo_class_changed(
     pseudo_class: PseudoClassElement,
 ) -> bool {
     match pseudo_class {
-        PseudoClassElement::Hover => any_changed::<Interaction>(world, entities),
+        PseudoClassElement::Hover => {
+            trace!("Checking for changes on hovered: {:?}", entities.len());
+            any_changed::<Interaction>(world, entities)
+        }
         PseudoClassElement::Unsupported => false,
     }
 }
