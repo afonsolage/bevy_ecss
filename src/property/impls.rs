@@ -105,13 +105,13 @@ mod style {
     impl_style_single_value!("width", WidthProperty, Val, val, width);
     impl_style_single_value!("height", HeightProperty, Val, val, height);
 
-    impl_style_single_value!("min-width", MinWidthProperty, Val, val, width);
-    impl_style_single_value!("min-height", MinHeightProperty, Val, val, height);
+    impl_style_single_value!("min-width", MinWidthProperty, Val, val, min_width);
+    impl_style_single_value!("min-height", MinHeightProperty, Val, val, min_height);
 
-    impl_style_single_value!("max-width", MaxWidthProperty, Val, val, width);
-    impl_style_single_value!("max-height", MaxHeightProperty, Val, val, height);
+    impl_style_single_value!("max-width", MaxWidthProperty, Val, val, max_width);
+    impl_style_single_value!("max-height", MaxHeightProperty, Val, val, max_height);
 
-    impl_style_single_value!("flex-basis", FlexBasisProperty, Val, val, height);
+    impl_style_single_value!("flex-basis", FlexBasisProperty, Val, val, flex_basis);
 
     impl_style_single_value!("flex-grow", FlexGrowProperty, f32, f32, flex_grow);
     impl_style_single_value!("flex-shrink", FlexShrinkProperty, f32, f32, flex_shrink);
