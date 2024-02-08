@@ -44,10 +44,10 @@ fn change_theme(
     for interaction in &interaction_query {
         if let Interaction::Pressed = *interaction {
             if let Ok(mut sheet) = styles_query.get_mut(themes.root) {
-                if sheet.handle() == &themes.dark {
-                    sheet.set(themes.light.clone());
+                if sheet.handles().first() == Some(&themes.dark) {
+                    sheet.set_handles(vec![themes.light.clone()]);
                 } else {
-                    sheet.set(themes.dark.clone());
+                    sheet.set_handles(vec![themes.dark.clone()]);
                 }
             }
         }
