@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added support for applying multiple style sheets to an entity [#45](https://github.com/afonsolage/bevy_ecss/issues/45)
+
+### Changed
+
+- Fixed wrong properties assignments [#42](https://github.com/afonsolage/bevy_ecss/pull/42/)
+
 ## [0.6.0]
 
 ### Added
