@@ -98,32 +98,33 @@ pub(crate) fn prepare_state(
     let mut state = StyleSheetState::default();
 
     for (root, maybe_children, sheet_handle) in &css_query.nodes {
-        let id = sheet_handle.handle().id();
-        if let Some(sheet) = css_query.assets.get(id) {
-            let (tracked_entities, selected_entities) = state.entry(id).or_default();
-            debug!("Applying style {}", sheet.path());
+        for id in sheet_handle.handles().iter().map(|h| h.id()) {
+            if let Some(sheet) = css_query.assets.get(id) {
+                let (tracked_entities, selected_entities) = state.entry(id).or_default();
+                debug!("Applying style {}", sheet.path());
 
-            for rule in sheet.iter() {
-                let entities = select_entities(
-                    root,
-                    maybe_children,
-                    &rule.selector,
-                    world,
-                    &css_query,
-                    registry,
-                    tracked_entities,
-                );
+                for rule in sheet.iter() {
+                    let entities = select_entities(
+                        root,
+                        maybe_children,
+                        &rule.selector,
+                        world,
+                        &css_query,
+                        registry,
+                        tracked_entities,
+                    );
 
-                trace!(
-                    "Applying rule ({}) on {} entities",
-                    rule.selector.to_string(),
-                    entities.len()
-                );
+                    trace!(
+                        "Applying rule ({}) on {} entities",
+                        rule.selector.to_string(),
+                        entities.len()
+                    );
 
-                selected_entities.push((rule.selector.clone(), entities));
+                    selected_entities.push((rule.selector.clone(), entities));
+                }
+
+                selected_entities.sort_by(|(a, _), (b, _)| a.weight.cmp(&b.weight));
             }
-
-            selected_entities.sort_by(|(a, _), (b, _)| a.weight.cmp(&b.weight));
         }
     }
 
@@ -344,7 +345,7 @@ pub(crate) fn hot_reload_style_sheets(
         if let AssetEvent::Modified { id } = evt {
             q_sheets
                 .iter_mut()
-                .filter(|sheet| sheet.handle().id() == *id)
+                .filter(|sheet| sheet.handles().iter().any(|h| h.id() == *id))
                 .for_each(|mut sheet| {
                     debug!("Refreshing sheet {:?} due to asset reload", sheet);
                     sheet.refresh();
@@ -384,7 +385,7 @@ pub(crate) fn watch_tracked_entities(world: &mut World) {
         for asset_id in changed_assets {
             let mut query = query_state.get_mut(world);
             for mut stylesheet in query.iter_mut() {
-                if stylesheet.handle().id() == asset_id {
+                if stylesheet.handles().iter().any(|h| h.id() == asset_id) {
                     debug!("Refreshing sheet {:?} due to changed entities", stylesheet);
                     stylesheet.refresh();
                 }

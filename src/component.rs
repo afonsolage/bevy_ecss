@@ -57,13 +57,20 @@ impl Class {
 ///
 #[derive(Component, Debug, Default, Reflect)]
 pub struct StyleSheet {
-    sheet: Handle<StyleSheetAsset>,
+    sheets: Vec<Handle<StyleSheetAsset>>,
 }
 
 impl StyleSheet {
     /// Creates a new [`StyleSheet`] from the given asset.
     pub fn new(handle: Handle<StyleSheetAsset>) -> Self {
-        Self { sheet: handle }
+        Self {
+            sheets: vec![handle],
+        }
+    }
+
+    /// Creates a new [`StyleSheet`] from the given assets.
+    pub fn from_handles(handles: Vec<Handle<StyleSheetAsset>>) -> Self {
+        Self { sheets: handles }
     }
 
     /// Reapplies the style sheet on entity and all children.
@@ -72,20 +79,43 @@ impl StyleSheet {
     }
 
     /// Internal [`StyleSheetAsset`] handle
+    ///
+    /// This method always assumes the style sheet has exactly one element,
+    /// regardless of the true number of tracked style sheets. This method is
+    /// deprecated, use [`StyleSheet::handles`] instead.
+    #[deprecated(since = "0.6.0", note = "Use `handles` instead")]
     pub fn handle(&self) -> &Handle<StyleSheetAsset> {
-        &self.sheet
+        assert_eq!(self.sheets.len(), 1, "Use `handles` instead");
+        self.sheets.first().unwrap()
+    }
+
+    /// Internal [`StyleSheetAsset`] handle
+    pub fn handles(&self) -> &[Handle<StyleSheetAsset>] {
+        &self.sheets
     }
 
     /// Change the internal [`StyleSheetAsset`] handle.
     /// This will automatically trigger the systems to reapply the style sheet.
+    ///
+    /// This method always assumes the style sheet has exactly one element,
+    /// regardless of the true number of tracked style sheets. This method is
+    /// deprecated, use [`StyleSheet::set_handles`] instead.
+    #[deprecated(since = "0.6.0", note = "Use `set_handles` instead")]
     pub fn set(&mut self, handle: Handle<StyleSheetAsset>) {
-        self.sheet = handle;
+        assert_eq!(self.sheets.len(), 1, "Use `set_handles` instead");
+        self.sheets = vec![handle];
+    }
+
+    /// Change the internal [`StyleSheetAsset`] list of handles.
+    /// This will automatically trigger the systems to reapply the style sheet.
+    pub fn set_handles(&mut self, handles: Vec<Handle<StyleSheetAsset>>) {
+        self.sheets = handles;
     }
 }
 
 impl PartialEq for StyleSheet {
     fn eq(&self, other: &Self) -> bool {
-        self.sheet == other.sheet
+        self.sheets == other.sheets
     }
 }
 
