@@ -45,7 +45,7 @@ impl Class {
     ///
     /// This method returns `true` if the class was modified, `false` otherwise.
     /// You can use this to check if the style sheet needs to be refreshed.
-    pub fn add_class(&mut self, class: &str) -> bool {
+    pub fn add(&mut self, class: &str) -> bool {
         if self.matches(class) {
             return false;
         }
@@ -69,7 +69,7 @@ impl Class {
     ///
     /// This method returns `true` if the class was modified, `false` otherwise.
     /// You can use this to check if the style sheet needs to be refreshed.
-    pub fn remove_class(&mut self, class: &str) -> bool {
+    pub fn remove(&mut self, class: &str) -> bool {
         if !self.matches(class) {
             return false;
         }
@@ -94,7 +94,7 @@ impl Class {
     ///
     /// This method returns `true` if the class was modified, `false` otherwise.
     /// You can use this to check if the style sheet needs to be refreshed.
-    pub fn set_class(&mut self, class: impl Into<Cow<'static, str>>) -> bool {
+    pub fn set(&mut self, class: impl Into<Cow<'static, str>>) -> bool {
         let class = class.into();
 
         if self.0 == class {
@@ -212,22 +212,22 @@ mod tests {
     #[test]
     fn modify_class() {
         let mut class = Class::new("yellow-button");
-        assert!(class.add_class("enabled"));
+        assert!(class.add("enabled"));
         assert_eq!(class.0, "yellow-button enabled");
 
-        assert!(!class.add_class("enabled"));
+        assert!(!class.add("enabled"));
         assert_eq!(class.0, "yellow-button enabled");
 
-        assert!(!class.remove_class("disabled"));
+        assert!(!class.remove("disabled"));
         assert_eq!(class.0, "yellow-button enabled");
 
-        assert!(class.remove_class("enabled"));
+        assert!(class.remove("enabled"));
         assert_eq!(class.0, "yellow-button");
 
-        assert!(class.set_class("blue-button enabled"));
+        assert!(class.set("blue-button enabled"));
         assert_eq!(class.0, "blue-button enabled");
 
-        assert!(!class.set_class("blue-button enabled"));
+        assert!(!class.set("blue-button enabled"));
         assert_eq!(class.0, "blue-button enabled");
     }
 }
