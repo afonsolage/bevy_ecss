@@ -35,6 +35,75 @@ impl Class {
     fn matches(&self, class: &str) -> bool {
         self.0.split_ascii_whitespace().any(|c| c == class)
     }
+
+    /// Appends a new class name to this component. If the class name is already
+    /// present, it will be ignored.
+    ///
+    /// Note that modifying a class will not automatically trigger the style
+    /// system to reapply the style sheet. If you want to reapply the style
+    /// sheet, you must manually use the [`StyleSheet::refresh`] method.
+    ///
+    /// This method returns `true` if the class was modified, `false` otherwise.
+    /// You can use this to check if the style sheet needs to be refreshed.
+    pub fn add(&mut self, class: &str) -> bool {
+        if self.matches(class) {
+            return false;
+        }
+
+        if self.0.is_empty() {
+            self.0.to_mut().push_str(class);
+        } else {
+            self.0.to_mut().push(' ');
+            self.0.to_mut().push_str(class);
+        }
+
+        true
+    }
+
+    /// Removes a class name from this component. If the class name is not
+    /// present, it will be ignored.
+    ///
+    /// Note that modifying a class will not automatically trigger the style
+    /// system to reapply the style sheet. If you want to reapply the style
+    /// sheet, you must manually use the [`StyleSheet::refresh`] method.
+    ///
+    /// This method returns `true` if the class was modified, `false` otherwise.
+    /// You can use this to check if the style sheet needs to be refreshed.
+    pub fn remove(&mut self, class: &str) -> bool {
+        if !self.matches(class) {
+            return false;
+        }
+
+        self.0 = self
+            .0
+            .split_ascii_whitespace()
+            .filter(move |c| c != &class)
+            .collect::<Vec<_>>()
+            .join(" ")
+            .into();
+
+        true
+    }
+
+    /// Replaces all class names with the given one as if a new Class component
+    /// was created.
+    ///
+    /// Note that modifying a class will not automatically trigger the style
+    /// system to reapply the style sheet. If you want to reapply the style
+    /// sheet, you must manually use the [`StyleSheet::refresh`] method.
+    ///
+    /// This method returns `true` if the class was modified, `false` otherwise.
+    /// You can use this to check if the style sheet needs to be refreshed.
+    pub fn set(&mut self, class: impl Into<Cow<'static, str>>) -> bool {
+        let class = class.into();
+
+        if self.0 == class {
+            return false;
+        }
+
+        self.0 = class;
+        true
+    }
 }
 
 /// Applies a [`StyleSheetAsset`] on the entity which has this component.
@@ -133,5 +202,32 @@ impl MatchSelectorElement for Class {
 impl MatchSelectorElement for Name {
     fn matches(&self, element: &str) -> bool {
         self.as_str() == element
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn modify_class() {
+        let mut class = Class::new("yellow-button");
+        assert!(class.add("enabled"));
+        assert_eq!(class.0, "yellow-button enabled");
+
+        assert!(!class.add("enabled"));
+        assert_eq!(class.0, "yellow-button enabled");
+
+        assert!(!class.remove("disabled"));
+        assert_eq!(class.0, "yellow-button enabled");
+
+        assert!(class.remove("enabled"));
+        assert_eq!(class.0, "yellow-button");
+
+        assert!(class.set("blue-button enabled"));
+        assert_eq!(class.0, "blue-button enabled");
+
+        assert!(!class.set("blue-button enabled"));
+        assert_eq!(class.0, "blue-button enabled");
     }
 }

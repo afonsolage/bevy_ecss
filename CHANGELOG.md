@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for applying multiple style sheets to an entity [#45](https://github.com/afonsolage/bevy_ecss/issues/45)
+- Added quality of life methods for modifying class lists on existing class components. [#48](https://github.com/afonsolage/bevy_ecss/pull/48)
 
 ### Changed
 
@@ -24,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fixed CSS precedence order, more broad rules are applied first.
-
 
 ## [0.5.1]
 
