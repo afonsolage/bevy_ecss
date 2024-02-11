@@ -35,6 +35,43 @@ impl Class {
     fn matches(&self, class: &str) -> bool {
         self.0.split_ascii_whitespace().any(|c| c == class)
     }
+
+    /// Appends a new class name to this component. If the class name is already
+    /// present, it will be ignored.
+    pub fn add_class(&mut self, class: &str) {
+        if self.matches(class) {
+            return;
+        }
+
+        if self.0.is_empty() {
+            self.0.to_mut().push_str(class);
+        } else {
+            self.0.to_mut().push(' ');
+            self.0.to_mut().push_str(class);
+        }
+    }
+
+    /// Removes a class name from this component. If the class name is not
+    /// present, it will be ignored.
+    pub fn remove_class(&mut self, class: &str) {
+        if !self.matches(class) {
+            return;
+        }
+
+        self.0 = self
+            .0
+            .split_ascii_whitespace()
+            .filter(move |c| c != &class)
+            .collect::<Vec<_>>()
+            .join(" ")
+            .into();
+    }
+
+    /// Replaces all class names with the given one as if a new Class component
+    /// was created.
+    pub fn set_class(&mut self, class: impl Into<Cow<'static, str>>) {
+        self.0 = class.into();
+    }
 }
 
 /// Applies a [`StyleSheetAsset`] on the entity which has this component.
