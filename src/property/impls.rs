@@ -116,6 +116,9 @@ mod style {
     impl_style_single_value!("flex-grow", FlexGrowProperty, f32, f32, flex_grow);
     impl_style_single_value!("flex-shrink", FlexShrinkProperty, f32, f32, flex_shrink);
 
+    impl_style_single_value!("row-gap", RowGapProperty, Val, val, row_gap);
+    impl_style_single_value!("column-gap", ColumnGapProperty, Val, val, column_gap);
+
     impl_style_single_value!(
         "aspect-ratio",
         AspectRatioProperty,
