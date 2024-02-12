@@ -176,6 +176,8 @@ fn register_properties(app: &mut bevy::prelude::App) {
     app.register_property::<FlexBasisProperty>();
     app.register_property::<FlexGrowProperty>();
     app.register_property::<FlexShrinkProperty>();
+    app.register_property::<RowGapProperty>();
+    app.register_property::<ColumnGapProperty>();
     app.register_property::<AspectRatioProperty>();
 
     app.register_property::<MarginProperty>();
