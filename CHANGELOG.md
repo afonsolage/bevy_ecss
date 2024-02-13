@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fixed wrong properties assignments [#42](https://github.com/afonsolage/bevy_ecss/pull/42/)
+- Fixed bug with style sheets being applied in a non-deterministic order [#51](https://github.com/afonsolage/bevy_ecss/pull/51)
 
 ## [0.6.0]
 

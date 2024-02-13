@@ -251,15 +251,15 @@ pub struct SelectedEntities(SmallVec<[(Selector, SmallVec<[Entity; 8]>); 8]>);
 
 /// Maps sheets for each [`StyleSheetAsset`].
 #[derive(Debug, Clone, Default, Resource, Deref, DerefMut)]
-pub struct StyleSheetState(HashMap<AssetId<StyleSheetAsset>, (TrackedEntities, SelectedEntities)>);
+pub struct StyleSheetState(Vec<(AssetId<StyleSheetAsset>, TrackedEntities, SelectedEntities)>);
 
 impl StyleSheetState {
     pub(crate) fn has_any_selected_entities(&self) -> bool {
-        self.values().any(|(_, v)| !v.is_empty())
+        self.iter().any(|(_, _, v)| !v.is_empty())
     }
 
     pub(crate) fn clear_selected_entities(&mut self) {
-        self.values_mut().for_each(|(_, v)| v.clear());
+        self.iter_mut().for_each(|(_, _, v)| v.clear());
     }
 }
 
@@ -330,7 +330,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         asset_server: Res<AssetServer>,
         mut commands: Commands,
     ) {
-        for (asset_id, (_, selected)) in apply_sheets.iter() {
+        for (asset_id, _, selected) in apply_sheets.iter() {
             if let Some(rules) = assets.get(*asset_id) {
                 for (selector, entities) in selected.iter() {
                     if let CacheState::Ok(cached) = local.get_or_parse(rules, selector) {
