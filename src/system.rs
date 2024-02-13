@@ -15,7 +15,7 @@ use smallvec::SmallVec;
 
 use crate::{
     component::{Class, MatchSelectorElement, StyleSheet},
-    property::{StyleSheetState, TrackedEntities},
+    property::{SelectedEntities, StyleSheetState, TrackedEntities},
     selector::{PseudoClassElement, Selector, SelectorElement},
     StyleSheetAsset,
 };
@@ -100,7 +100,8 @@ pub(crate) fn prepare_state(
     for (root, maybe_children, sheet_handle) in &css_query.nodes {
         for id in sheet_handle.handles().iter().map(|h| h.id()) {
             if let Some(sheet) = css_query.assets.get(id) {
-                let (tracked_entities, selected_entities) = state.entry(id).or_default();
+                let mut tracked_entities = TrackedEntities::default();
+                let mut selected_entities = SelectedEntities::default();
                 debug!("Applying style {}", sheet.path());
 
                 for rule in sheet.iter() {
@@ -111,7 +112,7 @@ pub(crate) fn prepare_state(
                         world,
                         &css_query,
                         registry,
-                        tracked_entities,
+                        &mut tracked_entities,
                     );
 
                     trace!(
@@ -124,6 +125,7 @@ pub(crate) fn prepare_state(
                 }
 
                 selected_entities.sort_by(|(a, _), (b, _)| a.weight.cmp(&b.weight));
+                state.push((id, tracked_entities, selected_entities));
             }
         }
     }
@@ -401,7 +403,7 @@ fn check_for_changed_assets(
     world: &World,
 ) -> Vec<AssetId<StyleSheetAsset>> {
     let mut changed_assets = vec![];
-    for (&asset_id, (tracked_entities, _)) in state.iter() {
+    for (asset_id, tracked_entities, _) in state.iter() {
         for (element, entities) in tracked_entities.iter() {
             if entities.is_empty() {
                 continue;
@@ -419,7 +421,7 @@ fn check_for_changed_assets(
 
             if changed {
                 trace!("Changed! {:?}", element);
-                changed_assets.push(asset_id);
+                changed_assets.push(*asset_id);
                 break;
             }
         }
