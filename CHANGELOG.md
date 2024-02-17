@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for applying multiple style sheets to an entity [#45](https://github.com/afonsolage/bevy_ecss/issues/45)
 - Added quality of life methods for modifying class lists on existing class components. [#48](https://github.com/afonsolage/bevy_ecss/pull/48)
 - Added support for `row-gap` and `column-gap` properties. [#49](https://github.com/afonsolage/bevy_ecss/pull/49)
+- Added support for `Any` (*) selector. [#55](https://github.com/afonsolage/bevy_ecss/pull/55)
 
 ### Changed
 
