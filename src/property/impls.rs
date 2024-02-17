@@ -356,13 +356,13 @@ mod text {
         }
     }
 
-    /// Applies the `text-align` property on [`Text::horizontal`](`TextAlignment`) components.
+    /// Applies the `text-align` property on [`Text::horizontal`](`JustifyText`) components.
     #[derive(Default)]
     pub(crate) struct TextAlignProperty;
 
     impl Property for TextAlignProperty {
         // Using Option since Cache must impl Default, which  doesn't
-        type Cache = Option<TextAlignment>;
+        type Cache = Option<JustifyText>;
         type Components = &'static mut Text;
         type Filters = With<Node>;
 
@@ -373,9 +373,9 @@ mod text {
         fn parse<'a>(values: &PropertyValues) -> Result<Self::Cache, EcssError> {
             if let Some(ident) = values.identifier() {
                 match ident {
-                    "left" => return Ok(Some(TextAlignment::Left)),
-                    "center" => return Ok(Some(TextAlignment::Center)),
-                    "right" => return Ok(Some(TextAlignment::Right)),
+                    "left" => return Ok(Some(JustifyText::Left)),
+                    "center" => return Ok(Some(JustifyText::Center)),
+                    "right" => return Ok(Some(JustifyText::Right)),
                     _ => (),
                 }
             }
@@ -388,7 +388,7 @@ mod text {
             _asset_server: &AssetServer,
             _commands: &mut Commands,
         ) {
-            components.alignment = cache.expect("Should always have a inner value");
+            components.justify = cache.expect("Should always have a inner value");
         }
     }
 

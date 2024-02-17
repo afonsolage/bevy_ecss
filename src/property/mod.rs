@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use bevy::{
-    ecs::query::{QueryItem, ReadOnlyWorldQuery, WorldQuery},
+    ecs::query::{QueryData, QueryFilter, QueryItem},
     log::{error, trace},
     prelude::{
         AssetId, AssetServer, Assets, Color, Commands, Deref, DerefMut, Entity, Local, Query, Res,
@@ -292,9 +292,9 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
     /// The cached value type to be applied by property.
     type Cache: Default + Any + Send + Sync;
     /// Which components should be queried when applying the modification. Check [`WorldQuery`] for more.
-    type Components: WorldQuery;
+    type Components: QueryData;
     /// Filters conditions to be applied when querying entities by this property. Check [`ReadOnlyWorldQuery`] for more.
-    type Filters: ReadOnlyWorldQuery;
+    type Filters: QueryFilter;
 
     /// Indicates which property name should matched for. Must match the same property name as on `css` file.
     ///
