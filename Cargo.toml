@@ -12,8 +12,7 @@ repository = "https://github.com/afonsolage/bevy_ecss"
 
 [dependencies]
 
-#bevy = { version = "0.12", default-features = false, features = [
-bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = false, features = [
+bevy = { version = "0.13", default-features = false, features = [
     "bevy_ui",
     "bevy_asset",
     "bevy_text",
@@ -25,8 +24,7 @@ smallvec = { version = "1.11", features = ["serde", "union", "const_generics"] }
 thiserror = "1.0.50"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-#bevy = { version = "0.12", features = [
-bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
+bevy = { version = "0.13", features = [
     "bevy_ui",
     "bevy_asset",
     "bevy_text",
@@ -35,8 +33,7 @@ bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
 ] }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-#bevy = "0.12"
-bevy = { git = "https://github.com/bevyengine/bevy.git"}
+bevy = "0.13"
 
 [[example]]
 name = "simple_ui"
