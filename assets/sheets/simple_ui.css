@@ -20,9 +20,13 @@
 .big-text {
     font-size: 15;
     width: 100%;
-    color: violet
+    color: violet;
 }
 
 .container .blue-bg {
     background-color: #ff00FF10;
-} 
+}
+
+* {
+    color: cyan;
+}
