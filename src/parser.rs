@@ -108,6 +108,7 @@ impl<'i> QualifiedRuleParser<'i> for StyleSheetParser {
                 }
                 WhiteSpace(_) => elements.push(SelectorElement::Child),
                 Delim(c) if *c == '.' => next_element_with_prefix = NextElementWithPrefix::Class,
+                Delim(c) if *c == '*' => elements.push(SelectorElement::Any),
                 Colon => next_element_with_prefix = NextElementWithPrefix::PseudoClass,
                 _ => {
                     let token = token.to_css_string();

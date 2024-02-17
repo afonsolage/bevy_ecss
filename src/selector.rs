@@ -19,6 +19,8 @@ pub enum SelectorElement {
     Child,
     /// A keyword added to a selector that specifies a special state of the selected element(s), like `button:hover`
     PseudoClass(PseudoClassElement),
+    /// Selects any component, like `*` on CSS.
+    Any,
 }
 
 /// Represents a pseudo-class as per (mdn docs)[https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes]
@@ -116,6 +118,7 @@ impl Selector {
                 SelectorElement::Class(_) => 10,
                 SelectorElement::Child => 0,
                 SelectorElement::PseudoClass(pseudo_class) => pseudo_class.weight(),
+                SelectorElement::Any => 0,
             };
             acc + element_weight
         })
@@ -142,6 +145,7 @@ impl std::fmt::Display for Selector {
                     result.push(':');
                     result.push_str(&c.to_string());
                 }
+                SelectorElement::Any => result.push('*'),
             }
         }
 
@@ -190,12 +194,14 @@ impl<'i> From<Vec<CowRcStr<'i>>> for Selector {
                 continue;
             }
 
-            if let Some(value) = value.strip_prefix('#') {
+            if value.as_ref() == "*" {
+                elements.push(SelectorElement::Any);
+            } else if let Some(value) = value.strip_prefix('#') {
                 elements.push(SelectorElement::Name(value.to_string()));
             } else if next_is_class {
-                elements.push(SelectorElement::Class(value.to_string()))
+                elements.push(SelectorElement::Class(value.to_string()));
             } else {
-                elements.push(SelectorElement::Component(value.to_string()))
+                elements.push(SelectorElement::Component(value.to_string()));
             }
 
             next_is_class = false;

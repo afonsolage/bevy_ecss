@@ -59,6 +59,7 @@ pub(crate) struct CssQueryParam<'w, 's> {
     names: Query<'w, 's, (Entity, &'static Name)>,
     classes: Query<'w, 's, (Entity, &'static Class)>,
     children: Query<'w, 's, &'static Children, With<Node>>,
+    any: Query<'w, 's, Entity, With<Node>>,
 }
 
 /// Holds an previous prepared [`CssQueryParam`];
@@ -217,6 +218,7 @@ fn select_entities_node(
             SelectorElement::PseudoClass(pseudo_class) => {
                 get_entities_with_pseudo_class(world, *pseudo_class, entities.clone())
             }
+            SelectorElement::Any => get_entities_with_any_component(&css_query.any, entities),
             // All child elements are filtered by [`get_parent_tree`](Selector::get_parent_tree)
             SelectorElement::Child => unreachable!(),
         };
@@ -321,6 +323,23 @@ fn get_entities_with_component(
     }
 }
 
+/// Filters entities which have a [`Node`] component.
+/// This is to mimic the "*" selector on CSS.
+fn get_entities_with_any_component(
+    query: &Query<Entity, With<Node>>,
+    entities: SmallVec<[Entity; 8]>,
+) -> (FilteredEntities, MatchedEntities) {
+    let filtered = query
+        .iter()
+        .filter(|e| entities.contains(e))
+        .collect::<SmallVec<_>>();
+
+    (
+        FilteredEntities(filtered.clone()),
+        MatchedEntities(filtered),
+    )
+}
+
 /// Traverse the children hierarchy three and returns all entities.
 fn get_children_recursively(
     children: &Children,
@@ -416,6 +435,7 @@ fn check_for_changed_assets(
                 SelectorElement::PseudoClass(pseudo_class) => {
                     any_component_changed_by_pseudo_class(world, entities, *pseudo_class)
                 }
+                SelectorElement::Any => any_component::<Node>(world, entities),
                 _ => unreachable!(),
             };
 
