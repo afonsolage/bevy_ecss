@@ -3,7 +3,7 @@ use std::hash::{Hash, Hasher};
 use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt},
     prelude::Asset,
-    reflect::{TypePath, TypeUuid},
+    reflect::TypePath,
     utils::{AHasher, HashMap},
 };
 use smallvec::SmallVec;
@@ -11,8 +11,7 @@ use thiserror::Error;
 
 use crate::{parser::StyleSheetParser, property::PropertyValues, selector::Selector};
 
-#[derive(Debug, TypeUuid, TypePath, Asset)]
-#[uuid = "14b98dd6-5425-4692-a561-5e6ae9180554"]
+#[derive(Debug, TypePath, Asset)]
 /// A cascading style sheet (`css`) asset file.
 ///
 /// _Note_: This asset only store intermediate data, like rules and properties.

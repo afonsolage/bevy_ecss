@@ -6,7 +6,6 @@ fn main() {
     // Whenever an StyleSheet is loaded, it'll be applied automatically
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
-            fit_canvas_to_parent: true,
             canvas: Some("#bevy".to_string()),
             ..default()
         }),
@@ -14,9 +13,6 @@ fn main() {
     }))
     .add_plugins(EcssPlugin::with_hot_reload())
     .add_systems(Startup, setup);
-
-    #[cfg(not(target_arch = "wasm32"))]
-    app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
 
     app.run();
 }
