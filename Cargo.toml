@@ -1,6 +1,6 @@
 [package]
 name = "bevy_ecss"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2021"
 categories = ["game-development", "gui", "web-programming"]
 description = "Allows using a subset of CSS to interact with Bevy ECS"

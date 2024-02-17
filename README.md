@@ -46,6 +46,7 @@ That's it, now your UI will indeed look _awesome_!
 |  0.11 |    0.4    |
 |  0.12 |    0.5    |
 |  0.12 |    0.6    |
+|  0.13 |    0.7    |
 
 ## Contributing
 
