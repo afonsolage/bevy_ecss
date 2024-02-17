@@ -14,9 +14,6 @@ fn main() {
     .add_plugins(EcssPlugin::with_hot_reload())
     .add_systems(Startup, setup);
 
-    #[cfg(not(target_arch = "wasm32"))]
-    app.add_plugins(bevy_editor_pls::prelude::EditorPlugin::default());
-
     app.run();
 }
 

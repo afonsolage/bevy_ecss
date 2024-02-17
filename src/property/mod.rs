@@ -273,10 +273,10 @@ impl StyleSheetState {
 /// On the first time the `system` runs it'll call [`parse`](`Property::parse`) and cache the value.
 /// Subsequential runs will only fetch the cached value.
 /// - [`Components`](Property::Components) is which components will be send to [`apply`](`Property::apply`) function whenever a
-/// valid cache exists and a matching property was found on any sheet rule. Check [`WorldQuery`] for more.
+/// valid cache exists and a matching property was found on any sheet rule. Check [`QueryData`] for more.
 /// - [`Filters`](Property::Filters) is used to filter which entities will be applied the property modification.
 /// Entities are first filtered by [`selectors`](`Selector`), but it can be useful to also ensure some behavior for safety reasons,
-/// like only inserting [`TextAlignment`](bevy::prelude::TextAlignment) if the entity also has a [`Text`](bevy::prelude::Text) component.
+/// like only inserting [`JustifyText`](bevy::prelude::JustifyText) if the entity also has a [`Text`](bevy::prelude::Text) component.
 ///  Check [`WorldQuery`] for more.
 ///
 /// These are tree functions required to be implemented:
@@ -286,14 +286,14 @@ impl StyleSheetState {
 /// Additionally, an [`AssetServer`] and [`Commands`] parameters are provided for more complex use cases.
 ///
 /// Also, there one function which have default implementations:
-/// - [`apply_system`](Property::apply_system) is a [`system`](https://docs.rs/bevy_ecs/0.8.1/bevy_ecs/system/index.html) which interacts with
+/// - [`apply_system`](Property::apply_system) is a [`system`](https://docs.rs/bevy_ecs/latest/bevy_ecs/system/index.html) which interacts with
 /// [ecs world](`bevy::prelude::World`) and call the [`apply`](Property::apply) function on every matched entity.
 pub trait Property: Default + Sized + Send + Sync + 'static {
     /// The cached value type to be applied by property.
     type Cache: Default + Any + Send + Sync;
-    /// Which components should be queried when applying the modification. Check [`WorldQuery`] for more.
+    /// Which components should be queried when applying the modification. Check [`QueryData`] for more.
     type Components: QueryData;
-    /// Filters conditions to be applied when querying entities by this property. Check [`ReadOnlyWorldQuery`] for more.
+    /// Filters conditions to be applied when querying entities by this property. Check [`QueryFilter`] for more.
     type Filters: QueryFilter;
 
     /// Indicates which property name should matched for. Must match the same property name as on `css` file.
@@ -318,7 +318,7 @@ pub trait Property: Default + Sized + Send + Sync + 'static {
         commands: &mut Commands,
     );
 
-    /// The [`system`](https://docs.rs/bevy_ecs/0.8.1/bevy_ecs/system/index.html) which interacts with
+    /// The [`system`](https://docs.rs/bevy_ecs/latest/bevy_ecs/system/index.html) which interacts with
     /// [ecs world](`bevy::prelude::World`) and call [`apply`](Property::apply) function on every matched entity.
     ///
     /// The default implementation will cover most use cases, by just implementing [`apply`](Property::apply)

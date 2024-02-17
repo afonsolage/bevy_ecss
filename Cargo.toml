@@ -33,7 +33,6 @@ bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
     "bevy_render",
     "file_watcher",
 ] }
-bevy_editor_pls = "0.6"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 #bevy = "0.12"
