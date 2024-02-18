@@ -1,0 +1,51 @@
+#root {
+    background-color: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-content: flex-start;
+    align-items: stretch;
+}
+
+#root .red {
+    width: 100%;
+    height: 9%;
+    background-color: red;
+    align-self: stretch;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-content: flex-start;
+    align-items: stretch;
+}
+
+#root .green {
+    width: 9%;
+    height: 100%;
+    align-self: stretch;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-content: flex-start;
+    align-items: stretch;
+    background-color: green;
+}
+
+#root .blue {
+    background-color: blue;
+    width: 100%;
+    height: 9%;
+    align-self: stretch;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-content: flex-start;
+    align-items: stretch;
+}
+
+#root .purple {
+    background-color: #2e002e;
+    width: 9%;
+    height: 100%;
+    align-self: stretch;
+}

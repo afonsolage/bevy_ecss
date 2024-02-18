@@ -1,0 +1,603 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Simple - Bevy ECSS</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="guide_css_subset.html">CSS subset</a></li><li class="chapter-item expanded "><a href="guide_properties.html">Supported Properties</a></li><li class="chapter-item expanded "><a href="guide_component_selectors.html">Component Selectors</a></li><li class="chapter-item expanded affix "><li class="part-title">Extending library</li><li class="chapter-item expanded "><a href="custom_component.html">Custom Component Selectors</a></li><li class="chapter-item expanded "><a href="custom_property.html">Custom Property</a></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="chapter-item expanded "><a href="example_simple.html" class="active">Simple</a></li><li class="chapter-item expanded "><a href="example_alpha.html">Custom property</a></li><li class="chapter-item expanded "><a href="example_theme.html">Theme</a></li><li class="chapter-item expanded "><a href="example_interactive.html">Interactive</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Bevy ECSS</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/afonsolage/bevy_ecss" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-code-fork"></i>
+                        </a>
+                        <a href="https://github.com/afonsolage/bevy_ecss/edit/main/book/src/example_simple.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="simple-example"><a class="header" href="#simple-example">Simple example</a></h1>
+<p><canvas id="bevy"></canvas></p>
+<script type="module">
+    // Import and run your bevy wasm code
+    import init from './simple_ui.js'
+    init();
+</script>
+<h2 id="css"><a class="header" href="#css">CSS</a></h2>
+<pre><code class="language-css">#ui-root {
+    background-color: #3b3a3a
+}
+
+#left-border {
+    margin: 0px 0px 0px 50px;
+    border: 0px;
+    padding: 5px;
+    background-color: #000000;
+}
+
+#ui-root #left-bg {
+    display: flex;
+}
+
+#right-list {
+    height: 50%;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: violet;
+}
+
+.container .blue-bg {
+    background-color: #ff00FF10;
+}
+
+* {
+    color: cyan;
+}
+</code></pre>
+<h2 id="code"><a class="header" href="#code">Code</a></h2>
+<pre><code class="language-rust">use bevy::prelude::*;
+use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
+
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                canvas: Some("#bevy".to_string()),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugins(EcssPlugin::default())
+        .add_systems(Startup, setup)
+        .run();
+}
+
+fn setup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    // Camera
+    commands.spawn(Camera2dBundle::default());
+
+    // root node
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            background_color: Color::NONE.into(),
+            ..default()
+        })
+        .insert(StyleSheet::new(asset_server.load("sheets/simple_ui.css")))
+        .insert(Name::new("ui-root"))
+        .with_children(|parent| {
+            // left vertical fill (border)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
+                        border: UiRect::all(Val::Px(2.0)),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+                    ..default()
+                })
+                .insert(Name::new("left-border"))
+                .with_children(|parent| {
+                    // left vertical fill (content)
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(100.0),
+                                align_items: AlignItems::FlexEnd,
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("left-bg"))
+                        .with_children(|parent| {
+                            // text
+                            parent
+                                .spawn(
+                                    TextBundle::from_section(
+                                        "Text Example",
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 30.0,
+                                            color: Color::WHITE,
+                                        },
+                                    )
+                                    .with_style(Style {
+                                        margin: UiRect::all(Val::Px(5.0)),
+                                        ..default()
+                                    }),
+                                )
+                                .insert(Name::new("left-text"));
+                        });
+                });
+            // right vertical fill
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        flex_direction: FlexDirection::ColumnReverse,
+                        justify_content: JustifyContent::Center,
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                    ..default()
+                })
+                .insert(Name::new("right-border"))
+                .with_children(|parent| {
+                    // Title
+                    parent
+                        .spawn(
+                            TextBundle::from_section(
+                                "Scrolling list",
+                                TextStyle {
+                                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                    font_size: 25.,
+                                    color: Color::WHITE,
+                                },
+                            )
+                            .with_style(Style {
+                                height: Val::Px(25.0),
+                                margin: UiRect {
+                                    left: Val::Auto,
+                                    right: Val::Auto,
+                                    ..default()
+                                },
+                                ..default()
+                            }),
+                        )
+                        .insert(Name::new("right-bg"));
+                    // List with hidden overflow
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                flex_direction: FlexDirection::ColumnReverse,
+                                align_self: AlignSelf::Center,
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(50.0),
+                                overflow: Overflow::clip(),
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.10, 0.10, 0.10).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("right-list"))
+                        .with_children(|parent| {
+                            // Moving panel
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        flex_direction: FlexDirection::ColumnReverse,
+                                        flex_grow: 1.0,
+                                        ..default()
+                                    },
+                                    background_color: Color::NONE.into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("right-moving-panel"))
+                                .with_children(|parent| {
+                                    // List items
+                                    for i in 0..30 {
+                                        parent
+                                            .spawn(
+                                                TextBundle::from_section(
+                                                    format!("Item {i}"),
+                                                    TextStyle {
+                                                        font: asset_server
+                                                            .load("fonts/FiraSans-Bold.ttf"),
+                                                        font_size: 20.,
+                                                        color: Color::WHITE,
+                                                    },
+                                                )
+                                                .with_style(Style {
+                                                    flex_shrink: 0.,
+                                                    height: Val::Px(20.),
+                                                    margin: UiRect {
+                                                        left: Val::Auto,
+                                                        right: Val::Auto,
+                                                        ..default()
+                                                    },
+                                                    ..default()
+                                                }),
+                                            )
+                                            .insert(Class::new("big-text"))
+                                            .insert(Name::new(format!("right-item-{}", i)));
+                                    }
+                                });
+                        });
+                });
+            // absolute positioning
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Px(200.0),
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(210.0),
+                        bottom: Val::Px(10.0),
+                        border: UiRect::all(Val::Px(20.0)),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.4, 0.4, 1.0).into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-blue-border"))
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(100.0),
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.8, 0.8, 1.0).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-navy-blue-content"));
+                });
+            // render order test: reddest in the back, whitest in the front (flex center)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        position_type: PositionType::Absolute,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-red-last"))
+                .insert(Class::new("blue-bg container"))
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Px(100.0),
+                                height: Val::Px(100.0),
+                                ..default()
+                            },
+                            background_color: Color::rgb(1.0, 0.0, 0.0).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-red-last-but-one"))
+                        .with_children(|parent| {
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(20.0),
+                                        bottom: Val::Px(20.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.3, 0.3).into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("mid-red-center"));
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(40.0),
+                                        bottom: Val::Px(40.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.5, 0.5).into(),
+                                    ..default()
+                                })
+                                .insert(Class::new("blue-bg"))
+                                .insert(Name::new("mid-red-top-but-one"));
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(60.0),
+                                        bottom: Val::Px(60.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.7, 0.7).into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("mid-red-top"));
+                            // alpha test
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(80.0),
+                                        bottom: Val::Px(80.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgba(1.0, 0.9, 0.9, 0.4).into(),
+                                    ..default()
+                                })
+                                .insert(Class::new("blue-bg"))
+                                .insert(Name::new("mid-red-alpha"));
+                        });
+                });
+            // bevy logo (flex center)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        position_type: PositionType::Absolute,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::FlexEnd,
+                        ..default()
+                    },
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-bevy-logo-bg"))
+                .with_children(|parent| {
+                    // bevy logo (image)
+                    parent
+                        .spawn(ImageBundle {
+                            style: Style {
+                                width: Val::Px(500.0),
+                                ..default()
+                            },
+                            image: asset_server.load("branding/bevy_logo_dark_big.png").into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-bevy-logo-image"));
+                });
+        });
+}</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="custom_property.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="example_alpha.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="custom_property.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="example_alpha.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

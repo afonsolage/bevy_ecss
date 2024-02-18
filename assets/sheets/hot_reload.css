@@ -1,0 +1,39 @@
+#ui-root {
+    background-color: #3e0909
+}
+
+#left-border {
+    margin: 0px;
+    border: 0px;
+    padding: 5px;
+    background-color: #353535;
+}
+
+#ui-root #left-bg {
+    display: flex;
+}
+
+#right-list {
+    height: 50%;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: #623192
+}
+
+.big-text-red {
+    font-size: 15;
+    width: 100%;
+    color: red;
+}
+
+#right-list text {
+    font-size: 19;
+    vertical-align: bottom;
+}
+
+.container .blue-bg {
+    background-color: #0f00FF10;
+} 

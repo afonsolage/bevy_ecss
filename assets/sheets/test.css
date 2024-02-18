@@ -1,0 +1,28 @@
+#ui-root {
+    background-color: #000000
+}
+
+#left-border {
+    margin: 0px 0px 0px 50px;
+    border: 0px;
+    padding: 5px;
+    background-color: gray;
+}
+
+#ui-root #left-bg {
+    display: flex;
+}
+
+#right-list {
+    height: 50%;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: violet
+}
+
+.container .blue-bg {
+    background-color: #ff00FF10;
+} 

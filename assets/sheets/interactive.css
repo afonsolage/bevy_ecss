@@ -1,0 +1,33 @@
+#ui-root {
+	width: 30%;
+	height: 100%;
+	justfy-content: space-between;
+}
+
+#list {
+	background-color: #050505;
+	width: 100%;
+	height: 100%;
+	flex-direction: column-reverse;
+	align-self: center;
+	overflow: clip;
+}
+
+#panel {
+	flex-direction: column-reverse;
+	flex-grow: 1.0;
+}
+
+text {
+	font: "fonts/FiraSans-Bold.ttf";
+	font-size: 20;
+	color: white;
+	flex-shrink: 0;
+	height: 20px;
+	margin: auto;	
+}
+
+text:hover {
+	color: red;
+	font-size: 25;
+}

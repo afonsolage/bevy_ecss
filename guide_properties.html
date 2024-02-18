@@ -1,0 +1,302 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Supported Properties - Bevy ECSS</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="guide_css_subset.html">CSS subset</a></li><li class="chapter-item expanded "><a href="guide_properties.html" class="active">Supported Properties</a></li><li class="chapter-item expanded "><a href="guide_component_selectors.html">Component Selectors</a></li><li class="chapter-item expanded affix "><li class="part-title">Extending library</li><li class="chapter-item expanded "><a href="custom_component.html">Custom Component Selectors</a></li><li class="chapter-item expanded "><a href="custom_property.html">Custom Property</a></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="chapter-item expanded "><a href="example_simple.html">Simple</a></li><li class="chapter-item expanded "><a href="example_alpha.html">Custom property</a></li><li class="chapter-item expanded "><a href="example_theme.html">Theme</a></li><li class="chapter-item expanded "><a href="example_interactive.html">Interactive</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Bevy ECSS</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/afonsolage/bevy_ecss" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-code-fork"></i>
+                        </a>
+                        <a href="https://github.com/afonsolage/bevy_ecss/edit/main/book/src/guide_properties.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="properties"><a class="header" href="#properties">Properties</a></h1>
+<p>Here is a list of all currently supported properties. Note that these are properties which are provived by Bevy ECSS but you can also add your own properties at anytime.</p>
+<p><em>Before reading properties description, we'll use this notation to describe accepted values:</em></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Notation</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>00.00%</code></td><td style="text-align: left">Any percent value, like <code>93%</code> or <code>4.45%</code></td></tr>
+<tr><td style="text-align: center"><code>00.00px</code></td><td style="text-align: left">Any dimensional value, like <code>11px</code> or <code>0.99px</code></td></tr>
+<tr><td style="text-align: center"><code>00.00</code></td><td style="text-align: left">Any number value, like <code>0</code> or <code>14.2</code></td></tr>
+<tr><td style="text-align: center"><code>&lt;ident&gt;</code> | <code>&lt;ident&gt;</code></td><td style="text-align: left">Only one of the identifiers are allowed, without quotes, like <code>none</code> or <code>hidden</code></td></tr>
+<tr><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Allows the <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/margin#syntax"><code>short hand area constructor</code></a> by using either dimensions or percentage, like <code>10px</code> or <code>5% 10px 3% auto</code>. No global values are supported yet</td></tr>
+</tbody></table>
+</div>
+<h3 id="style-properties"><a class="header" href="#style-properties"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>display</code></td><td style="text-align: center"><code>flex</code> | <code>none</code></td><td style="text-align: left">Applies the  <code>display</code>         property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.display"><code>display</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>position-type</code></td><td style="text-align: center"><code>absolute</code> | <code>relative</code></td><td style="text-align: left">Applies the  <code>position-type</code>   property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.position_type"><code>position_type</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>direction</code></td><td style="text-align: center"><code>inherit</code> | <code>left-to-right</code> | <code>right-to-left</code></td><td style="text-align: left">Applies the  <code>direction</code>       property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.direction"><code>direction</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>flex-direction</code></td><td style="text-align: center"><code>row</code> | <code>column</code> | <code>row-reverse</code> | <code>column-reverse</code></td><td style="text-align: left">Applies the  <code>flex-direction</code>  property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_direction"><code>flex_direction</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>flex-wrap</code></td><td style="text-align: center"><code>no-wrap</code> | <code>wrap</code> | <code>wrap-reverse</code></td><td style="text-align: left">Applies the  <code>flex-wrap</code>       property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_wrap"><code>flex_wrap</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>align-items</code></td><td style="text-align: center"><code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>baseline</code> | <code>stretch</code></td><td style="text-align: left">Applies the  <code>align-items</code>     property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.align_items"><code>align_items</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>align-self</code></td><td style="text-align: center"><code>auto</code> | <code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>baseline</code> | <code>stretch</code></td><td style="text-align: left">Applies the  <code>align-self</code>      property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.align_self"><code>align_self</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>align-content</code></td><td style="text-align: center"><code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>stretch</code> | <code>space-between</code> | <code>space-around</code></td><td style="text-align: left">Applies the  <code>align-content</code>   property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.align_content"><code>align_content</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>justify-content</code></td><td style="text-align: center"><code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>space-between</code> | <code>space-around</code> | <code>space-evenly</code></td><td style="text-align: left">Applies the  <code>justify-content</code> property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.justify_content"><code>justify_content</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>overflow-x</code></td><td style="text-align: center"><code>visible</code> | <code>hidden</code></td><td style="text-align: left">Applies the  <code>overflow-x</code>      property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.overflow"><code>overflow.x</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>overflow-y</code></td><td style="text-align: center"><code>visible</code> | <code>hidden</code></td><td style="text-align: left">Applies the  <code>overflow-y</code>      property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.overflow"><code>overflow.y</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>left</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.left"><code>left</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>right</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.right"><code>right</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>top</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.top"><code>top</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>bottom</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.bottom"><code>bottom</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>width</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.width"><code>width</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>height</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.height"><code>height</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>min-width</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.min_width"><code>min_width</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>min-height</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.min_height"><code>min_height</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>max-width</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.max_width"><code>max_width</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>max-height</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.max_height"><code>max_height</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>flex-basis</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_basis"><code>flex_basis</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>flex-grow</code></td><td style="text-align: center"><code>0</code> | <code>1</code> | <code>2</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_grow"><code>flex_grow</code></a>   field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>flex-shrink</code></td><td style="text-align: center"><code>0</code> | <code>1</code> | <code>2</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_shrink"><code>flex_shrink</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>aspect-ratio</code></td><td style="text-align: center"><code>00.00</code> | <code>none</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.aspect_ratio"><code>aspect_ratio</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>margin</code></td><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.margin"><code>margin</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>padding</code></td><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.padding"><code>padding</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>border</code></td><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.border"><code>border</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>row-gap</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.row_gap"><code>row_gap</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>column-gap</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.column_gap"><code>column_gap</code></a> field of all matched components.</td></tr>
+</tbody></table>
+</div>
+<h3 id="text-properties"><a class="header" href="#text-properties"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Text.html"><code>Text</code></a> properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>color</code></td><td style="text-align: center"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/named-color"><code>named-colors</code></a> | <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color"><code>hex_colors</code></a></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.style"><code>style.color</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>font</code></td><td style="text-align: center"><code>"path/to/font.ttf"</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.style"><code>style.font</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>font-size</code></td><td style="text-align: center"><code>00.00</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.style"><code>style.font_size</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>text-content</code></td><td style="text-align: center"><code>"Some text value"</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.value"><code>value</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>text-align</code></td><td style="text-align: center"><code>left</code> | <code>center</code> | <code>right</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.Text.html#structfield.alignment"><code>alignment</code></a> of all matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+</tbody></table>
+</div>
+<h3 id="components-properties"><a class="header" href="#components-properties">Components properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>background-color</code></td><td style="text-align: center"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/named-color"><code>named-colors</code></a> | <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color"><code>hex_colors</code></a></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.BackgroundColor.html"><code>BackgroundColor</code></a> of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>border-color</code></td><td style="text-align: center"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/named-color"><code>named-colors</code></a> | <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color"><code>hex_colors</code></a></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.BorderColor.html"><code>BorderColor</code></a> of all matched components.</td></tr>
+</tbody></table>
+</div>
+<h3 id="image-properties"><a class="header" href="#image-properties">Image properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>image-path</code></td><td style="text-align: center">"path/to/image.png"</td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.UiImage.html#structfield.texture"><code>image.texture</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/ui/struct.UiImage.html"><code>images</code></a> of matched components.</td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="guide_css_subset.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="guide_component_selectors.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="guide_css_subset.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="guide_component_selectors.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

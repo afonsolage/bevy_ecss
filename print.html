@@ -1,0 +1,1654 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Bevy ECSS</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="guide_css_subset.html">CSS subset</a></li><li class="chapter-item expanded "><a href="guide_properties.html">Supported Properties</a></li><li class="chapter-item expanded "><a href="guide_component_selectors.html">Component Selectors</a></li><li class="chapter-item expanded affix "><li class="part-title">Extending library</li><li class="chapter-item expanded "><a href="custom_component.html">Custom Component Selectors</a></li><li class="chapter-item expanded "><a href="custom_property.html">Custom Property</a></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="chapter-item expanded "><a href="example_simple.html">Simple</a></li><li class="chapter-item expanded "><a href="example_alpha.html">Custom property</a></li><li class="chapter-item expanded "><a href="example_theme.html">Theme</a></li><li class="chapter-item expanded "><a href="example_interactive.html">Interactive</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Bevy ECSS</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/afonsolage/bevy_ecss" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-code-fork"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p><a href="https://github.com/afonsolage/bevy_ecss#license"><img src="https://img.shields.io/badge/license-MIT%2FApache-blue.svg" alt="MIT/Apache 2.0" /></a>
+<a href="https://docs.rs/bevy_ecss"><img src="https://docs.rs/bevy_ecss/badge.svg" alt="Realease Doc" /></a>
+<a href="https://github.com/afonsolage/bevy_ecss/actions"><img src="https://github.com/afonsolage/bevy_ecss/workflows/CI/badge.svg" alt="Rust" /></a>
+<a href="https://crates.io/crates/bevy_ecss"><img src="https://img.shields.io/crates/v/bevy_ecss.svg" alt="Crate" /></a>
+<a href="https://github.com/bevyengine/bevy/blob/main/docs/plugins_guidelines.md#main-branch-tracking"><img src="https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue" alt="Bevy tracking" /></a></p>
+<img class="right" src="https://github.com/afonsolage/bevy_ecss/raw/main/assets/branding/bevy_ecss.png" alt="The Bevy ECSS logo">
+<p>Bevy ECSS is a crate which allows the usage of a subset of <a href="https://developer.mozilla.org/en-US/docs/Web/CSS"><code>CSS</code></a> to interact with <a href="https://crates.io/crates/bevy_ecs"><code>bevy_ecs</code></a>. It's mainly aimed to apply styling on <a href="https://crates.io/crates/bevy"><code>bevy_ui</code></a> but it can be used by any component by implementing custom properties.</p>
+<h2 id="why-the-name"><a class="header" href="#why-the-name">Why the name?</a></h2>
+<p>Just because Bevy ECS + CSS is a perfect fit!</p>
+<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<p>To use Bevy ECSS just add a <code>StyleSheet</code> with a loaded <code>css</code> file to any entity and all style sheet rules will be applied to the entity and <em>all</em> its <a href="https://stackoverflow.com/questions/1182189/css-child-vs-descendant-selectors"><code>descendants</code></a> (children of children of children and so on).</p>
+<pre><code class="language-rust">use bevy::prelude::*;
+use bevy_ecss::prelude::*;
+
+fn setup_awesome_ui(root: Entity, mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    commands
+        .entity(root)
+        .insert(StyleSheet::new(asset_server.load("sheets/awesome.css")));
+}</code></pre>
+<p>That's it, now your UI will indeed look <em>awesome</em>!</p>
+<h2 id="bevy-support-table"><a class="header" href="#bevy-support-table">Bevy support table</a></h2>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">bevy</th><th style="text-align: center">bevy_ecss</th></tr></thead><tbody>
+<tr><td style="text-align: center">0.8</td><td style="text-align: center">0.1</td></tr>
+<tr><td style="text-align: center">0.9</td><td style="text-align: center">0.2</td></tr>
+<tr><td style="text-align: center">0.10</td><td style="text-align: center">0.3</td></tr>
+<tr><td style="text-align: center">0.11</td><td style="text-align: center">0.4</td></tr>
+<tr><td style="text-align: center">0.12</td><td style="text-align: center">0.5</td></tr>
+</tbody></table>
+</div>
+<h2 id="contributing"><a class="header" href="#contributing">Contributing</a></h2>
+<p>Got some idea, feedback, question or found any bug? Feel free to open an issue at any time!</p>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>Bevy ECSS is dual-licensed under either:</p>
+<ul>
+<li>MIT License (<a href="LICENSE-MIT">LICENSE-MIT</a> or <a href="http://opensource.org/licenses/MIT">http://opensource.org/licenses/MIT</a>)</li>
+<li>Apache License, Version 2.0 (<a href="LICENSE-APACHE">LICENSE-APACHE</a> or <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a>)</li>
+</ul>
+<p>This means you can select the license you prefer!
+This dual-licensing approach is the de-facto standard in the Rust ecosystem and there are <a href="https://github.com/bevyengine/bevy/issues/2373">very good reasons</a> to include both.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
+<h2 id="070"><a class="header" href="#070">[0.7.0]</a></h2>
+<h3 id="added"><a class="header" href="#added">Added</a></h3>
+<ul>
+<li>Added support for applying multiple style sheets to an entity <a href="https://github.com/afonsolage/bevy_ecss/issues/45">#45</a></li>
+<li>Added quality of life methods for modifying class lists on existing class components. <a href="https://github.com/afonsolage/bevy_ecss/pull/48">#48</a></li>
+<li>Added support for <code>row-gap</code> and <code>column-gap</code> properties. <a href="https://github.com/afonsolage/bevy_ecss/pull/49">#49</a></li>
+<li>Added support for <code>Any</code> (*) selector. <a href="https://github.com/afonsolage/bevy_ecss/pull/55">#55</a></li>
+</ul>
+<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<ul>
+<li>Fixed wrong properties assignments <a href="https://github.com/afonsolage/bevy_ecss/pull/42/">#42</a></li>
+<li>Fixed bug with style sheets being applied in a non-deterministic order <a href="https://github.com/afonsolage/bevy_ecss/pull/51">#51</a></li>
+</ul>
+<h2 id="060"><a class="header" href="#060">[0.6.0]</a></h2>
+<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<ul>
+<li>Added watch for changes on entities with components affected by css.</li>
+</ul>
+<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<ul>
+<li>Fixed CSS precedence order, more broad rules are applied first.</li>
+</ul>
+<h2 id="051"><a class="header" href="#051">[0.5.1]</a></h2>
+<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<ul>
+<li>Added support for <code>:hover</code> pseudo-class.</li>
+<li>Added support for <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes">Pseudo-classes</a>.</li>
+</ul>
+<h2 id="051-1"><a class="header" href="#051-1">[0.5.1]</a></h2>
+<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<ul>
+<li>New selectors for setting up BorderColor and Image texture.</li>
+<li>New documentation available on: <a href="https://afonsolage.github.io/bevy_ecss/">link</a>.</li>
+</ul>
+<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
+<ul>
+<li>Updated <code>cssparser</code> to <code>0.33</code>.</li>
+<li>Use color function from <code>cssparser</code>.</li>
+</ul>
+<h2 id="050"><a class="header" href="#050">[0.5.0]</a></h2>
+<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<ul>
+<li>Support for auto value</li>
+</ul>
+<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<ul>
+<li>Upgraded to Bevy 0.12.</li>
+</ul>
+<h2 id="040"><a class="header" href="#040">[0.4.0]</a></h2>
+<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
+<ul>
+<li>Upgraded to Bevy 0.11.</li>
+</ul>
+<h2 id="030"><a class="header" href="#030">[0.3.0]</a></h2>
+<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<ul>
+<li><code>TextAlignProperty</code></li>
+</ul>
+<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
+<ul>
+<li>Upgraded to Bevy 0.10.</li>
+</ul>
+<h3 id="removed"><a class="header" href="#removed">Removed</a></h3>
+<ul>
+<li><code>VerticalAlignProperty</code> and <code>HorizontalAlignProperty</code></li>
+</ul>
+<h2 id="020"><a class="header" href="#020">[0.2.0]</a></h2>
+<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
+<ul>
+<li>Upgraded to Bevy 0.9.</li>
+</ul>
+<h2 id="010"><a class="header" href="#010">[0.1.0]</a></h2>
+<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
+<ul>
+<li>First version</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="css-subset"><a class="header" href="#css-subset">CSS Subset</a></h1>
+<p>Bevy ECSS only supports a subset of CSS at moment, since many properties and features requires more advanced selectors, components and properties which currently isn't implemented.</p>
+<p>Here you can find a list of all currently supported selectors and properties:</p>
+<h3 id="selectors"><a class="header" href="#selectors"><ins>Selectors</ins></a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Type</th><th style="text-align: left">Details</th><th style="text-align: left">Example</th></tr></thead><tbody>
+<tr><td style="text-align: center"><em>Name</em></td><td style="text-align: left">Selects by using <code>bevy</code> built-int <a href="https://docs.rs/bevy/latest/bevy/core/struct.Name.html"><code>Name</code></a> component.</td><td style="text-align: left"><code>#inventory { ... }</code></td></tr>
+<tr><td style="text-align: center"><em>Class</em></td><td style="text-align: left">Selects by using <code>Class</code> component, which is provided by Bevy ECSS.</td><td style="text-align: left"><code>.enabled { ... }</code></td></tr>
+<tr><td style="text-align: center"><em>Component</em></td><td style="text-align: left">Selects by using any component, but it has to be registered before usage. You can find more details bellow.</td><td style="text-align: left"><code>button { ... }</code></td></tr>
+<tr><td style="text-align: center"><em>PseudoClass</em></td><td style="text-align: left">Selects by using pseudo-classes. A list of supported pseudo-classes are listed at the end of the page.</td><td style="text-align: left"><code>:hover { ... }</code></td></tr>
+</tbody></table>
+</div>
+<p>You may combine any of the above selector types to create a complex selector, if you like so. For instance, <code>window.enabled.pop-up</code> select all <code>window</code>s, which are <code>enabled</code> and are of <code>pop-up</code> type. The same rules of <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Class_selectors"><code>CSS Class selectors</code></a> applies here.</p>
+<p><em>This assumes that <code>window</code> is a <code>bevy_ecs</code> component and was registered before usage. Also assumes the entities has the <code>Class</code> component with at least <code>enabled pop-up</code> class name.</em></p>
+<p>Aditionally, Bevy ECSS also supports <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator"><code>descendant combinator</code></a> which selects <em>all</em> entities that are descendant the given selector tree.</p>
+<pre><code class="language-css">#quest-window text {
+    color: red;
+}
+</code></pre>
+<p>The above rule will match <em>all</em> entities which has a <a href="https://docs.rs/bevy/latest/bevy/text/struct.Text.html"><code>Text</code></a> component and is descendant of any entity which as a <a href="https://docs.rs/bevy/latest/bevy/core/struct.Name.html"><code>Name</code></a> component which the value of <code>quest-window</code>.</p>
+<p>So it's possible to combine complex composed selectors with descendant combinator.</p>
+<pre><code class="language-css">#main-menu button.enabled .border {
+    background-color: #ff03ab;
+}
+</code></pre>
+<p>This rule will match all components which has a <code>Class</code> with the value of <code>border</code> and are descendant of any entity which has a <code>button</code> component <em>and</em> a <code>Class</code> component with the value of <code>enabled</code> and also are descendant of any entity which has a <code>Name</code> component with value <code>main-menu</code>.</p>
+<h3 id="supported-pseudo-classes"><a class="header" href="#supported-pseudo-classes">Supported pseudo-classes</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Pseudo-Class</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>:hover</code></td><td style="text-align: left">Matches any entity which has <code>Interaction</code> component with <code>Interaction::Hovered</code> variant.</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="properties"><a class="header" href="#properties">Properties</a></h1>
+<p>Here is a list of all currently supported properties. Note that these are properties which are provived by Bevy ECSS but you can also add your own properties at anytime.</p>
+<p><em>Before reading properties description, we'll use this notation to describe accepted values:</em></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Notation</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>00.00%</code></td><td style="text-align: left">Any percent value, like <code>93%</code> or <code>4.45%</code></td></tr>
+<tr><td style="text-align: center"><code>00.00px</code></td><td style="text-align: left">Any dimensional value, like <code>11px</code> or <code>0.99px</code></td></tr>
+<tr><td style="text-align: center"><code>00.00</code></td><td style="text-align: left">Any number value, like <code>0</code> or <code>14.2</code></td></tr>
+<tr><td style="text-align: center"><code>&lt;ident&gt;</code> | <code>&lt;ident&gt;</code></td><td style="text-align: left">Only one of the identifiers are allowed, without quotes, like <code>none</code> or <code>hidden</code></td></tr>
+<tr><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Allows the <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/margin#syntax"><code>short hand area constructor</code></a> by using either dimensions or percentage, like <code>10px</code> or <code>5% 10px 3% auto</code>. No global values are supported yet</td></tr>
+</tbody></table>
+</div>
+<h3 id="style-properties"><a class="header" href="#style-properties"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>display</code></td><td style="text-align: center"><code>flex</code> | <code>none</code></td><td style="text-align: left">Applies the  <code>display</code>         property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.display"><code>display</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>position-type</code></td><td style="text-align: center"><code>absolute</code> | <code>relative</code></td><td style="text-align: left">Applies the  <code>position-type</code>   property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.position_type"><code>position_type</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>direction</code></td><td style="text-align: center"><code>inherit</code> | <code>left-to-right</code> | <code>right-to-left</code></td><td style="text-align: left">Applies the  <code>direction</code>       property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.direction"><code>direction</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>flex-direction</code></td><td style="text-align: center"><code>row</code> | <code>column</code> | <code>row-reverse</code> | <code>column-reverse</code></td><td style="text-align: left">Applies the  <code>flex-direction</code>  property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_direction"><code>flex_direction</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>flex-wrap</code></td><td style="text-align: center"><code>no-wrap</code> | <code>wrap</code> | <code>wrap-reverse</code></td><td style="text-align: left">Applies the  <code>flex-wrap</code>       property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_wrap"><code>flex_wrap</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>align-items</code></td><td style="text-align: center"><code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>baseline</code> | <code>stretch</code></td><td style="text-align: left">Applies the  <code>align-items</code>     property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.align_items"><code>align_items</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>align-self</code></td><td style="text-align: center"><code>auto</code> | <code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>baseline</code> | <code>stretch</code></td><td style="text-align: left">Applies the  <code>align-self</code>      property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.align_self"><code>align_self</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>align-content</code></td><td style="text-align: center"><code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>stretch</code> | <code>space-between</code> | <code>space-around</code></td><td style="text-align: left">Applies the  <code>align-content</code>   property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.align_content"><code>align_content</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>justify-content</code></td><td style="text-align: center"><code>flex-start</code> | <code>flex-end</code> | <code>center</code> | <code>space-between</code> | <code>space-around</code> | <code>space-evenly</code></td><td style="text-align: left">Applies the  <code>justify-content</code> property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.justify_content"><code>justify_content</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>overflow-x</code></td><td style="text-align: center"><code>visible</code> | <code>hidden</code></td><td style="text-align: left">Applies the  <code>overflow-x</code>      property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.overflow"><code>overflow.x</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>overflow-y</code></td><td style="text-align: center"><code>visible</code> | <code>hidden</code></td><td style="text-align: left">Applies the  <code>overflow-y</code>      property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.overflow"><code>overflow.y</code></a> field of all sections on matched <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a> components.</td></tr>
+<tr><td style="text-align: center"><code>left</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.left"><code>left</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>right</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.right"><code>right</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>top</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.top"><code>top</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>bottom</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.bottom"><code>bottom</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>width</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.width"><code>width</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>height</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.height"><code>height</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>min-width</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.min_width"><code>min_width</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>min-height</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.min_height"><code>min_height</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>max-width</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.max_width"><code>max_width</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>max-height</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.max_height"><code>max_height</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>flex-basis</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_basis"><code>flex_basis</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>flex-grow</code></td><td style="text-align: center"><code>0</code> | <code>1</code> | <code>2</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_grow"><code>flex_grow</code></a>   field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>flex-shrink</code></td><td style="text-align: center"><code>0</code> | <code>1</code> | <code>2</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.flex_shrink"><code>flex_shrink</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>aspect-ratio</code></td><td style="text-align: center"><code>00.00</code> | <code>none</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.aspect_ratio"><code>aspect_ratio</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>margin</code></td><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.margin"><code>margin</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>padding</code></td><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.padding"><code>padding</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>border</code></td><td style="text-align: center">&lt;<code>area-short-hand</code>&gt;</td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.border"><code>border</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>row-gap</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.row_gap"><code>row_gap</code></a> field of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>column-gap</code></td><td style="text-align: center"><code>00.00%</code> | <code>00.00px</code></td><td style="text-align: left">Applies the             property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html#structfield.column_gap"><code>column_gap</code></a> field of all matched components.</td></tr>
+</tbody></table>
+</div>
+<h3 id="text-properties"><a class="header" href="#text-properties"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Text.html"><code>Text</code></a> properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>color</code></td><td style="text-align: center"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/named-color"><code>named-colors</code></a> | <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color"><code>hex_colors</code></a></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.style"><code>style.color</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>font</code></td><td style="text-align: center"><code>"path/to/font.ttf"</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.style"><code>style.font</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>font-size</code></td><td style="text-align: center"><code>00.00</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.style"><code>style.font_size</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>text-content</code></td><td style="text-align: center"><code>"Some text value"</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html#structfield.value"><code>value</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/text/struct.TextSection.html"><code>sections</code></a> of matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: center"><code>text-align</code></td><td style="text-align: center"><code>left</code> | <code>center</code> | <code>right</code></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/text/struct.Text.html#structfield.alignment"><code>alignment</code></a> of all matched components.</td></tr>
+<tr><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: left"></td></tr>
+</tbody></table>
+</div>
+<h3 id="components-properties"><a class="header" href="#components-properties">Components properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>background-color</code></td><td style="text-align: center"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/named-color"><code>named-colors</code></a> | <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color"><code>hex_colors</code></a></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.BackgroundColor.html"><code>BackgroundColor</code></a> of all matched components.</td></tr>
+<tr><td style="text-align: center"><code>border-color</code></td><td style="text-align: center"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/named-color"><code>named-colors</code></a> | <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color"><code>hex_colors</code></a></td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.BorderColor.html"><code>BorderColor</code></a> of all matched components.</td></tr>
+</tbody></table>
+</div>
+<h3 id="image-properties"><a class="header" href="#image-properties">Image properties</a></h3>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Property</th><th style="text-align: center">Values</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>image-path</code></td><td style="text-align: center">"path/to/image.png"</td><td style="text-align: left">Applies the property on <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.UiImage.html#structfield.texture"><code>image.texture</code></a> for all <a href="https://docs.rs/bevy/latest/bevy/ui/struct.UiImage.html"><code>images</code></a> of matched components.</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="component-selector-builtin"><a class="header" href="#component-selector-builtin">Component Selector Builtin</a></h1>
+<p>Bevy ECSS provites the following components selector:</p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Selector</th><th style="text-align: center">Component</th></tr></thead><tbody>
+<tr><td style="text-align: center"><code>background-color</code></td><td style="text-align: center"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.BackgroundColor.html"><code>BackgroundColor</code></a></td></tr>
+<tr><td style="text-align: center"><code>text</code></td><td style="text-align: center"><a href="https://docs.rs/bevy/latest/bevy/text/struct.Text.html"><code>Text</code></a></td></tr>
+<tr><td style="text-align: center"><code>button</code></td><td style="text-align: center"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Button.html"><code>Button</code></a></td></tr>
+<tr><td style="text-align: center"><code>node</code></td><td style="text-align: center"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Node.html"><code>Node</code></a></td></tr>
+<tr><td style="text-align: center"><code>style</code></td><td style="text-align: center"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.Style.html"><code>Style</code></a></td></tr>
+<tr><td style="text-align: center"><code>ui-image</code></td><td style="text-align: center"><a href="https://docs.rs/bevy/latest/bevy/prelude/struct.UiImage.html"><code>UiImage</code></a></td></tr>
+<tr><td style="text-align: center"><code>interaction</code></td><td style="text-align: center"><a href="https://docs.rs/bevy/latest/bevy/prelude/enum.Interaction.html"><code>Interaction</code></a></td></tr>
+</tbody></table>
+</div>
+<p>This list will be expanded to match <code>bevy_ui</code> and other <code>bevy</code> core components.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="custom-component-selector"><a class="header" href="#custom-component-selector">Custom Component Selector</a></h1>
+<p>You may also register your own components or alias/overwrite builtin components selector.</p>
+<pre><code class="language-rust">use bevy::prelude::*;
+use bevy_ecss::prelude::*;
+
+#[derive(Component)]
+struct MyFancyComponentSelector;
+
+#[derive(Component)]
+struct FancyColor;
+
+fn some_main() {
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins).add_plugins(EcssPlugin::default());
+    // You may use it as selector now, like
+    // fancy-pants {
+    //      background-color: pink;
+    // }
+    app.register_component_selector::&lt;MyFancyComponentSelector&gt;("fancy-pants");
+    // Or you can overwrite a component selector.
+    app.register_component_selector::&lt;FancyColor&gt;("background-color");
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="custom-property"><a class="header" href="#custom-property">Custom property</a></h1>
+<p>It is possible to implement your own properties, be it part of <code>CSS</code> standard or not.
+Let's implement a custom <code>alpha</code> property with will set the alpha channel of any <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.BackgroundColor.html"><code>BackgroundColor</code></a>.</p>
+<pre><code class="language-rust"><span class="boring">use bevy::{ecs::query::QueryItem, prelude::*};
+</span><span class="boring">use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues};
+</span>
+#[derive(Default)]
+pub(crate) struct AlphaProperty;
+
+impl Property for AlphaProperty {
+    // This is the cached value to be used when applying the property value.
+    // It is evaluated only on the first time and futures runs are cached for performance reasons.
+    type Cache = f32;
+    // Which components the property needs when applying the cached value.
+    // It is the same as using bevy_ecs Query&lt;C, F&gt;.
+    type Components = &amp;'static mut BackgroundColor;
+    // If this property can be set only when there is another property, it's possible to filter here.
+    // It's not recommended to use only With&lt;&gt; and Without&lt;&gt;.
+    type Filters = ();
+
+    fn name() -&gt; &amp;'static str {
+        // The name of property. prefer kebab-case for consistency.
+        "alpha"
+    }
+
+    fn parse&lt;'a&gt;(values: &amp;PropertyValues) -&gt; Result&lt;Self::Cache, EcssError&gt; {
+        // PropertyValues::f32 tries to parse property value into a numeric value
+        if let Some(value) = values.f32() {
+            Ok(value)
+        } else {
+            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+        }
+    }
+
+    // This function will be called for every entity matched on every rule selector.
+    fn apply&lt;'w&gt;(
+        cache: &amp;Self::Cache,
+        mut components: QueryItem&lt;Self::Components&gt;,
+        _asset_server: &amp;AssetServer,
+        _commands: &amp;mut Commands,
+    ) {
+        components.0.set_a(*cache);
+    }
+}</code></pre>
+<p>Now just register the property on <code>App</code>:</p>
+<pre><code class="language-rust ignore">app.register_property::&lt;AlphaProperty&gt;();</code></pre>
+<p>Done! Whenever an <code>alpha</code> property is found on any <code>css</code> file, the <code>AlphaProperty</code> will be applied. You can find this full example <a href="https://github.com/afonsolage/bevy_ecss/blob/main/examples/alpha.rs"><code>here</code></a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="simple-example"><a class="header" href="#simple-example">Simple example</a></h1>
+<p><canvas id="bevy"></canvas></p>
+<script type="module">
+    // Import and run your bevy wasm code
+    import init from './simple_ui.js'
+    init();
+</script>
+<h2 id="css"><a class="header" href="#css">CSS</a></h2>
+<pre><code class="language-css">#ui-root {
+    background-color: #3b3a3a
+}
+
+#left-border {
+    margin: 0px 0px 0px 50px;
+    border: 0px;
+    padding: 5px;
+    background-color: #000000;
+}
+
+#ui-root #left-bg {
+    display: flex;
+}
+
+#right-list {
+    height: 50%;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: violet;
+}
+
+.container .blue-bg {
+    background-color: #ff00FF10;
+}
+
+* {
+    color: cyan;
+}
+</code></pre>
+<h2 id="code"><a class="header" href="#code">Code</a></h2>
+<pre><code class="language-rust">use bevy::prelude::*;
+use bevy_ecss::prelude::{Class, EcssPlugin, StyleSheet};
+
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                canvas: Some("#bevy".to_string()),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugins(EcssPlugin::default())
+        .add_systems(Startup, setup)
+        .run();
+}
+
+fn setup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    // Camera
+    commands.spawn(Camera2dBundle::default());
+
+    // root node
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            background_color: Color::NONE.into(),
+            ..default()
+        })
+        .insert(StyleSheet::new(asset_server.load("sheets/simple_ui.css")))
+        .insert(Name::new("ui-root"))
+        .with_children(|parent| {
+            // left vertical fill (border)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
+                        border: UiRect::all(Val::Px(2.0)),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+                    ..default()
+                })
+                .insert(Name::new("left-border"))
+                .with_children(|parent| {
+                    // left vertical fill (content)
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(100.0),
+                                align_items: AlignItems::FlexEnd,
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("left-bg"))
+                        .with_children(|parent| {
+                            // text
+                            parent
+                                .spawn(
+                                    TextBundle::from_section(
+                                        "Text Example",
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 30.0,
+                                            color: Color::WHITE,
+                                        },
+                                    )
+                                    .with_style(Style {
+                                        margin: UiRect::all(Val::Px(5.0)),
+                                        ..default()
+                                    }),
+                                )
+                                .insert(Name::new("left-text"));
+                        });
+                });
+            // right vertical fill
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        flex_direction: FlexDirection::ColumnReverse,
+                        justify_content: JustifyContent::Center,
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                    ..default()
+                })
+                .insert(Name::new("right-border"))
+                .with_children(|parent| {
+                    // Title
+                    parent
+                        .spawn(
+                            TextBundle::from_section(
+                                "Scrolling list",
+                                TextStyle {
+                                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                    font_size: 25.,
+                                    color: Color::WHITE,
+                                },
+                            )
+                            .with_style(Style {
+                                height: Val::Px(25.0),
+                                margin: UiRect {
+                                    left: Val::Auto,
+                                    right: Val::Auto,
+                                    ..default()
+                                },
+                                ..default()
+                            }),
+                        )
+                        .insert(Name::new("right-bg"));
+                    // List with hidden overflow
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                flex_direction: FlexDirection::ColumnReverse,
+                                align_self: AlignSelf::Center,
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(50.0),
+                                overflow: Overflow::clip(),
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.10, 0.10, 0.10).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("right-list"))
+                        .with_children(|parent| {
+                            // Moving panel
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        flex_direction: FlexDirection::ColumnReverse,
+                                        flex_grow: 1.0,
+                                        ..default()
+                                    },
+                                    background_color: Color::NONE.into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("right-moving-panel"))
+                                .with_children(|parent| {
+                                    // List items
+                                    for i in 0..30 {
+                                        parent
+                                            .spawn(
+                                                TextBundle::from_section(
+                                                    format!("Item {i}"),
+                                                    TextStyle {
+                                                        font: asset_server
+                                                            .load("fonts/FiraSans-Bold.ttf"),
+                                                        font_size: 20.,
+                                                        color: Color::WHITE,
+                                                    },
+                                                )
+                                                .with_style(Style {
+                                                    flex_shrink: 0.,
+                                                    height: Val::Px(20.),
+                                                    margin: UiRect {
+                                                        left: Val::Auto,
+                                                        right: Val::Auto,
+                                                        ..default()
+                                                    },
+                                                    ..default()
+                                                }),
+                                            )
+                                            .insert(Class::new("big-text"))
+                                            .insert(Name::new(format!("right-item-{}", i)));
+                                    }
+                                });
+                        });
+                });
+            // absolute positioning
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Px(200.0),
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(210.0),
+                        bottom: Val::Px(10.0),
+                        border: UiRect::all(Val::Px(20.0)),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.4, 0.4, 1.0).into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-blue-border"))
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(100.0),
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.8, 0.8, 1.0).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-navy-blue-content"));
+                });
+            // render order test: reddest in the back, whitest in the front (flex center)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        position_type: PositionType::Absolute,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-red-last"))
+                .insert(Class::new("blue-bg container"))
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Px(100.0),
+                                height: Val::Px(100.0),
+                                ..default()
+                            },
+                            background_color: Color::rgb(1.0, 0.0, 0.0).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-red-last-but-one"))
+                        .with_children(|parent| {
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(20.0),
+                                        bottom: Val::Px(20.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.3, 0.3).into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("mid-red-center"));
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(40.0),
+                                        bottom: Val::Px(40.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.5, 0.5).into(),
+                                    ..default()
+                                })
+                                .insert(Class::new("blue-bg"))
+                                .insert(Name::new("mid-red-top-but-one"));
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(60.0),
+                                        bottom: Val::Px(60.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.7, 0.7).into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("mid-red-top"));
+                            // alpha test
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(80.0),
+                                        bottom: Val::Px(80.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgba(1.0, 0.9, 0.9, 0.4).into(),
+                                    ..default()
+                                })
+                                .insert(Class::new("blue-bg"))
+                                .insert(Name::new("mid-red-alpha"));
+                        });
+                });
+            // bevy logo (flex center)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        position_type: PositionType::Absolute,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::FlexEnd,
+                        ..default()
+                    },
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-bevy-logo-bg"))
+                .with_children(|parent| {
+                    // bevy logo (image)
+                    parent
+                        .spawn(ImageBundle {
+                            style: Style {
+                                width: Val::Px(500.0),
+                                ..default()
+                            },
+                            image: asset_server.load("branding/bevy_logo_dark_big.png").into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-bevy-logo-image"));
+                });
+        });
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="custom-property-1"><a class="header" href="#custom-property-1">Custom property</a></h1>
+<p><canvas id="bevy"></canvas></p>
+<script type="module">
+    // Import and run your bevy wasm code
+    import init from './alpha.js'
+    init();
+</script>
+<h2 id="css-1"><a class="header" href="#css-1">CSS</a></h2>
+<pre><code class="language-css">ui-image {
+    alpha: 0.3;
+    image-path: "branding/bevy_logo_dark_big.png";
+    width: 100%;
+    height: auto;
+}
+</code></pre>
+<h2 id="code-1"><a class="header" href="#code-1">Code</a></h2>
+<pre><code class="language-rust">use bevy::{ecs::query::QueryItem, prelude::*};
+use bevy_ecss::{prelude::*, EcssError, Property, PropertyValues};
+
+fn main() {
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            canvas: Some("#bevy".to_string()),
+            ..default()
+        }),
+        ..default()
+    }))
+    .add_plugins(EcssPlugin::default())
+    .add_systems(Startup, setup);
+
+    app.register_property::&lt;AlphaProperty&gt;();
+
+    app.run();
+}
+
+fn setup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    commands.spawn(Camera2dBundle::default());
+
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            background_color: Color::NONE.into(),
+            ..default()
+        })
+        .insert(StyleSheet::new(asset_server.load("sheets/alpha.css")))
+        .with_children(|parent| {
+            // bevy logo (image)
+            parent.spawn(ImageBundle::default());
+        });
+}
+
+#[derive(Default)]
+pub(crate) struct AlphaProperty;
+
+impl Property for AlphaProperty {
+    // This is the cached value to be used when applying the property value.
+    // It is evaluated only on the first time and futures values are cached for performance reasons.
+    type Cache = f32;
+    // Which components we need when applying the cache. It is the same as using bevy ecs Query.
+    type Components = &amp;'static mut BackgroundColor;
+    // If this property can be set only when there is another property, we may filter there.
+    // It's not recommended to use only With&lt;&gt; and Without&lt;&gt;.
+    type Filters = ();
+
+    fn name() -&gt; &amp;'static str {
+        // The name of property. prefer kebab-case for consistency.
+        "alpha"
+    }
+
+    fn parse&lt;'a&gt;(values: &amp;PropertyValues) -&gt; Result&lt;Self::Cache, EcssError&gt; {
+        // PropertyValues::f32 tries to parse property value into a numeric value
+        if let Some(value) = values.f32() {
+            Ok(value)
+        } else {
+            Err(EcssError::InvalidPropertyValue(Self::name().to_string()))
+        }
+    }
+
+    fn apply&lt;'w&gt;(
+        cache: &amp;Self::Cache,
+        mut components: QueryItem&lt;Self::Components&gt;,
+        _asset_server: &amp;AssetServer,
+        _commands: &amp;mut Commands,
+    ) {
+        components.0.set_a(*cache);
+    }
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="theme-example"><a class="header" href="#theme-example">Theme example</a></h1>
+<p><canvas id="bevy"></canvas></p>
+<script type="module">
+    // Import and run your bevy wasm code
+    import init from './theme.js'
+    init();
+</script>
+<h2 id="css-2"><a class="header" href="#css-2">CSS</a></h2>
+<h3 id="dark-theme"><a class="header" href="#dark-theme">Dark theme</a></h3>
+<pre><code class="language-css">#ui-root {
+    background-color: #181414
+}
+
+#left-border {
+    margin: 0px;
+    border: 0px;
+    padding: 5px;
+    background-color: #353535;
+}
+
+#ui-root #left-bg {
+    display: flex;
+    background-color: #242424;
+}
+
+#right-border {
+    background-color: #242424;
+}
+
+#left-bg text {
+    color: #b3b3b3
+}
+
+#right-list {
+    height: 50%;
+    background-color: #3b3b3b;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: #7c7c7c
+}
+
+.big-text-red {
+    font-size: 15;
+    width: 100%;
+    color: red;
+}
+
+text {
+    color: blue;
+}
+
+#mid-blue-border {
+    background-color: #0a0a24;
+}
+
+#mid-blue-border node {
+    background-color: #383838;
+}
+
+title {
+    font-size: 22;
+    vertical-align: bottom;
+    color: #b3b3b3;
+}
+
+.container .blue-bg {
+    background-color: #ff00FF10;
+}
+
+#mid-bevy-logo-image {
+    background-color: #aaaaaa;
+}
+
+button {
+    align-items: center;
+    align-content: center;
+}
+
+button text {
+    width: 100%;
+    height: 25px;
+    left: 10px;
+    font-size: 20;
+    color: azure;
+    text-content: "Darkness!";
+}
+
+button:hover text {
+    text-content: "Switch to Lightness?";
+}
+</code></pre>
+<h3 id="light-theme"><a class="header" href="#light-theme">Light theme</a></h3>
+<pre><code class="language-css">#ui-root {
+    background-color: #bbb6b6
+}
+
+#left-border {
+    margin: 0px;
+    border: 0px;
+    padding: 5px;
+    background-color: #dddddd;
+}
+
+#ui-root #left-bg {
+    display: flex;
+    background-color: darkgray;
+}
+
+#right-border {
+    background-color: #a5a1a1;
+}
+
+#left-bg text {
+    color: #252525
+}
+
+#right-list {
+    height: 50%;
+    background-color: #ebebeb;
+}
+
+.big-text {
+    font-size: 15;
+    width: 100%;
+    color: #252525
+}
+
+#mid-blue-border {
+    background-color: #28288d;
+}
+
+#mid-blue-border node {
+    background-color: #a5a1a1;
+}
+
+title {
+    font-size: 22;
+    vertical-align: bottom;
+    color: #3f3f3f;
+}
+
+.container .blue-bg {
+    background-color: #44004410;
+}
+
+#mid-bevy-logo-image {
+    background-color: #424242;
+}
+
+button {
+    align-items: center;
+    align-content: center;
+}
+
+button text {
+    width: 100%;
+    height: 25px;
+    left: 10px;
+    font-size: 20;
+    color: #3b3f3f;
+    text-content: "Lightness!!!!";
+}
+
+button:hover text {
+    text-content: "Switch to Darkness?";
+}
+</code></pre>
+<h2 id="code-2"><a class="header" href="#code-2">Code</a></h2>
+<pre><code class="language-rust">use bevy::{prelude::*, ui::FocusPolicy};
+use bevy_ecss::prelude::{
+    Class, EcssPlugin, RegisterComponentSelector, StyleSheet, StyleSheetAsset,
+};
+
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
+struct Title;
+
+fn main() {
+    let mut app = App::new();
+
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            canvas: Some("#bevy".to_string()),
+            ..default()
+        }),
+        ..default()
+    }))
+    .add_plugins(EcssPlugin::with_hot_reload())
+    .add_systems(Startup, setup)
+    .add_systems(Update, change_theme)
+    .register_component_selector::&lt;Title&gt;("title");
+
+    app.run();
+}
+
+#[derive(Resource)]
+struct Themes {
+    pub root: Entity,
+    pub dark: Handle&lt;StyleSheetAsset&gt;,
+    pub light: Handle&lt;StyleSheetAsset&gt;,
+}
+
+fn change_theme(
+    themes: Res&lt;Themes&gt;,
+    mut styles_query: Query&lt;&amp;mut StyleSheet&gt;,
+    interaction_query: Query&lt;&amp;Interaction, (Changed&lt;Interaction&gt;, With&lt;Button&gt;)&gt;,
+) {
+    for interaction in &amp;interaction_query {
+        if let Interaction::Pressed = *interaction {
+            if let Ok(mut sheet) = styles_query.get_mut(themes.root) {
+                if sheet.handles().first() == Some(&amp;themes.dark) {
+                    sheet.set_handles(vec![themes.light.clone()]);
+                } else {
+                    sheet.set_handles(vec![themes.dark.clone()]);
+                }
+            }
+        }
+    }
+}
+
+fn setup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    let dark = asset_server.load("sheets/dark_theme.css");
+    let light = asset_server.load("sheets/light_theme.css");
+
+    // Camera
+    commands.spawn(Camera2dBundle::default());
+
+    // root node
+    let root = commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            focus_policy: FocusPolicy::Pass,
+            background_color: Color::NONE.into(),
+            ..default()
+        })
+        .insert(Name::new("ui-root"))
+        .insert(StyleSheet::new(dark.clone()))
+        .with_children(|parent| {
+            // left vertical fill (border)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
+                        border: UiRect::all(Val::Px(2.0)),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+                    ..default()
+                })
+                .insert(Name::new("left-border"))
+                .with_children(|parent| {
+                    // left vertical fill (content)
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(100.0),
+                                align_items: AlignItems::FlexEnd,
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("left-bg"))
+                        .with_children(|parent| {
+                            // text
+                            parent
+                                .spawn(
+                                    TextBundle::from_section(
+                                        "Text Example",
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 30.0,
+                                            color: Color::WHITE,
+                                        },
+                                    )
+                                    .with_style(Style {
+                                        margin: UiRect::all(Val::Px(5.0)),
+                                        ..default()
+                                    }),
+                                )
+                                .insert(Name::new("left-text"));
+                        });
+                });
+            // right vertical fill
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        flex_direction: FlexDirection::ColumnReverse,
+                        justify_content: JustifyContent::Center,
+                        width: Val::Px(200.0),
+                        height: Val::Percent(100.0),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                    ..default()
+                })
+                .insert(Name::new("right-border"))
+                .with_children(|parent| {
+                    // Title
+                    parent
+                        .spawn(
+                            TextBundle::from_section(
+                                "Scrolling list",
+                                TextStyle {
+                                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                    font_size: 25.,
+                                    color: Color::WHITE,
+                                },
+                            )
+                            .with_style(Style {
+                                width: Val::Auto,
+                                height: Val::Px(25.),
+                                margin: UiRect {
+                                    left: Val::Auto,
+                                    right: Val::Auto,
+                                    ..default()
+                                },
+                                ..default()
+                            }),
+                        )
+                        .insert(Title)
+                        .insert(Name::new("right-bg"));
+                    // List with hidden overflow
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                flex_direction: FlexDirection::ColumnReverse,
+                                align_self: AlignSelf::Center,
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(50.0),
+                                overflow: Overflow::clip(),
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.10, 0.10, 0.10).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("right-list"))
+                        .with_children(|parent| {
+                            // Moving panel
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        flex_direction: FlexDirection::ColumnReverse,
+                                        flex_grow: 1.0,
+                                        ..default()
+                                    },
+                                    background_color: Color::NONE.into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("right-moving-panel"))
+                                .with_children(|parent| {
+                                    // List items
+                                    for i in 0..30 {
+                                        parent
+                                            .spawn(
+                                                TextBundle::from_section(
+                                                    format!("Item {i}"),
+                                                    TextStyle {
+                                                        font: asset_server
+                                                            .load("fonts/FiraSans-Bold.ttf"),
+                                                        font_size: 20.,
+                                                        color: Color::WHITE,
+                                                    },
+                                                )
+                                                .with_style(Style {
+                                                    flex_shrink: 0.,
+                                                    height: Val::Px(20.0),
+                                                    margin: UiRect {
+                                                        left: Val::Auto,
+                                                        right: Val::Auto,
+                                                        ..default()
+                                                    },
+                                                    ..default()
+                                                }),
+                                            )
+                                            .insert(Class::new("big-text"))
+                                            .insert(Name::new(format!("right-item-{}", i)));
+                                    }
+                                });
+                        });
+                });
+
+            // render order test: reddest in the back, whitest in the front (flex center)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        position_type: PositionType::Absolute,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-red-last"))
+                .insert(Class::new("blue-bg container"))
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Px(100.0),
+                                height: Val::Px(100.0),
+                                ..default()
+                            },
+                            background_color: Color::rgb(1.0, 0.0, 0.0).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-red-last-but-one"))
+                        .with_children(|parent| {
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(20.0),
+                                        bottom: Val::Px(20.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.3, 0.3).into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("mid-red-center"));
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(40.0),
+                                        bottom: Val::Px(40.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.5, 0.5).into(),
+                                    ..default()
+                                })
+                                .insert(Class::new("blue-bg"))
+                                .insert(Name::new("mid-red-top-but-one"));
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(60.0),
+                                        bottom: Val::Px(60.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgb(1.0, 0.7, 0.7).into(),
+                                    ..default()
+                                })
+                                .insert(Name::new("mid-red-top"));
+                            // alpha test
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(80.0),
+                                        bottom: Val::Px(80.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::rgba(1.0, 0.9, 0.9, 0.4).into(),
+                                    ..default()
+                                })
+                                .insert(Class::new("blue-bg"))
+                                .insert(Name::new("mid-red-alpha"));
+                        });
+                });
+            // bevy logo (flex center)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        position_type: PositionType::Absolute,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::FlexEnd,
+                        ..default()
+                    },
+                    focus_policy: FocusPolicy::Pass,
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-bevy-logo-bg"))
+                .with_children(|parent| {
+                    // bevy logo (image)
+                    parent
+                        .spawn(ImageBundle {
+                            style: Style {
+                                width: Val::Px(500.0),
+                                ..default()
+                            },
+                            image: asset_server.load("branding/bevy_logo_dark_big.png").into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-bevy-logo-image"));
+                });
+            // absolute positioning
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Px(200.0),
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(210.0),
+                        bottom: Val::Px(10.0),
+                        border: UiRect::all(Val::Px(20.0)),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.4, 0.4, 1.0).into(),
+                    ..default()
+                })
+                .insert(Name::new("mid-blue-border"))
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Px(100.0),
+                                height: Val::Px(100.0),
+                                ..default()
+                            },
+                            focus_policy: FocusPolicy::Pass,
+                            background_color: Color::rgb(0.8, 0.8, 1.0).into(),
+                            ..default()
+                        })
+                        .insert(Name::new("mid-navy-blue-content"))
+                        .with_children(|parent| {
+                            parent
+                                .spawn(ButtonBundle {
+                                    style: Style {
+                                        width: Val::Px(100.0),
+                                        height: Val::Px(100.0),
+                                        ..default()
+                                    },
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn(TextBundle::from_section(
+                                        "Change Theme",
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 40.0,
+                                            color: Color::rgb(0.9, 0.9, 0.9),
+                                        },
+                                    ));
+                                });
+                        });
+                });
+        })
+        .id();
+
+    commands.insert_resource(Themes { root, dark, light })
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="interactive-example"><a class="header" href="#interactive-example">Interactive example</a></h1>
+<p><canvas id="bevy"></canvas></p>
+<script type="module">
+    // Import and run your bevy wasm code
+    import init from './interactive.js'
+    init();
+</script>
+<h2 id="css-3"><a class="header" href="#css-3">CSS</a></h2>
+<pre><code class="language-css">#ui-root {
+	width: 30%;
+	height: 100%;
+	justfy-content: space-between;
+}
+
+#list {
+	background-color: #050505;
+	width: 100%;
+	height: 100%;
+	flex-direction: column-reverse;
+	align-self: center;
+	overflow: clip;
+}
+
+#panel {
+	flex-direction: column-reverse;
+	flex-grow: 1.0;
+}
+
+text {
+	font: "fonts/FiraSans-Bold.ttf";
+	font-size: 20;
+	color: white;
+	flex-shrink: 0;
+	height: 20px;
+	margin: auto;	
+}
+
+text:hover {
+	color: red;
+	font-size: 25;
+}
+</code></pre>
+<h2 id="code-3"><a class="header" href="#code-3">Code</a></h2>
+<pre><code class="language-rust">use bevy::{prelude::*, ui::FocusPolicy};
+use bevy_ecss::prelude::{EcssPlugin, StyleSheet};
+
+fn main() {
+    let mut app = App::new();
+
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            canvas: Some("#bevy".to_string()),
+            ..default()
+        }),
+        ..default()
+    }))
+    .add_plugins(EcssPlugin::with_hot_reload())
+    .add_systems(Startup, setup);
+
+    app.run();
+}
+
+fn setup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    // Camera
+    commands.spawn(Camera2dBundle::default());
+
+    // root node
+    commands
+        .spawn(NodeBundle {
+            focus_policy: FocusPolicy::Pass,
+            ..default()
+        })
+        .insert(Name::new("ui-root"))
+        .insert(StyleSheet::new(asset_server.load("sheets/interactive.css")))
+        .with_children(|parent| {
+            parent
+                .spawn(NodeBundle {
+                    focus_policy: FocusPolicy::Pass,
+                    ..default()
+                })
+                .insert(Name::new("list"))
+                .with_children(|parent| {
+                    // Moving panel
+                    parent
+                        .spawn(NodeBundle {
+                            focus_policy: FocusPolicy::Pass,
+                            ..default()
+                        })
+                        .insert(Name::new("panel"))
+                        .with_children(|parent| {
+                            // List items
+                            for i in 0..30 {
+                                parent
+                                    .spawn(TextBundle::from_section(
+                                        format!("Item {i}"),
+                                        TextStyle::default(),
+                                    ))
+                                    .insert(Interaction::default());
+                            }
+                        });
+                });
+        });
+}</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

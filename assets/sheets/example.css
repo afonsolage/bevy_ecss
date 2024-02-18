@@ -1,0 +1,57 @@
+#score_window {
+    color: black;
+}
+
+window {
+    display: none;
+    justify-content: flex-start;
+    position: relative;
+    flex-direction: column;
+    flex-wrap: wrap-reverse;
+}
+
+button.border {
+    align-content: center;
+    align-self: flex-end;
+    left: 10px;
+    top: 100px;
+    align-content: space-around;
+    justify-content: space-evenly;
+}
+
+button text {
+    right: 20%;
+    bottom: 20%;
+    vertical-align: top;
+    text-align: left;
+    font: "fonts/FiraSans-Bold.ttf";
+    font-size: 15px;
+    color: #fff;
+}
+
+.disabled {
+    background-color: #1a5a1a;
+}
+
+.active.hovered {
+    margin: 2px 5px 4% 3px;
+    padding: 10px;
+    border: 2px;
+}
+
+.active .not_hovered {
+    flex-grow: 1.1;
+    flex-shrink: 1;
+    flex-basis: 55px;
+    width: 100%;
+    height: 100%;
+}
+
+a#complex.selector.example {
+    min-width: 10px;
+    min-height: 15px;
+    max-width: 99%;
+    max-height: 98%;
+    aspect-ratio: auto;
+    overflow: visible;
+}
