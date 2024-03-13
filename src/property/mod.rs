@@ -17,7 +17,7 @@ use smallvec::SmallVec;
 use crate::{selector::Selector, EcssError, SelectorElement, StyleSheetAsset};
 
 mod colors;
-pub(crate) mod impls;
+pub mod impls;
 
 /// A property value token which was parsed from a CSS rule.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]

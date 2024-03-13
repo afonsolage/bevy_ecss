@@ -2,7 +2,7 @@
 
 mod component;
 mod parser;
-mod property;
+pub mod property;
 mod selector;
 mod stylesheet;
 mod system;
