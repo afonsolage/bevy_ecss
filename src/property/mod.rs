@@ -26,8 +26,17 @@ pub enum PropertyToken {
     Percentage(f32),
     /// A value which was parsed dimension value, like `10px` or `35em.
     ///
-    /// Currently there is no distinction between [`length-values`](https://developer.mozilla.org/en-US/docs/Web/CSS/length).
+    /// Currently there is no distinction between [`length-values`](https://developer.mozilla.org/en-US/docs/Web/CSS/length)
+    /// except for `vmin`, `vmax`, `vh` and `vw`.
     Dimension(f32),
+    /// A minimum viewport axis value like `10vmin`
+    VMin(f32),
+    /// A maximum viewport axis value like `10vmax`
+    VMax(f32),
+    /// A viewport height value like `10vh`
+    Vh(f32),
+    /// A viewport width value like `10vw`
+    Vw(f32),
     /// A numeric float value, like `31.1` or `43`.
     Number(f32),
     /// A plain identifier, like `none` or `center`.
@@ -97,6 +106,10 @@ impl PropertyValues {
         self.0.iter().find_map(|token| match token {
             PropertyToken::Percentage(val) => Some(Val::Percent(*val)),
             PropertyToken::Dimension(val) => Some(Val::Px(*val)),
+            PropertyToken::VMin(val) => Some(Val::VMin(*val)),
+            PropertyToken::VMax(val) => Some(Val::VMax(*val)),
+            PropertyToken::Vh(val) => Some(Val::Vh(*val)),
+            PropertyToken::Vw(val) => Some(Val::Vw(*val)),
             PropertyToken::Identifier(val) if val == "auto" => Some(Val::Auto),
             _ => None,
         })
@@ -153,6 +166,10 @@ impl PropertyValues {
                     let val = match token {
                         PropertyToken::Percentage(val) => Val::Percent(*val),
                         PropertyToken::Dimension(val) => Val::Px(*val),
+                        PropertyToken::VMin(val) => Val::VMin(*val),
+                        PropertyToken::VMax(val) => Val::VMax(*val),
+                        PropertyToken::Vh(val) => Val::Vh(*val),
+                        PropertyToken::Vw(val) => Val::Vw(*val),
                         PropertyToken::Identifier(val) if val == "auto" => Val::Auto,
                         _ => return (rect, idx),
                     };
@@ -183,7 +200,13 @@ impl<'i> TryFrom<Token<'i>> for PropertyToken {
             Token::QuotedString(val) => Ok(Self::String(val.to_string())),
             Token::Number { value, .. } => Ok(Self::Number(value)),
             Token::Percentage { unit_value, .. } => Ok(Self::Percentage(unit_value * 100.0)),
-            Token::Dimension { value, .. } => Ok(Self::Dimension(value)),
+            Token::Dimension { value, unit, .. } => match unit.as_bytes() {
+                b"vmin" => Ok(Self::VMin(value)),
+                b"vmax" => Ok(Self::VMax(value)),
+                b"vh" => Ok(Self::Vh(value)),
+                b"vw" => Ok(Self::Vw(value)),
+                _ => Ok(Self::Dimension(value)),
+            },
             _ => Err(()),
         }
     }
