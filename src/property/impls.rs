@@ -4,8 +4,8 @@ use crate::EcssError;
 
 use super::{Property, PropertyValues};
 
-pub(crate) use style::*;
-pub(crate) use text::*;
+pub use style::*;
+pub use text::*;
 
 /// Impls for `bevy_ui` [`Style`] component
 mod style {
@@ -20,7 +20,7 @@ mod style {
             $(#[doc = concat!("::",stringify!($style_field))])*
             #[doc = "](`Style`) field of all sections on matched [`Style`] components."]
             #[derive(Default)]
-            pub(crate) struct $struct;
+            pub struct $struct;
 
             impl Property for $struct {
                 type Cache = UiRect;
@@ -65,7 +65,7 @@ mod style {
             $(#[doc = concat!("::",stringify!($style_field))])*
             #[doc = "](`Style`) field of all sections on matched [`Style`] components."]
             #[derive(Default)]
-            pub(crate) struct $struct;
+            pub struct $struct;
 
             impl Property for $struct {
                 type Cache = $cache;
@@ -138,7 +138,7 @@ mod style {
             #[doc = concat!("`", stringify!($cache), "`")]
             #[doc = ") field of all sections on matched [`Style`] components."]
             #[derive(Default)]
-            pub(crate) struct $struct;
+            pub struct $struct;
 
             impl Property for $struct {
                 type Cache = $cache;
@@ -256,7 +256,7 @@ mod text {
 
     /// Applies the `color` property on [`TextStyle::color`](`TextStyle`) field of all sections on matched [`Text`] components.
     #[derive(Default)]
-    pub(crate) struct FontColorProperty;
+    pub struct FontColorProperty;
 
     impl Property for FontColorProperty {
         type Cache = Color;
@@ -290,7 +290,7 @@ mod text {
 
     /// Applies the `font` property on [`TextStyle::font`](`TextStyle`) property of all sections on matched [`Text`] components.
     #[derive(Default)]
-    pub(crate) struct FontProperty;
+    pub struct FontProperty;
 
     impl Property for FontProperty {
         type Cache = String;
@@ -324,7 +324,7 @@ mod text {
 
     /// Applies the `font-size` property on [`TextStyle::font_size`](`TextStyle`) property of all sections on matched [`Text`] components.
     #[derive(Default)]
-    pub(crate) struct FontSizeProperty;
+    pub struct FontSizeProperty;
 
     impl Property for FontSizeProperty {
         type Cache = f32;
@@ -358,7 +358,7 @@ mod text {
 
     /// Applies the `text-align` property on [`Text::horizontal`](`JustifyText`) components.
     #[derive(Default)]
-    pub(crate) struct TextAlignProperty;
+    pub struct TextAlignProperty;
 
     impl Property for TextAlignProperty {
         // Using Option since Cache must impl Default, which  doesn't
@@ -394,7 +394,7 @@ mod text {
 
     /// Apply a custom `text-content` which updates [`TextSection::value`](`TextSection`) of all sections on matched [`Text`] components
     #[derive(Default)]
-    pub(crate) struct TextContentProperty;
+    pub struct TextContentProperty;
 
     impl Property for TextContentProperty {
         type Cache = String;
@@ -430,7 +430,7 @@ mod text {
 
 /// Applies the `background-color` property on [`BackgroundColor`] component of matched entities.
 #[derive(Default)]
-pub(crate) struct BackgroundColorProperty;
+pub struct BackgroundColorProperty;
 
 impl Property for BackgroundColorProperty {
     type Cache = Color;
