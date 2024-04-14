@@ -36,7 +36,9 @@ impl<'w, 's, T: Component> ComponentFilter for SystemState<Query<'w, 's, Entity,
     }
 
     fn get_change_ticks(&self, world: &World, entity: Entity) -> Option<ComponentTicks> {
-        world.entity(entity).get_change_ticks::<T>()
+        world
+            .get_entity(entity)
+            .and_then(|e| e.get_change_ticks::<T>())
     }
 }
 
@@ -288,8 +290,8 @@ fn get_entities_with_pseudo_class_hover(
         .copied()
         .filter(|&e| {
             world
-                .entity(e)
-                .get::<Interaction>()
+                .get_entity(e)
+                .and_then(|e| e.get::<Interaction>())
                 .is_some_and(|interaction| matches!(interaction, Interaction::Hovered))
         })
         .collect::<SmallVec<_>>();
@@ -455,7 +457,7 @@ fn any_component<T: Component>(world: &World, entities: &SmallVec<[Entity; 8]>) 
     let this_run = world.read_change_tick();
     let last_run = world.last_change_tick();
     for e in entities {
-        if let Some(ticks) = world.entity(*e).get_change_ticks::<T>() {
+        if let Some(ticks) = world.get_entity(*e).and_then(|e| e.get_change_ticks::<T>()) {
             if ticks.is_changed(last_run, this_run) {
                 return true;
             }
