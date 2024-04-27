@@ -13,7 +13,7 @@ Here you can find a list of all currently supported selectors and properties:
 | _Component_   | Selects by using any component, but it has to be registered before usage. You can find more details bellow.   | `button { ... }`     |
 | _PseudoClass_ | Selects by using pseudo-classes. A list of supported pseudo-classes are listed at the end of the page.        | `:hover { ... }`     |
 
-You may combine any of the above selector types to create a complex selector, if you like so. For instance, `window.enabled.pop-up` select all `window`s, which are `enabled` and are of `pop-up` type. The same rules of [`CSS Class selectors`](https://developer.mozilla.org/en-US/docs/Web/CSS/Class_selectors) applies here. 
+You may combine any of the above selector types to create a complex selector, if you like so. For instance, `window.enabled.pop-up` select all `window`s, which are `enabled` and are of `pop-up` type. The same rules of [`CSS Class selectors`](https://developer.mozilla.org/en-US/docs/Web/CSS/Class_selectors) applies here.
 
 _This assumes that `window` is a `bevy_ecs` component and was registered before usage. Also assumes the entities has the `Class` component with at least `enabled pop-up` class name._
 
@@ -42,3 +42,4 @@ This rule will match all components which has a `Class` with the value of `borde
 |       Pseudo-Class    |                                   Description                                               |
 |:---------------------:|:------------------------------------------------------------------------------------------- |
 |       `:hover`        |  Matches any entity which has `Interaction` component with `Interaction::Hovered` variant.  |
+|       `:active`       |  Matches any entity which has `Interaction` component with `Interaction::Pressed` variant.  |

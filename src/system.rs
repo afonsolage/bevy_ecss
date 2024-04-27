@@ -273,17 +273,25 @@ fn get_entities_with_pseudo_class(
     entities: SmallVec<[Entity; 8]>,
 ) -> (FilteredEntities, MatchedEntities) {
     match pseudo_class {
-        PseudoClassElement::Hover => get_entities_with_pseudo_class_hover(world, entities),
+        PseudoClassElement::Hover => {
+            get_entities_with_pseudo_class_interaction(world, entities, &Interaction::Hovered)
+        }
+        PseudoClassElement::Active => {
+            get_entities_with_pseudo_class_interaction(world, entities, &Interaction::Pressed)
+        }
         PseudoClassElement::Unsupported => (FilteredEntities(entities), Default::default()),
     }
 }
 
-/// Utility function to filter any entities matching a [`PseudoClassElement::Hover`] variant
-/// This function looks for [`Interaction`] component with [`Interaction::Hovered`] variant.
-/// Returns a list with entities which are hovered and a list of entities which where matched.
-fn get_entities_with_pseudo_class_hover(
+/// Utility function to filter any entities matching a [`PseudoClassElement::Hover`] or
+/// [`PseudoClassElement::Active`] variant
+/// This function looks for [`Interaction`] component with [`Interaction::Hovered`] or
+/// [`Interaction::Pressed`] variant.
+/// Returns a list with entities which are hovered or pressed and a list of entities which where matched.
+fn get_entities_with_pseudo_class_interaction(
     world: &World,
     entities: SmallVec<[Entity; 8]>,
+    interaction: &Interaction,
 ) -> (FilteredEntities, MatchedEntities) {
     let filtered = entities
         .iter()
@@ -292,7 +300,7 @@ fn get_entities_with_pseudo_class_hover(
             world
                 .get_entity(e)
                 .and_then(|e| e.get::<Interaction>())
-                .is_some_and(|interaction| matches!(interaction, Interaction::Hovered))
+                .is_some_and(|i| i == interaction)
         })
         .collect::<SmallVec<_>>();
 
@@ -499,7 +507,9 @@ fn any_component_changed_by_pseudo_class(
     pseudo_class: PseudoClassElement,
 ) -> bool {
     match pseudo_class {
-        PseudoClassElement::Hover => any_component::<Interaction>(world, entities),
+        PseudoClassElement::Hover | PseudoClassElement::Active => {
+            any_component::<Interaction>(world, entities)
+        }
         PseudoClassElement::Unsupported => false,
     }
 }
