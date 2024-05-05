@@ -28,6 +28,7 @@ pub enum SelectorElement {
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub enum PseudoClassElement {
     Hover,
+    Active,
     Unsupported,
 }
 
@@ -37,6 +38,7 @@ impl PseudoClassElement {
     fn weight(&self) -> u32 {
         match self {
             PseudoClassElement::Hover => 10,
+            PseudoClassElement::Active => 10,
             PseudoClassElement::Unsupported => 0,
         }
     }
@@ -46,6 +48,7 @@ impl std::fmt::Display for PseudoClassElement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PseudoClassElement::Hover => write!(f, "hover"),
+            PseudoClassElement::Active => write!(f, "active"),
             PseudoClassElement::Unsupported => write!(f, "unsupported"),
         }
     }
@@ -55,6 +58,7 @@ impl<'a> From<&'a CowRcStr<'a>> for PseudoClassElement {
     fn from(value: &'a CowRcStr<'a>) -> Self {
         match value.as_ref() {
             "hover" => PseudoClassElement::Hover,
+            "active" => PseudoClassElement::Active,
             _ => PseudoClassElement::Unsupported,
         }
     }

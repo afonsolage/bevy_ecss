@@ -423,7 +423,7 @@ mod text {
                 .sections
                 .iter_mut()
                 // TODO: Maybe change this so each line break is a new section
-                .for_each(|section| section.value = cache.clone());
+                .for_each(|section| section.value.clone_from(cache));
         }
     }
 }
