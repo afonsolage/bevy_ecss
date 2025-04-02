@@ -72,6 +72,6 @@ impl Property for AlphaProperty {
         _asset_server: &AssetServer,
         _commands: &mut Commands,
     ) {
-        components.0.set_a(*cache);
+        components.0.set_alpha(*cache);
     }
 }

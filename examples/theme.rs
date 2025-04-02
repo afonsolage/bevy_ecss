@@ -82,7 +82,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         border: UiRect::all(Val::Px(2.0)),
                         ..default()
                     },
-                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+                    background_color: Color::srgb(0.65, 0.65, 0.65).into(),
                     ..default()
                 })
                 .insert(Name::new("left-border"))
@@ -96,7 +96,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 align_items: AlignItems::FlexEnd,
                                 ..default()
                             },
-                            background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            background_color: Color::srgb(0.15, 0.15, 0.15).into(),
                             ..default()
                         })
                         .insert(Name::new("left-bg"))
@@ -130,7 +130,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         height: Val::Percent(100.0),
                         ..default()
                     },
-                    background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                    background_color: Color::srgb(0.15, 0.15, 0.15).into(),
                     ..default()
                 })
                 .insert(Name::new("right-border"))
@@ -170,7 +170,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 overflow: Overflow::clip(),
                                 ..default()
                             },
-                            background_color: Color::rgb(0.10, 0.10, 0.10).into(),
+                            background_color: Color::srgb(0.10, 0.10, 0.10).into(),
                             ..default()
                         })
                         .insert(Name::new("right-list"))
@@ -243,7 +243,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 height: Val::Px(100.0),
                                 ..default()
                             },
-                            background_color: Color::rgb(1.0, 0.0, 0.0).into(),
+                            background_color: Color::srgb(1.0, 0.0, 0.0).into(),
                             ..default()
                         })
                         .insert(Name::new("mid-red-last-but-one"))
@@ -258,7 +258,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         bottom: Val::Px(20.0),
                                         ..default()
                                     },
-                                    background_color: Color::rgb(1.0, 0.3, 0.3).into(),
+                                    background_color: Color::srgb(1.0, 0.3, 0.3).into(),
                                     ..default()
                                 })
                                 .insert(Name::new("mid-red-center"));
@@ -272,7 +272,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         bottom: Val::Px(40.0),
                                         ..default()
                                     },
-                                    background_color: Color::rgb(1.0, 0.5, 0.5).into(),
+                                    background_color: Color::srgb(1.0, 0.5, 0.5).into(),
                                     ..default()
                                 })
                                 .insert(Class::new("blue-bg"))
@@ -287,7 +287,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         bottom: Val::Px(60.0),
                                         ..default()
                                     },
-                                    background_color: Color::rgb(1.0, 0.7, 0.7).into(),
+                                    background_color: Color::srgb(1.0, 0.7, 0.7).into(),
                                     ..default()
                                 })
                                 .insert(Name::new("mid-red-top"));
@@ -302,7 +302,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         bottom: Val::Px(80.0),
                                         ..default()
                                     },
-                                    background_color: Color::rgba(1.0, 0.9, 0.9, 0.4).into(),
+                                    background_color: Color::srgba(1.0, 0.9, 0.9, 0.4).into(),
                                     ..default()
                                 })
                                 .insert(Class::new("blue-bg"))
@@ -350,7 +350,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         border: UiRect::all(Val::Px(20.0)),
                         ..default()
                     },
-                    background_color: Color::rgb(0.4, 0.4, 1.0).into(),
+                    background_color: Color::srgb(0.4, 0.4, 1.0).into(),
                     ..default()
                 })
                 .insert(Name::new("mid-blue-border"))
@@ -363,7 +363,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 ..default()
                             },
                             focus_policy: FocusPolicy::Pass,
-                            background_color: Color::rgb(0.8, 0.8, 1.0).into(),
+                            background_color: Color::srgb(0.8, 0.8, 1.0).into(),
                             ..default()
                         })
                         .insert(Name::new("mid-navy-blue-content"))
@@ -383,7 +383,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         TextStyle {
                                             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                                             font_size: 40.0,
-                                            color: Color::rgb(0.9, 0.9, 0.9),
+                                            color: Color::srgb(0.9, 0.9, 0.9),
                                         },
                                     ));
                                 });

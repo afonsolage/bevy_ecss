@@ -2,7 +2,7 @@ use bevy::prelude::Color;
 
 pub(super) fn parse_hex_color(hex: &str) -> Option<Color> {
     if let Ok((r, g, b, a)) = cssparser::color::parse_hash_color(hex.as_bytes()) {
-        Some(Color::rgba_u8(r, g, b, (a * 255.0) as u8))
+        Some(Color::srgba_u8(r, g, b, (a * 255.0) as u8))
     } else {
         None
     }
@@ -21,7 +21,7 @@ pub(super) fn parse_named_color(name: &str) -> Option<Color> {
         alpha,
     })) = cssparser_color::parse_color_keyword(name)
     {
-        Some(Color::rgba_u8(red, green, blue, (alpha * 255.0) as u8))
+        Some(Color::srgba_u8(red, green, blue, (alpha * 255.0) as u8))
     } else {
         None
     }

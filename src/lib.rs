@@ -10,6 +10,7 @@ mod system;
 use std::{error::Error, fmt::Display};
 
 use bevy::{
+    app::First,
     asset::AssetEvents,
     ecs::system::SystemState,
     prelude::{
@@ -123,17 +124,15 @@ impl Plugin for EcssPlugin {
             )
             .add_systems(PostUpdate, system::clear_state.in_set(EcssSet::Cleanup));
 
-        let prepared_state = PrepareParams::new(&mut app.world);
+        let prepared_state = PrepareParams::new(app.world_mut());
         app.insert_resource(prepared_state);
 
         register_component_selector(app);
         register_properties(app);
 
         if self.hot_reload {
-            app.configure_sets(AssetEvents, EcssHotReload).add_systems(
-                AssetEvents,
-                system::hot_reload_style_sheets.in_set(EcssHotReload),
-            );
+            app.configure_sets(First, EcssHotReload.in_set(AssetEvents))
+                .add_systems(First, system::hot_reload_style_sheets.in_set(EcssHotReload));
         }
     }
 }
@@ -232,10 +231,10 @@ impl RegisterComponentSelector for bevy::prelude::App {
     where
         T: Component,
     {
-        let system_state = SystemState::<Query<Entity, With<T>>>::new(&mut self.world);
+        let system_state = SystemState::<Query<Entity, With<T>>>::new(self.world_mut());
         let boxed_state = Box::new(system_state);
 
-        self.world
+        self.world_mut()
             .get_resource_or_insert_with::<ComponentFilterRegistry>(bevy::utils::default)
             .insert(name, boxed_state);
 

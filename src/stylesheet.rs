@@ -4,7 +4,7 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt},
     prelude::Asset,
     reflect::TypePath,
-    utils::{AHasher, HashMap},
+    utils::{AHasher, ConditionalSendFuture, HashMap},
 };
 use smallvec::SmallVec;
 use thiserror::Error;
@@ -98,7 +98,7 @@ impl AssetLoader for StyleSheetLoader {
         reader: &'a mut Reader,
         _settings: &'a Self::Settings,
         load_context: &'a mut bevy::asset::LoadContext,
-    ) -> bevy::utils::BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
+    ) -> impl ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
             let mut bytes = Vec::new();
             reader.read_to_end(&mut bytes).await?;

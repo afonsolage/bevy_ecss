@@ -486,7 +486,7 @@ impl Property for BorderColorProperty {
         _asset_server: &AssetServer,
         commands: &mut Commands,
     ) {
-        commands.entity(components).insert(BorderColor(*cache));
+        commands.entity(components).insert(BorderColor::all(*cache));
     }
 }
 

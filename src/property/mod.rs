@@ -293,24 +293,26 @@ impl StyleSheetState {
 ///
 /// These are the associated types that must by specified by implementors:
 /// - [`Cache`](Property::Cache) is a cached value to be applied by this trait.
-/// On the first time the `system` runs it'll call [`parse`](`Property::parse`) and cache the value.
-/// Subsequential runs will only fetch the cached value.
+///   On the first time the `system` runs it'll call [`parse`](`Property::parse`) and cache the value.
+///   Subsequential runs will only fetch the cached value.
 /// - [`Components`](Property::Components) is which components will be send to [`apply`](`Property::apply`) function whenever a
-/// valid cache exists and a matching property was found on any sheet rule. Check [`QueryData`] for more.
+///   valid cache exists and a matching property was found on any sheet rule. Check [`QueryData`] for more.
 /// - [`Filters`](Property::Filters) is used to filter which entities will be applied the property modification.
-/// Entities are first filtered by [`selectors`](`Selector`), but it can be useful to also ensure some behavior for safety reasons,
-/// like only inserting [`JustifyText`](bevy::prelude::JustifyText) if the entity also has a [`Text`](bevy::prelude::Text) component.
-///  Check [`WorldQuery`] for more.
+///   Entities are first filtered by [`selectors`](`Selector`), but it can be useful to also ensure some behavior for safety reasons,
+///   like only inserting [`JustifyText`](bevy::prelude::JustifyText) if the entity also has a [`Text`](bevy::prelude::Text) component.
+///
+/// Check [`WorldQuery`] for more.
 ///
 /// These are tree functions required to be implemented:
 /// - [`name`](Property::name) indicates which property name should matched for.
 /// - [`parse`](Property::parse) parses the [`PropertyValues`] into the [`Cache`](Property::Cache) value to be reused across multiple entities.
 /// - [`apply`](Property::apply) applies on the given [`Components`](Property::Components) the [`Cache`](Property::Cache) value.
+///
 /// Additionally, an [`AssetServer`] and [`Commands`] parameters are provided for more complex use cases.
 ///
 /// Also, there one function which have default implementations:
 /// - [`apply_system`](Property::apply_system) is a [`system`](https://docs.rs/bevy_ecs/latest/bevy_ecs/system/index.html) which interacts with
-/// [ecs world](`bevy::prelude::World`) and call the [`apply`](Property::apply) function on every matched entity.
+///   [ecs world](`bevy::prelude::World`) and call the [`apply`](Property::apply) function on every matched entity.
 pub trait Property: Default + Sized + Send + Sync + 'static {
     /// The cached value type to be applied by property.
     type Cache: Default + Any + Send + Sync;
